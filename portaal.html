@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rapportageportaal</title>
+<meta name="robots" content="noindex">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0e1522;--panel:#161f31;--line:#2b3a57;--blauw:#1e6ff5;--txt:#e8ecf3;--muted:#93a0b5;--red:#e5484d;--green:#2fbf71;--navy:#0d2456}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--ink);color:var(--txt);font-family:'Barlow',system-ui,sans-serif;line-height:1.5}
+.wrap{max-width:820px;margin:0 auto;padding:26px 18px 60px}
+header{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+header img{height:46px;width:auto;background:#fff;border-radius:9px;padding:4px 8px}
+h1{font-family:'Barlow Condensed';font-size:26px;text-transform:uppercase}
+.sub{color:var(--muted);font-size:14px;margin-bottom:24px}
+.rij{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:13px 16px;margin-bottom:10px}
+.tag{font-family:'Barlow Condensed';font-weight:600;text-transform:uppercase;font-size:14px;border-radius:6px;padding:4px 10px}
+.tag-dienst{background:#2fbf7122;color:var(--green);border:1px solid #2fbf7155}
+.tag-incident{background:#e5484d22;color:var(--red);border:1px solid #e5484d55}
+.tag-ronde{background:#1e6ff522;color:#6ea5ff;border:1px solid #1e6ff555}
+.rij .meta{font-size:13px;color:var(--muted)}
+.rij .mono{font-family:'IBM Plex Mono';font-size:13px}
+.knop{border:1px solid var(--line);background:transparent;color:var(--txt);border-radius:8px;padding:8px 16px;cursor:pointer;font-family:'Barlow Condensed';font-size:16px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.knop:hover{border-color:var(--blauw);color:#6ea5ff}
+.leeg,.fout{color:var(--muted);text-align:center;padding:40px 10px;border:1px dashed var(--line);border-radius:10px}
+.fout{color:var(--red);border-color:var(--red)}
+
+/* Rapportweergave (zelfde stijl als de Oisecur-PDF) */
+#rapport{display:none;background:#fff;color:#141414;border-radius:12px;padding:26px;margin-top:8px}
+#rapport.open{display:block}
+.terug{margin-bottom:14px;display:none}
+.terug.open{display:inline-flex;gap:10px}
+.pr{font-family:'Barlow',sans-serif;color:#141414;font-size:12.5px;line-height:1.5}
+.pr .pr-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid var(--navy);padding-bottom:10px;margin-bottom:16px}
+.pr .pr-logo{height:52px;width:auto;display:block;margin-bottom:6px}
+.pr .pr-head h1{font-family:'Barlow Condensed';font-size:24px;text-transform:uppercase;color:var(--navy)}
+.pr .sub{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#666;margin:0}
+.pr .pr-num{text-align:right;font-family:'IBM Plex Mono';font-size:12px}
+.pr .pr-num .status{display:inline-block;border:2px solid var(--navy);color:var(--navy);padding:2px 10px;font-weight:600;text-transform:uppercase;font-family:'Barlow Condensed';font-size:14px;margin-top:6px;letter-spacing:.08em}
+.pr table{width:100%;border-collapse:collapse;margin-bottom:16px}
+.pr th,.pr td{border:1px solid #bbb;padding:6px 9px;text-align:left;vertical-align:top}
+.pr th{background:#efefef;font-family:'Barlow Condensed';text-transform:uppercase;font-size:12px;letter-spacing:.06em}
+.pr .kv td:first-child{width:32%;background:#f6f6f6;font-weight:600}
+.pr h2{font-family:'Barlow Condensed';font-size:15px;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #111;padding-bottom:3px;margin:18px 0 8px}
+.pr .pr-time{font-family:'IBM Plex Mono';white-space:nowrap;width:70px}
+.pr .gps{font-size:10px;color:#888;font-family:'IBM Plex Mono'}
+.pr .pr-fotos{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0 4px}
+.pr .pr-fotos img{width:100%;border:1px solid #bbb;border-radius:3px}
+.pr .pr-sign{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:34px}
+.pr .sig{border-top:1px solid #111;padding-top:6px;font-size:11px;color:#444}
+.pr .sig img{height:60px;display:block;margin:4px 0}
+.pr .pr-foot{margin-top:28px;font-size:10px;color:#888;border-top:1px solid #ccc;padding-top:6px;display:flex;justify-content:space-between}
+.pr .sev-hoog{color:#c1121f;font-weight:700}
+.pr .afw{color:#c1121f;font-weight:600}
+@media print{
+  body{background:#fff}
+  .wrap>*:not(#rapport){display:none!important}
+  #rapport{border-radius:0;padding:0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><img id="p-logo" src="" alt="" hidden><div><h1 id="p-titel">Rapportageportaal</h1></div></header>
+  <p class="sub" id="p-sub">Rapporten laden…</p>
+  <div class="terug" id="terug">
+    <button class="knop" onclick="sluitRapport()">← Terug naar overzicht</button>
+    <button class="knop" onclick="window.print()">Afdrukken / PDF</button>
+  </div>
+  <div id="lijst"></div>
+  <div id="rapport"></div>
+</div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const token = new URLSearchParams(location.search).get('t');
+let bedrijf = null;
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtDate(iso){ if(!iso) return '—'; const [y,m,d]=iso.split('-'); return d+'-'+m+'-'+y; }
+function gpsTxt(g){ return g ? '<div class="gps">GPS '+g.lat.toFixed(5)+', '+g.lng.toFixed(5)+'</div>' : ''; }
+
+async function laad(){
+  if(!token){ $('lijst').innerHTML='<div class="fout">Geen portaallink gevonden in het adres.</div>'; $('p-sub').textContent=''; return; }
+  try{
+    const res = await fetch('/api/portaal?token='+encodeURIComponent(token));
+    const d = await res.json();
+    if(!res.ok) throw new Error(d.fout||'Fout');
+    bedrijf = d.bedrijf;
+    if(bedrijf.logo){ $('p-logo').src=bedrijf.logo; $('p-logo').hidden=false; }
+    $('p-titel').textContent = d.object;
+    $('p-sub').textContent = 'Beveiligingsrapportages door '+bedrijf.naam+' — alleen-lezen overzicht.';
+    document.title = d.object+' — rapportageportaal';
+    if(!d.rapporten.length){ $('lijst').innerHTML='<div class="leeg">Nog geen rapporten voor dit object.</div>'; return; }
+    $('lijst').innerHTML = d.rapporten.map(r=>{
+      const tag={dienst:'tag-dienst',incident:'tag-incident',ronde:'tag-ronde'}[r.type];
+      const naam={dienst:'Dienst',incident:'Incident',ronde:'Ronde'}[r.type];
+      return '<div class="rij"><span class="tag '+tag+'">'+naam+'</span>'+
+        '<div><div class="mono">'+r.nummer+'</div><div class="meta">'+fmtDate(r.datum)+' · '+esc(r.naam)+'</div></div>'+
+        '<button class="knop" onclick="openRapport(\''+r.nummer+'\')">Bekijken</button></div>';
+    }).join('');
+  }catch(e){
+    $('p-sub').textContent='';
+    $('lijst').innerHTML='<div class="fout">'+esc(e.message)+'</div>';
+  }
+}
+
+async function openRapport(nummer){
+  try{
+    const res = await fetch('/api/portaal?token='+encodeURIComponent(token)+'&nummer='+encodeURIComponent(nummer));
+    const d = await res.json();
+    if(!res.ok) throw new Error(d.fout||'Fout');
+    $('rapport').innerHTML = bouw(d.rapport);
+    $('rapport').classList.add('open');
+    $('terug').classList.add('open');
+    $('lijst').style.display='none';
+    window.scrollTo(0,0);
+  }catch(e){ alert(e.message); }
+}
+function sluitRapport(){
+  $('rapport').classList.remove('open');
+  $('terug').classList.remove('open');
+  $('lijst').style.display='';
+}
+
+function kv(k,v){ return '<tr><td>'+k+'</td><td>'+(v||'—')+'</td></tr>'; }
+function sect(t,v){ return v ? '<h2>'+t+'</h2><p>'+esc(v).replaceAll('\n','<br>')+'</p>' : ''; }
+function bouw(r){
+  const titel={dienst:'Dienstrapport',incident:'Incidentrapport',ronde:'Ronderapport'}[r.type];
+  let body='<table class="kv">'+
+    kv('Beveiliger', esc(r.naam)+(r.pnr?' &nbsp;(nr. '+esc(r.pnr)+')':''))+
+    kv('Object / locatie', esc(r.object)+(r.adres?' — '+esc(r.adres):''))+
+    kv('Datum', fmtDate(r.datum))+
+    kv('Dienst', (r.dienstnaam?esc(r.dienstnaam)+' · ':'')+(r.van||'—')+' – '+(r.tot||'—'))+'</table>';
+  if(r.type==='dienst'){
+    body+='<h2>Mutaties</h2><table><tr><th class="pr-time">Tijd</th><th>Omschrijving</th></tr>'+
+      r.mutaties.map(m=>'<tr><td class="pr-time">'+(m.tijd||'—')+'</td><td>'+esc(m.oms)+gpsTxt(m.gps)+'</td></tr>').join('')+'</table>';
+    if(r.overdracht) body+='<h2>Overdracht</h2><p>'+esc(r.overdracht).replaceAll('\n','<br>')+'</p>';
+  }
+  if(r.type==='incident'){
+    const i=r.incident;
+    body+='<h2>Incidentgegevens</h2><table class="kv">'+
+      kv('Categorie',esc(i.cat))+kv('Prioriteit', i.prio==='Hoog'?'<span class="sev-hoog">HOOG</span>':esc(i.prio))+
+      kv('Tijdstip',i.tijd||'—')+kv('Exacte locatie',esc(i.loc)||'—')+
+      (r.gps?kv('GPS-locatie','<span class="gps" style="font-size:12px">'+r.gps.lat.toFixed(5)+', '+r.gps.lng.toFixed(5)+'</span>'):'')+
+      kv('Politie ter plaatse',i.politie?'Ja':'Nee')+kv('Overige hulpdiensten',i.hulp?'Ja':'Nee')+
+      kv('Schade geconstateerd',i.schade?'Ja':'Nee')+'</table>';
+    body+=sect('Omschrijving',i.oms)+sect('Genomen acties',i.actie)+
+          sect('Betrokkenen / signalement',i.betrok)+sect('Vervolgacties',i.vervolg);
+    if(i.fotos&&i.fotos.length) body+='<h2>Foto\u2019s ('+i.fotos.length+')</h2><div class="pr-fotos">'+
+      i.fotos.map(f=>'<img src="'+f+'" alt="Incidentfoto">').join('')+'</div>';
+  }
+  if(r.type==='ronde'){
+    body+='<h2>Controleronde</h2><table class="kv">'+kv('Gestart',r.ronde.start||'—')+kv('Afgerond',r.ronde.eind||'—')+'</table>';
+    body+='<table><tr><th>Checkpoint</th><th style="width:110px">Status</th><th>Opmerking</th></tr>'+
+      r.ronde.punten.map(p=>'<tr><td>'+esc(p.naam)+gpsTxt(p.gps)+'</td><td'+(p.status==='Afwijking'?' class="afw"':'')+'>'+p.status+(p.qr?'<div class="gps">QR gescand '+(p.tijd||'')+'</div>':'')+'</td><td>'+(esc(p.opm)||'—')+'</td></tr>').join('')+'</table>';
+  }
+  return '<div class="pr"><div class="pr-head">'+
+    '<div>'+(bedrijf.logo?'<img class="pr-logo" src="'+bedrijf.logo+'" alt="Logo">':'')+
+    '<h1>'+esc(bedrijf.naam)+' — '+titel+'</h1><div class="sub">Beveiligingsrapportage</div></div>'+
+    '<div class="pr-num">'+r.nummer+'<br>'+fmtDate(r.datum)+'<br><span class="status">'+(r.type==='incident'?'Incident':'Definitief')+'</span></div></div>'+
+    body+
+    '<div class="pr-sign"><div class="sig">Handtekening beveiliger<br>'+(r.handtekening?'<img src="'+r.handtekening+'" alt="Handtekening">':'<br><br>')+esc(r.naam)+'</div>'+
+    '<div class="sig">Handtekening leidinggevende / opdrachtgever<br><br><br>&nbsp;</div></div>'+
+    '<div class="pr-foot"><span>Gegenereerd met Oisecur</span><span>'+r.nummer+'</span></div></div>';
+}
+laad();
+</script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oisecur — Beheerconsole</title>
+<meta name="robots" content="noindex">
+<style>
+:root{--ink:#0e1522;--panel:#161f31;--panel2:#1d2940;--line:#2b3a57;--blauw:#1e6ff5;--txt:#e8ecf3;--muted:#93a0b5;--red:#e5484d;--green:#2fbf71}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--ink);color:var(--txt);font-family:system-ui,sans-serif;line-height:1.5;padding:30px 18px}
+.wrap{max-width:760px;margin:0 auto}
+h1{font-size:26px;margin-bottom:4px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:26px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px;margin-bottom:18px}
+h2{font-size:17px;margin-bottom:14px;color:#6ea5ff}
+label{display:block;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:12px 0 4px}
+input,select{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:7px;color:var(--txt);padding:10px 12px;font-size:15px}
+input:focus{outline:2px solid var(--blauw);border-color:var(--blauw)}
+button{background:var(--blauw);color:#fff;border:none;border-radius:8px;padding:12px 22px;font-size:15px;font-weight:600;cursor:pointer;margin-top:16px}
+button:hover{background:#3d84ff}
+.melding{margin-top:12px;font-size:14px;min-height:20px}
+.melding.ok{color:var(--green)} .melding.fout{color:var(--red)}
+.rij{display:flex;justify-content:space-between;gap:12px;border:1px solid var(--line);background:var(--panel2);border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:14px;flex-wrap:wrap}
+.rij .sub2{color:var(--muted);font-size:13px}
+code{background:var(--panel2);padding:2px 6px;border-radius:4px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Oisecur — Beheerconsole</h1>
+  <p class="sub">Alleen voor Oisecur zelf. Hier maak je klantbedrijven aan met hun beheerder-account.</p>
+
+  <div class="card">
+    <h2>Beheersleutel</h2>
+    <label for="key">OISECUR_ADMIN_KEY (zoals ingesteld in Vercel)</label>
+    <input id="key" type="password" placeholder="Beheersleutel">
+    <button onclick="laadBedrijven()">Bedrijven ophalen</button>
+    <div class="melding" id="m-key"></div>
+  </div>
+
+  <div class="card">
+    <h2>Nieuw bedrijf aanmaken</h2>
+    <label for="b-naam">Bedrijfsnaam</label>
+    <input id="b-naam" placeholder="Voorbeeld Beveiliging B.V.">
+    <label for="b-id">Bedrijfscode (2–8 letters, komt in rapportnummers)</label>
+    <input id="b-id" placeholder="VBBV" maxlength="8" style="text-transform:uppercase">
+    <label for="b-plan">Pakket</label>
+    <select id="b-plan"><option value="starter">Starter</option><option value="pro" selected>Pro</option><option value="business">Business</option></select>
+    <label for="b-behnaam">Naam beheerder</label>
+    <input id="b-behnaam" placeholder="Voor- en achternaam">
+    <label for="b-login">Login beheerder (e-mail of gebruikersnaam)</label>
+    <input id="b-login" placeholder="info@bedrijf.nl">
+    <label for="b-ww">Wachtwoord (min. 8 tekens)</label>
+    <input id="b-ww" placeholder="Geef door aan de klant">
+    <button onclick="maakBedrijf()">Bedrijf aanmaken</button>
+    <div class="melding" id="m-nieuw"></div>
+  </div>
+
+  <div class="card">
+    <h2>Bedrijven</h2>
+    <div id="lijst"><span class="sub2" style="color:var(--muted)">Voer de beheersleutel in en klik op "Bedrijven ophalen".</span></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+function meld(id, tekst, fout){ const m=$(id); m.textContent=tekst; m.className='melding '+(fout?'fout':'ok'); }
+
+async function adminApi(methode, body){
+  const res = await fetch('/api/admin', {
+    method: methode,
+    headers: { 'Content-Type':'application/json', 'x-admin-key': $('key').value.trim() },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(data.fout || 'Fout '+res.status);
+  return data;
+}
+
+async function laadBedrijven(){
+  meld('m-key','Ophalen…');
+  try{
+    const d = await adminApi('GET');
+    meld('m-key','Sleutel geldig — '+d.bedrijven.length+' bedrijf/bedrijven.');
+    const stat = Object.fromEntries(d.statistiek.map(s=>[s.bid,s]));
+    $('lijst').innerHTML = d.bedrijven.map(b=>{
+      const s = stat[b.id] || {users:'?',rapporten:'?'};
+      return '<div class="rij"><div><b>'+b.naam+'</b> <code>'+b.id+'</code>'+
+        '<div class="sub2">pakket: '+(b.plan||'-')+' · sinds '+(b.sinds||'').slice(0,10)+'</div></div>'+
+        '<div class="sub2">'+s.users+' account(s) · '+s.rapporten+' rapport(en)</div></div>';
+    }).join('') || '<span class="sub2">Nog geen bedrijven.</span>';
+  }catch(e){ meld('m-key', e.message, true); }
+}
+
+async function maakBedrijf(){
+  meld('m-nieuw','Aanmaken…');
+  try{
+    const d = await adminApi('POST', {
+      naam: $('b-naam').value.trim(),
+      id: $('b-id').value.trim().toUpperCase(),
+      plan: $('b-plan').value,
+      beheerderNaam: $('b-behnaam').value.trim(),
+      login: $('b-login').value.trim(),
+      wachtwoord: $('b-ww').value
+    });
+    meld('m-nieuw','Aangemaakt: '+d.bid+'. Geef login en wachtwoord door aan de klant.');
+    ['b-naam','b-id','b-behnaam','b-login','b-ww'].forEach(i=>$(i).value='');
+    laadBedrijven();
+  }catch(e){ meld('m-nieuw', e.message, true); }
+}
+</script>
+</body>
+</html>

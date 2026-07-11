@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oisecur — Beveiligingsrapportage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+<style>
+:root{
+  --ink:#0e1522;
+  --panel:#161f31;
+  --panel-2:#1d2940;
+  --line:#2b3a57;
+  --paper:#f5f6f8;
+  --blauw:#1e6ff5;
+  --blauw-donker:#0d2456;
+  --green:#2fbf71;
+  --red:#e5484d;
+  --txt:#e8ecf3;
+  --muted:#8b98ad;
+  --radius:10px;
+  font-size:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--ink);
+  color:var(--txt);
+  font-family:'Barlow',system-ui,sans-serif;
+  min-height:100vh;
+}
+h1,h2,h3,.disp{font-family:'Barlow Condensed',sans-serif;letter-spacing:.02em}
+.mono{font-family:'IBM Plex Mono',monospace}
+
+/* ── Topbar ─────────────────────────── */
+header{
+  display:flex;align-items:center;gap:14px;
+  padding:14px 22px;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,#131c2e,#0e1522);
+  position:sticky;top:0;z-index:50;
+}
+.logo{
+  display:flex;align-items:center;gap:10px;
+}
+.logo-img{
+  height:46px;width:auto;background:#fff;border-radius:9px;padding:4px 8px;display:block;
+}
+.logo h1{font-size:24px;font-weight:700;text-transform:uppercase}
+.logo h1 span{color:#5b96ff}
+.logo small{display:block;font-family:'Barlow';font-size:11px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;font-weight:500}
+header .clock{margin-left:auto;font-size:14px;color:var(--muted)}
+header .clock b{color:var(--txt);font-weight:500}
+
+/* ── Layout ─────────────────────────── */
+.wrap{max-width:1100px;margin:0 auto;padding:24px 18px 80px}
+.tabs{display:flex;gap:8px;margin-bottom:22px;flex-wrap:wrap}
+.tab{
+  border:1px solid var(--line);background:var(--panel);color:var(--muted);
+  padding:9px 18px;border-radius:999px;cursor:pointer;
+  font-family:'Barlow Condensed';font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;
+}
+.tab.active{background:var(--blauw);border-color:var(--blauw);color:#fff}
+.tab .badge{background:#0e152233;border-radius:999px;padding:0 8px;font-size:14px;margin-left:6px}
+.tab:not(.active) .badge{background:var(--panel-2);color:var(--txt)}
+
+.card{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:20px;margin-bottom:18px;
+}
+.card h2{font-size:21px;text-transform:uppercase;color:#6ea5ff;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.card h2::after{content:"";flex:1;height:1px;background:var(--line)}
+
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:1fr 1fr 1fr}
+.g4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:760px){.g2,.g3,.g4{grid-template-columns:1fr}}
+
+label{display:block;font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+input,select,textarea{
+  width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:7px;
+  color:var(--txt);padding:10px 12px;font-family:'Barlow';font-size:15px;
+}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--blauw);outline-offset:0;border-color:var(--blauw)}
+textarea{resize:vertical;min-height:80px}
+input[type=time]{font-family:'IBM Plex Mono',monospace}
+
+.btn{
+  border:none;border-radius:8px;padding:11px 20px;cursor:pointer;
+  font-family:'Barlow Condensed';font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;
+  display:inline-flex;align-items:center;gap:8px;
+}
+.btn-primary{background:var(--blauw);color:#fff}
+.btn-primary:hover{background:#3d84ff}
+.btn-ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
+.btn-ghost:hover{border-color:var(--blauw);color:var(--blauw)}
+.btn-danger{background:transparent;border:1px solid var(--red);color:var(--red)}
+.btn-sm{padding:6px 12px;font-size:15px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+
+/* ── Rapporttype keuze ──────────────── */
+.types{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+@media(max-width:760px){.types{grid-template-columns:1fr}}
+.type-card{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:18px;cursor:pointer;text-align:left;color:var(--txt);
+}
+.type-card:hover{border-color:var(--blauw)}
+.type-card.sel{border-color:var(--blauw);background:var(--panel-2);box-shadow:inset 0 0 0 1px var(--blauw)}
+.type-card .code{font-family:'IBM Plex Mono';font-size:12px;color:#6ea5ff;letter-spacing:.1em}
+.type-card h3{font-size:20px;text-transform:uppercase;margin:4px 0 6px}
+.type-card p{font-size:13.5px;color:var(--muted);line-height:1.45}
+
+/* ── Mutaties / checkpoints ─────────── */
+.rows{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
+.row-item{
+  display:grid;grid-template-columns:110px 1fr auto;gap:10px;align-items:start;
+  background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:10px;
+}
+.row-item.cp{grid-template-columns:1fr 150px 1fr auto}
+@media(max-width:760px){.row-item,.row-item.cp{grid-template-columns:1fr}}
+.row-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:6px}
+.row-del:hover{color:var(--red)}
+
+.sev{display:flex;gap:8px;flex-wrap:wrap}
+.sev input{display:none}
+.sev label{
+  cursor:pointer;margin:0;padding:8px 16px;border-radius:999px;border:1px solid var(--line);
+  color:var(--muted);font-size:13px;
+}
+.sev input:checked + label{border-color:var(--blauw);color:var(--blauw);background:#1e6ff514}
+.sev input:focus-visible + label{outline:2px solid var(--blauw)}
+.sev.s-hoog input:checked + label{border-color:var(--red);color:var(--red);background:#e5484d14}
+
+.chk{display:flex;align-items:center;gap:10px;padding:8px 0}
+.chk input{width:18px;height:18px;accent-color:var(--blauw)}
+.chk span{font-size:15px}
+
+/* ── Archief ────────────────────────── */
+.report-list{display:flex;flex-direction:column;gap:10px}
+.report-row{
+  display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;
+}
+.report-row .tag{
+  font-family:'Barlow Condensed';font-weight:600;text-transform:uppercase;font-size:14px;
+  border-radius:6px;padding:4px 10px;letter-spacing:.05em;
+}
+.tag-dienst{background:#2fbf7122;color:var(--green);border:1px solid #2fbf7155}
+.tag-incident{background:#e5484d22;color:var(--red);border:1px solid #e5484d55}
+.tag-ronde{background:#1e6ff522;color:#6ea5ff;border:1px solid #1e6ff555}
+.report-row .meta{font-size:13px;color:var(--muted)}
+.report-row .meta b{color:var(--txt);font-weight:500}
+.empty{color:var(--muted);text-align:center;padding:36px 10px;border:1px dashed var(--line);border-radius:var(--radius)}
+.empty b{color:var(--txt)}
+
+.notice{
+  font-size:13px;color:var(--muted);border-left:3px solid var(--blauw);
+  padding:8px 12px;background:var(--panel);border-radius:0 8px 8px 0;margin-bottom:18px;
+}
+
+/* ── Foto's ─────────────────────────── */
+.foto-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-top:12px}
+.foto-thumb{position:relative;border:1px solid var(--line);border-radius:8px;overflow:hidden;aspect-ratio:4/3;background:var(--panel-2)}
+.foto-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.foto-thumb button{
+  position:absolute;top:4px;right:4px;width:24px;height:24px;border:none;border-radius:50%;
+  background:rgba(14,21,34,.85);color:#fff;cursor:pointer;font-size:13px;line-height:1;
+}
+.foto-thumb button:hover{background:var(--red)}
+
+/* ── Handtekening ───────────────────── */
+#sig-canvas{
+  width:100%;height:160px;background:#fff;border-radius:8px;border:1px solid var(--line);
+  touch-action:none;cursor:crosshair;display:block;
+}
+.sig-hint{font-size:12.5px;color:var(--muted);margin-top:6px}
+
+/* ── Login ──────────────────────────── */
+#login{
+  position:fixed;inset:0;z-index:200;background:var(--ink);
+  display:grid;place-items:center;padding:20px;
+}
+.login-card{
+  width:100%;max-width:380px;background:var(--panel);border:1px solid var(--line);
+  border-radius:14px;padding:32px 28px;text-align:center;
+}
+.login-card img{height:74px;width:auto;background:#fff;border-radius:12px;padding:8px 14px;margin-bottom:14px}
+.login-card h2{font-size:26px;text-transform:uppercase;margin-bottom:2px}
+.login-card .sub{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:22px}
+.login-card .field{text-align:left;margin-bottom:14px}
+.login-err{color:var(--red);font-size:13.5px;min-height:18px;margin:6px 0 10px}
+.btn-logout{margin-left:14px}
+
+/* ── Beheer ─────────────────────────── */
+.mini-form{display:grid;gap:10px;margin-bottom:14px;align-items:end}
+.mf-2{grid-template-columns:1fr 1fr auto}
+.mf-3{grid-template-columns:1.4fr 1fr 1fr auto}
+@media(max-width:760px){.mf-2,.mf-3{grid-template-columns:1fr}}
+.item-list{display:flex;flex-direction:column;gap:8px}
+.item-row{
+  display:flex;align-items:center;gap:12px;
+  background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-size:14.5px;
+}
+.item-row .sub2{color:var(--muted);font-size:13px}
+.item-row .row-del{margin-left:auto}
+
+/* ── QR-scanner ─────────────────────── */
+#scanner{position:fixed;inset:0;z-index:150;background:rgba(10,15,25,.96);display:none;place-items:center;padding:18px}
+#scanner.open{display:grid}
+.scan-box{width:100%;max-width:440px;text-align:center}
+.scan-box video{width:100%;border-radius:12px;border:2px solid var(--blauw);background:#000}
+.scan-box p{color:var(--muted);font-size:14px;margin:12px 0}
+
+/* ── Checkpoint-editor per object ───── */
+.cp-editor{grid-column:1/-1;background:var(--ink);border:1px solid var(--line);border-radius:8px;padding:14px;margin-top:4px}
+.cp-editor .mini-form{grid-template-columns:1fr auto}
+.item-row{flex-wrap:wrap}
+
+/* ── QR-printvel ────────────────────── */
+.qr-vel{display:grid;grid-template-columns:1fr 1fr;gap:10mm;font-family:'Barlow',sans-serif}
+.qr-kaart{border:2px solid #0d2456;border-radius:6px;padding:8mm;text-align:center;page-break-inside:avoid}
+.qr-kaart .b{font-family:'Barlow Condensed';font-weight:700;text-transform:uppercase;font-size:14pt;color:#0d2456}
+.qr-kaart .c{font-size:12pt;font-weight:600;margin:3mm 0}
+.qr-kaart .qr{display:flex;justify-content:center;margin:4mm 0}
+.qr-kaart .s{font-size:8pt;color:#666}
+
+/* ── Toast ──────────────────────────── */
+#toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--blauw);color:#fff;font-weight:600;padding:12px 22px;border-radius:999px;
+  opacity:0;pointer-events:none;transition:.25s;z-index:100;font-size:15px;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── Printrapport (PDF) ─────────────── */
+#print-area{display:none}
+@media print{
+  body *{visibility:hidden}
+  header,.wrap,#toast{display:none}
+  #print-area,#print-area *{visibility:visible}
+  #print-area{display:block;position:absolute;inset:0;background:#fff;color:#111;padding:0}
+  @page{margin:18mm 16mm}
+}
+.pr{font-family:'Barlow',sans-serif;color:#141414;font-size:12.5px;line-height:1.5}
+.pr .pr-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0d2456;padding-bottom:10px;margin-bottom:16px}
+.pr .pr-logo{height:52px;width:auto;display:block;margin-bottom:6px}
+.pr .pr-head h1{font-family:'Barlow Condensed';font-size:26px;text-transform:uppercase;letter-spacing:.03em;color:#0d2456}
+.pr .pr-head .sub{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#666}
+.pr .pr-num{text-align:right;font-family:'IBM Plex Mono';font-size:12px}
+.pr .pr-num .status{display:inline-block;border:2px solid #0d2456;color:#0d2456;padding:2px 10px;font-weight:600;text-transform:uppercase;font-family:'Barlow Condensed';font-size:14px;margin-top:6px;letter-spacing:.08em}
+.pr table{width:100%;border-collapse:collapse;margin-bottom:16px}
+.pr th,.pr td{border:1px solid #bbb;padding:6px 9px;text-align:left;vertical-align:top}
+.pr th{background:#efefef;font-family:'Barlow Condensed';text-transform:uppercase;font-size:12px;letter-spacing:.06em}
+.pr .kv td:first-child{width:32%;background:#f6f6f6;font-weight:600}
+.pr h2{font-family:'Barlow Condensed';font-size:15px;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #111;padding-bottom:3px;margin:18px 0 8px}
+.pr .pr-time{font-family:'IBM Plex Mono';white-space:nowrap;width:70px}
+.pr .pr-sign{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:34px}
+.pr .sig{border-top:1px solid #111;padding-top:6px;font-size:11px;color:#444}
+.pr .pr-foot{margin-top:28px;font-size:10px;color:#888;border-top:1px solid #ccc;padding-top:6px;display:flex;justify-content:space-between}
+.pr .sev-hoog{color:#c1121f;font-weight:700}
+.pr .gps{font-size:10px;color:#888;font-family:'IBM Plex Mono'}
+.pr .pr-fotos{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0 4px}
+.pr .pr-fotos img{width:100%;border:1px solid #bbb;border-radius:3px}
+.pr .sig img{height:60px;display:block;margin:4px 0}
+.pr .afw{color:#c1121f;font-weight:600}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <img class="logo-img" id="hdr-logo" src="data:image/webp;base64,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" alt="Logo">
+    <div>
+      <h1 id="hdr-naam">Oisecur</h1>
+      <small>Rapportage · powered by Oisecur</small>
+    </div>
+  </div>
+  <div class="clock mono" id="clock"></div>
+  <button class="btn btn-ghost btn-sm btn-logout" onclick="logout()">Uitloggen</button>
+</header>
+
+<div id="login">
+  <div class="login-card">
+    <img src="data:image/webp;base64,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" alt="Oisecur">
+    <h2>Oi<span style="color:#5b96ff">secur</span></h2>
+    <div class="sub">Beveiligingsrapportage</div>
+    <div class="field"><label for="l-user">Gebruikersnaam</label><input id="l-user" autocomplete="username"></div>
+    <div class="field"><label for="l-pass">Wachtwoord</label><input id="l-pass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"></div>
+    <div class="login-err" id="l-err"></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="login()">Inloggen</button>
+  </div>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <nav class="tabs" aria-label="Hoofdmenu">
+    <button class="tab active" data-view="nieuw" onclick="showView('nieuw')">Nieuw rapport</button>
+    <button class="tab" data-view="archief" onclick="showView('archief')">Archief <span class="badge" id="count">0</span></button>
+    <button class="tab" data-view="beheer" id="tab-beheer" onclick="showView('beheer')">Beheer</button>
+  </nav>
+
+  <!-- ═══════════ NIEUW RAPPORT ═══════════ -->
+  <section id="view-nieuw">
+
+    <div class="types" role="radiogroup" aria-label="Rapporttype">
+      <button class="type-card sel" data-type="dienst" onclick="setType('dienst')">
+        <span class="code">DR</span>
+        <h3>Dienstrapport</h3>
+        <p>Mutaties en bijzonderheden tijdens de dienst, met tijdstempel per regel.</p>
+      </button>
+      <button class="type-card" data-type="incident" onclick="setType('incident')">
+        <span class="code">IR</span>
+        <h3>Incidentrapport</h3>
+        <p>Vastlegging van een incident: wat, waar, wie, genomen acties en opvolging.</p>
+      </button>
+      <button class="type-card" data-type="ronde" onclick="setType('ronde')">
+        <span class="code">CR</span>
+        <h3>Ronderapport</h3>
+        <p>Controleronde met checkpoints, status per punt en geconstateerde afwijkingen.</p>
+      </button>
+    </div>
+
+    <!-- Algemene kop -->
+    <div class="card">
+      <h2>Dienstgegevens</h2>
+      <div class="grid g3">
+        <div><label for="f-mw">Beveiliger</label><select id="f-mw" onchange="pickMw()"></select></div>
+        <div><label for="f-pnr">Personeelsnr / pasnr</label><input id="f-pnr" placeholder="bijv. 1024"></div>
+        <div><label for="f-objsel">Object / locatie</label><select id="f-objsel"></select></div>
+        <div><label for="f-datum">Datum</label><input id="f-datum" type="date"></div>
+        <div><label for="f-dienst">Dienst</label><select id="f-dienst" onchange="pickDienst()"></select></div>
+        <div class="grid g2" style="gap:10px">
+          <div><label for="f-van">Van</label><input id="f-van" type="time"></div>
+          <div><label for="f-tot">Tot</label><input id="f-tot" type="time"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Dienstrapport ── -->
+    <div class="card" id="sec-dienst">
+      <h2>Mutaties</h2>
+      <div class="rows" id="mutaties"></div>
+      <div class="actions">
+        <button class="btn btn-ghost btn-sm" onclick="addMutatie()">+ Mutatie</button>
+        <button class="btn btn-ghost btn-sm" onclick="addMutatie(true)">+ Mutatie (tijd nu)</button>
+      </div>
+      <div style="margin-top:16px">
+        <label for="f-overdracht">Overdracht / bijzonderheden voor volgende dienst</label>
+        <textarea id="f-overdracht" placeholder="Sleutels compleet, portofoon opgeladen, openstaande punten…"></textarea>
+      </div>
+    </div>
+
+    <!-- ── Incidentrapport ── -->
+    <div class="card" id="sec-incident" hidden>
+      <h2>Incident</h2>
+      <div class="grid g3" style="margin-bottom:14px">
+        <div>
+          <label for="i-cat">Categorie</label>
+          <select id="i-cat">
+            <option>Diefstal / inbraak</option>
+            <option>Agressie / geweld</option>
+            <option>Overlast</option>
+            <option>Brand / brandmelding</option>
+            <option>Alarmmelding</option>
+            <option>Ongeval / letsel</option>
+            <option>Vandalisme / schade</option>
+            <option>Verdachte situatie</option>
+            <option>Onbevoegde toegang</option>
+            <option>Overig</option>
+          </select>
+        </div>
+        <div><label for="i-tijd">Tijdstip incident</label><input id="i-tijd" type="time"></div>
+        <div><label for="i-loc">Exacte locatie</label><input id="i-loc" placeholder="bijv. laadkade achterzijde"></div>
+      </div>
+      <div style="margin-bottom:14px">
+        <label>Prioriteit</label>
+        <div class="sev" id="i-prio">
+          <input type="radio" name="prio" id="p1" value="Laag" checked><label for="p1">Laag</label>
+          <input type="radio" name="prio" id="p2" value="Middel"><label for="p2">Middel</label>
+          <span class="sev s-hoog" style="display:contents">
+            <input type="radio" name="prio" id="p3" value="Hoog"><label for="p3">Hoog</label>
+          </span>
+        </div>
+      </div>
+      <div class="grid g2" style="margin-bottom:14px">
+        <div><label for="i-oms">Omschrijving (feitelijk, chronologisch)</label><textarea id="i-oms" placeholder="Wat is er waargenomen en gebeurd…"></textarea></div>
+        <div><label for="i-actie">Genomen acties</label><textarea id="i-actie" placeholder="Aangesproken, aangehouden, meldkamer geïnformeerd…"></textarea></div>
+      </div>
+      <div class="grid g2" style="margin-bottom:14px">
+        <div><label for="i-betrok">Betrokkenen / signalement</label><textarea id="i-betrok" placeholder="Namen, signalement, getuigen…"></textarea></div>
+        <div><label for="i-vervolg">Vervolgacties / opvolging</label><textarea id="i-vervolg" placeholder="Aangifte, schade melden, camera veiligstellen…"></textarea></div>
+      </div>
+      <div class="grid g3" style="margin-bottom:14px">
+        <label class="chk"><input type="checkbox" id="i-politie"><span>Politie ter plaatse</span></label>
+        <label class="chk"><input type="checkbox" id="i-hulp"><span>Overige hulpdiensten</span></label>
+        <label class="chk"><input type="checkbox" id="i-schade"><span>Schade geconstateerd</span></label>
+      </div>
+      <div>
+        <label for="i-fotos">Foto's (schade, situatie, sporen)</label>
+        <input id="i-fotos" type="file" accept="image/*" capture="environment" multiple onchange="addFotos(this)">
+        <div class="foto-grid" id="foto-grid"></div>
+      </div>
+    </div>
+
+    <!-- ── Ronderapport ── -->
+    <div class="card" id="sec-ronde" hidden>
+      <h2>Controleronde</h2>
+      <div class="grid g2" style="margin-bottom:14px">
+        <div><label for="r-start">Ronde gestart</label><input id="r-start" type="time"></div>
+        <div><label for="r-eind">Ronde afgerond</label><input id="r-eind" type="time"></div>
+      </div>
+      <div class="rows" id="checkpoints"></div>
+      <div class="actions">
+        <button class="btn btn-ghost btn-sm" onclick="addCheckpoint()">+ Checkpoint</button>
+        <button class="btn btn-ghost btn-sm" onclick="laadObjectCheckpoints()">Checkpoints van object laden</button>
+        <button class="btn btn-primary btn-sm" onclick="startScan()">&#9635; Scan QR-checkpoint</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Handtekening beveiliger</h2>
+      <canvas id="sig-canvas"></canvas>
+      <div class="sig-hint">Teken met vinger of muis. De handtekening wordt in de PDF opgenomen.</div>
+      <div class="actions"><button class="btn btn-ghost btn-sm" onclick="clearSig()">Wissen</button></div>
+    </div>
+
+    <div class="actions" style="margin-top:4px">
+      <button class="btn btn-primary" onclick="saveReport()">Rapport opslaan</button>
+      <button class="btn btn-ghost" onclick="saveReport(true)">Opslaan &amp; PDF</button>
+      <button class="btn btn-danger" onclick="resetForm()">Leegmaken</button>
+    </div>
+  </section>
+
+  <!-- ═══════════ ARCHIEF ═══════════ -->
+  <section id="view-archief" hidden>
+    <div class="notice">Rapporten worden veilig opgeslagen op de server. Als beheerder zie je alle rapporten; medewerkers zien alleen hun eigen rapporten.</div>
+    <div class="actions" style="margin-bottom:16px">
+      <button class="btn btn-ghost btn-sm" onclick="exportJSON()">Exporteer JSON</button>
+    </div>
+    <div class="report-list" id="report-list"></div>
+  </section>
+
+  <!-- ═══════════ BEHEER ═══════════ -->
+  <section id="view-beheer" hidden>
+    <div class="card">
+      <h2>Bedrijfsprofiel</h2>
+      <div class="mini-form mf-2">
+        <div><label for="b-bedrijf-naam">Bedrijfsnaam</label><input id="b-bedrijf-naam"></div>
+        <div>
+          <label for="b-logo">Eigen logo (PNG/JPG, liefst op witte achtergrond)</label>
+          <input id="b-logo" type="file" accept="image/*" onchange="uploadLogo(this)">
+        </div>
+        <div class="actions" style="margin:0">
+          <button class="btn btn-primary btn-sm" onclick="saveBedrijfNaam()">Opslaan</button>
+          <button class="btn btn-ghost btn-sm" onclick="resetLogo()">Standaardlogo</button>
+        </div>
+      </div>
+      <div class="notice" style="margin:6px 0 0">Het logo verschijnt in de kop van de app en op elke PDF-rapportage van dit bedrijf.</div>
+    </div>
+
+    <div class="card">
+      <h2>Medewerkers</h2>
+      <div class="mini-form mf-2">
+        <div><label for="b-mw-naam">Naam</label><input id="b-mw-naam" placeholder="Voor- en achternaam"></div>
+        <div><label for="b-mw-pnr">Personeelsnr / pasnr</label><input id="b-mw-pnr" placeholder="bijv. 1024"></div>
+        <div><label for="b-mw-login">Login (e-mail of gebruikersnaam)</label><input id="b-mw-login" placeholder="jan@bedrijf.nl"></div>
+        <div><label for="b-mw-pass">Wachtwoord (min. 8 tekens)</label><input id="b-mw-pass" type="text" placeholder="Geef door aan de medewerker"></div>
+        <button class="btn btn-primary btn-sm" onclick="addMw()">Account aanmaken</button>
+      </div>
+      <div class="notice" style="margin:0 0 12px">Elke medewerker logt in met een eigen account en ziet alleen zijn eigen rapporten. Alleen jij als beheerder ziet alles.</div>
+      <div class="item-list" id="list-mw"></div>
+    </div>
+
+    <div class="card">
+      <h2>Objecten</h2>
+      <div class="mini-form mf-3">
+        <div><label for="b-obj-naam">Objectnaam</label><input id="b-obj-naam" placeholder="bijv. Bedrijventerrein Noord"></div>
+        <div><label for="b-obj-adres">Adres / plaats</label><input id="b-obj-adres" placeholder="Straat, plaats"></div>
+        <div><label for="b-obj-mail">E-mail opdrachtgever</label><input id="b-obj-mail" type="email" placeholder="rapportages@klant.nl"></div>
+        <button class="btn btn-primary btn-sm" onclick="addObj()">Toevoegen</button>
+      </div>
+      <div class="item-list" id="list-obj"></div>
+    </div>
+
+    <div class="card">
+      <h2>Diensttijden</h2>
+      <div class="mini-form mf-3">
+        <div><label for="b-d-naam">Naam dienst</label><input id="b-d-naam" placeholder="bijv. Nachtdienst"></div>
+        <div><label for="b-d-van">Van</label><input id="b-d-van" type="time"></div>
+        <div><label for="b-d-tot">Tot</label><input id="b-d-tot" type="time"></div>
+        <button class="btn btn-primary btn-sm" onclick="addDienst()">Toevoegen</button>
+      </div>
+      <div class="item-list" id="list-dienst"></div>
+    </div>
+  </section>
+</div>
+
+<div id="scanner">
+  <div class="scan-box">
+    <video id="scan-video" playsinline muted></video>
+    <p>Richt de camera op de QR-code van het checkpoint.</p>
+    <button class="btn btn-ghost" onclick="stopScan()">Annuleren</button>
+  </div>
+</div>
+
+<div id="toast" role="status"></div>
+<div id="print-area"></div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+
+/* ═══ Sessie & staat ═══ */
+let token = null, rol = null, ik = null, bedrijf = null;
+let medewerkers = [], objecten = [], diensten = [], rapportLijst = [];
+let currentType = 'dienst';
+const rapportCache = {};
+const OISECUR_LOGO = document.querySelector('#login img').src;
+
+/* ═══ API-helper ═══ */
+async function api(pad, body, methode){
+  const opts = { method: methode || (body ? 'POST' : 'GET'),
+                 headers: { 'Content-Type': 'application/json' } };
+  if (token) opts.headers.Authorization = 'Bearer ' + token;
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch('/api/' + pad, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.fout || 'Er ging iets mis (' + res.status + ').');
+  return data;
+}
+
+/* ═══ GPS ═══ */
+function vraagGPS(){
+  return new Promise(res => {
+    if(!navigator.geolocation) return res(null);
+    const klaar = p => res(p ? { lat:p.coords.latitude, lng:p.coords.longitude, acc:Math.round(p.coords.accuracy) } : null);
+    navigator.geolocation.getCurrentPosition(klaar, ()=>res(null), { enableHighAccuracy:true, timeout:6000, maximumAge:30000 });
+  });
+}
+
+/* ═══ Demo-modus: knop op de hoofdpagina vult de inlog vast in ═══ */
+if(new URLSearchParams(location.search).get('demo')==='1'){
+  $('l-user').value = 'demo@oisecur.nl';
+  $('l-pass').value = 'demo12345';
+  $('l-err').textContent = 'Demo-omgeving — klik op Inloggen om rond te kijken.';
+  $('l-err').style.color = '#6ea5ff';
+}
+
+/* ═══ Login ═══ */
+async function login(){
+  const u = $('l-user').value.trim(), p = $('l-pass').value;
+  if(!u || !p){ $('l-err').textContent = 'Vul gebruikersnaam en wachtwoord in.'; return; }
+  $('l-err').textContent = '';
+  try{
+    const d = await api('auth', { actie:'login', gebruiker:u, wachtwoord:p });
+    token = d.token; rol = d.rol; bedrijf = d.bedrijf;
+    ik = { naam:d.naam, pnr:d.pnr, login:u.toLowerCase().trim() };
+    await laadStamdata();
+    await laadRapporten();
+    applyBranding();
+    $('tab-beheer').style.display = rol === 'beheerder' ? '' : 'none';
+    $('login').style.display = 'none';
+    $('app').hidden = false;
+    requestAnimationFrame(sigResize);
+  }catch(e){
+    $('l-err').textContent = e.message;
+    $('l-pass').value = ''; $('l-pass').focus();
+  }
+}
+async function logout(){
+  try{ await api('auth', { actie:'uitloggen' }); }catch(e){}
+  location.reload();
+}
+
+function applyBranding(){
+  $('hdr-logo').src = bedrijf.logo || OISECUR_LOGO;
+  $('hdr-naam').textContent = bedrijf.naam;
+  $('b-bedrijf-naam').value = bedrijf.naam;
+  document.title = bedrijf.naam + ' — Oisecur rapportage';
+}
+
+/* ═══ Stamdata laden & tonen ═══ */
+async function laadStamdata(){
+  const d = await api('stamdata');
+  bedrijf = d.bedrijf; objecten = d.objecten; diensten = d.diensten; medewerkers = d.medewerkers;
+  syncStamdata();
+}
+function syncStamdata(){
+  if(rol === 'beheerder'){
+    $('list-mw').innerHTML = medewerkers.map(m =>
+      '<div class="item-row"><b>'+esc(m.naam)+'</b><span class="sub2">'+
+      (m.pnr ? 'nr. '+esc(m.pnr)+' · ' : '')+esc(m.login)+(m.rol==='beheerder' ? ' · beheerder' : '')+'</span>'+
+      (m.rol==='beheerder' ? '' :
+        '<button class="row-del" style="margin-left:auto" title="Wachtwoord resetten" onclick="resetWachtwoord(\''+esc(m.login)+'\')">&#8635;</button>'+
+        '<button class="row-del" title="Verwijderen" onclick="delMw(\''+esc(m.login)+'\')">&#10005;</button>')+
+      '</div>').join('') || '<div class="empty">Nog geen medewerkers.</div>';
+  }
+  $('list-obj').innerHTML = objecten.map((o,i)=>
+    '<div class="item-row"><b>'+esc(o.naam)+'</b><span class="sub2">'+esc(o.adres||'')+(o.email?' · '+esc(o.email):'')+
+    ((o.checkpoints||[]).length ? ' · '+o.checkpoints.length+' checkpoints' : '')+'</span>'+
+    '<button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="toggleCpEditor('+i+')">QR-checkpoints</button>'+
+    '<button class="btn btn-ghost btn-sm" onclick="portaalLink('+i+')">Portaallink</button>'+
+    '<button class="row-del" title="Verwijderen" onclick="delObj('+i+')">&#10005;</button>'+
+    '<div class="cp-editor" id="cp-editor-'+i+'" hidden></div></div>').join('')
+    || '<div class="empty">Nog geen objecten.</div>';
+  $('list-dienst').innerHTML = diensten.map((d,i)=>
+    '<div class="item-row"><b>'+esc(d.naam)+'</b><span class="sub2 mono">'+d.van+' – '+d.tot+'</span>'+
+    '<button class="row-del" title="Verwijderen" onclick="delDienst('+i+')">&#10005;</button></div>').join('')
+    || '<div class="empty">Nog geen diensttijden.</div>';
+
+  /* Formulier-dropdowns */
+  if(rol === 'beheerder'){
+    fillSelect($('f-mw'), medewerkers.map(m=>m.naam), 'Kies beveiliger…');
+    $('f-mw').disabled = false;
+  } else {
+    $('f-mw').innerHTML = '<option value="ik" selected>'+esc(ik.naam)+'</option>';
+    $('f-mw').disabled = true;
+    $('f-pnr').value = ik.pnr || '';
+  }
+  fillSelect($('f-objsel'), objecten.map(o=>o.naam + (o.adres?' — '+o.adres:'')), 'Kies object…');
+  fillSelect($('f-dienst'), diensten.map(d=>d.naam+' ('+d.van+' – '+d.tot+')'), 'Kies dienst…');
+}
+function fillSelect(sel, items, ph){
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">'+ph+'</option>' +
+    items.map((t,i)=>'<option value="'+i+'">'+esc(t)+'</option>').join('');
+  if(prev!=='' && Number(prev) < items.length) sel.value = prev;
+}
+function pickMw(){
+  if(rol !== 'beheerder') return;
+  const m = medewerkers[$('f-mw').value];
+  if(m) $('f-pnr').value = m.pnr || '';
+}
+function pickDienst(){
+  const d = diensten[$('f-dienst').value];
+  if(d){ $('f-van').value = d.van; $('f-tot').value = d.tot; }
+}
+
+/* ═══ Beheer: bedrijfsprofiel ═══ */
+async function saveBedrijfNaam(){
+  const n = $('b-bedrijf-naam').value.trim();
+  if(!n){ toast('Vul een bedrijfsnaam in.', true); return; }
+  try{ await api('stamdata', { actie:'profiel', naam:n });
+       bedrijf.naam = n; applyBranding(); toast('Bedrijfsnaam opgeslagen.');
+  }catch(e){ toast(e.message, true); }
+}
+function uploadLogo(input){
+  const f = input.files[0];
+  if(!f) return;
+  if(!f.type.startsWith('image/')){ toast('Kies een afbeelding (PNG/JPG/WebP).', true); return; }
+  const img = new Image();
+  img.onload = async () => {
+    const max = 480, s = Math.min(1, max/Math.max(img.width, img.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.width*s); c.height = Math.round(img.height*s);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    const dataUri = c.toDataURL('image/png');
+    URL.revokeObjectURL(img.src);
+    try{ await api('stamdata', { actie:'profiel', logo:dataUri });
+         bedrijf.logo = dataUri; applyBranding(); toast('Logo bijgewerkt.');
+    }catch(e){ toast(e.message, true); }
+  };
+  img.src = URL.createObjectURL(f);
+  input.value = '';
+}
+async function resetLogo(){
+  try{ await api('stamdata', { actie:'profiel', logo:'' });
+       bedrijf.logo = ''; applyBranding(); toast('Standaardlogo hersteld.');
+  }catch(e){ toast(e.message, true); }
+}
+
+/* ═══ Beheer: medewerkers, objecten, diensten ═══ */
+async function addMw(){
+  const naam=$('b-mw-naam').value.trim(), pnr=$('b-mw-pnr').value.trim(),
+        loginNaam=$('b-mw-login').value.trim(), ww=$('b-mw-pass').value;
+  if(!naam || !loginNaam || !ww){ toast('Naam, login en wachtwoord zijn verplicht.', true); return; }
+  try{
+    await api('stamdata', { actie:'medewerker+', naam, pnr, login:loginNaam, wachtwoord:ww });
+    $('b-mw-naam').value=$('b-mw-pnr').value=$('b-mw-login').value=$('b-mw-pass').value='';
+    await laadStamdata();
+    toast('Account aangemaakt voor '+naam+'.');
+  }catch(e){ toast(e.message, true); }
+}
+async function delMw(loginNaam){
+  if(!confirm('Account van '+loginNaam+' verwijderen? De rapporten blijven bewaard.')) return;
+  try{ await api('stamdata', { actie:'medewerker-', login:loginNaam });
+       await laadStamdata(); toast('Account verwijderd.');
+  }catch(e){ toast(e.message, true); }
+}
+async function resetWachtwoord(loginNaam){
+  const ww = prompt('Nieuw wachtwoord voor '+loginNaam+' (min. 8 tekens):');
+  if(!ww) return;
+  try{ await api('stamdata', { actie:'wachtwoord', login:loginNaam, wachtwoord:ww });
+       toast('Wachtwoord aangepast. Geef het door aan de medewerker.');
+  }catch(e){ toast(e.message, true); }
+}
+async function addObj(){
+  const naam=$('b-obj-naam').value.trim(), adres=$('b-obj-adres').value.trim(), email=$('b-obj-mail').value.trim();
+  if(!naam){ toast('Vul een objectnaam in.', true); return; }
+  objecten.push({naam, adres, email});
+  try{ await api('stamdata', { actie:'objecten', objecten });
+       $('b-obj-naam').value=$('b-obj-adres').value=$('b-obj-mail').value='';
+       syncStamdata(); toast('Object toegevoegd.');
+  }catch(e){ objecten.pop(); toast(e.message, true); }
+}
+async function delObj(i){
+  const [oud] = objecten.splice(i,1);
+  try{ await api('stamdata', { actie:'objecten', objecten }); syncStamdata(); }
+  catch(e){ objecten.splice(i,0,oud); toast(e.message, true); }
+}
+async function addDienst(){
+  const naam=$('b-d-naam').value.trim(), van=$('b-d-van').value, tot=$('b-d-tot').value;
+  if(!naam||!van||!tot){ toast('Vul naam, van- en tot-tijd in.', true); return; }
+  diensten.push({naam, van, tot});
+  try{ await api('stamdata', { actie:'diensten', diensten });
+       $('b-d-naam').value=''; $('b-d-van').value=$('b-d-tot').value='';
+       syncStamdata(); toast('Dienst toegevoegd.');
+  }catch(e){ diensten.pop(); toast(e.message, true); }
+}
+async function delDienst(i){
+  const [oud] = diensten.splice(i,1);
+  try{ await api('stamdata', { actie:'diensten', diensten }); syncStamdata(); }
+  catch(e){ diensten.splice(i,0,oud); toast(e.message, true); }
+}
+
+/* ═══ QR-checkpoints per object (beheer) ═══ */
+function toggleCpEditor(i){
+  const ed = $('cp-editor-'+i);
+  if(!ed.hidden){ ed.hidden = true; return; }
+  ed.hidden = false;
+  renderCpEditor(i);
+}
+function renderCpEditor(i){
+  const cps = objecten[i].checkpoints || [];
+  $('cp-editor-'+i).innerHTML =
+    '<div class="mini-form" style="grid-template-columns:1fr auto;margin-bottom:10px">'+
+      '<div><label>Nieuw checkpoint</label><input id="cp-naam-'+i+'" placeholder="bijv. Nooduitgang hal B"></div>'+
+      '<button class="btn btn-primary btn-sm" onclick="addCp('+i+')">Toevoegen</button>'+
+    '</div>'+
+    (cps.map((c,j)=>'<div class="item-row"><b>'+esc(c.naam)+'</b><span class="sub2 mono">'+c.id+'</span>'+
+      '<button class="row-del" style="margin-left:auto" title="Verwijderen" onclick="delCp('+i+','+j+')">&#10005;</button></div>').join('')
+      || '<div class="empty" style="padding:14px">Nog geen checkpoints voor dit object.</div>')+
+    (cps.length ? '<div class="actions" style="margin-top:10px"><button class="btn btn-ghost btn-sm" onclick="printQR('+i+')">QR-bordjes afdrukken</button></div>' : '');
+}
+async function addCp(i){
+  const naam = $('cp-naam-'+i).value.trim();
+  if(!naam){ toast('Vul een checkpointnaam in.', true); return; }
+  objecten[i].checkpoints = objecten[i].checkpoints || [];
+  objecten[i].checkpoints.push({ id: Math.random().toString(36).slice(2,8).toUpperCase(), naam });
+  try{ await api('stamdata', { actie:'objecten', objecten });
+       renderCpEditor(i); $('cp-naam-'+i).focus(); toast('Checkpoint toegevoegd.');
+  }catch(e){ objecten[i].checkpoints.pop(); toast(e.message, true); }
+}
+async function delCp(i,j){
+  const [oud] = objecten[i].checkpoints.splice(j,1);
+  try{ await api('stamdata', { actie:'objecten', objecten }); renderCpEditor(i); syncStamdata(); toast('Checkpoint verwijderd.'); }
+  catch(e){ objecten[i].checkpoints.splice(j,0,oud); toast(e.message, true); }
+}
+function printQR(i){
+  if(typeof QRCode === 'undefined'){ toast('QR-generator niet geladen (geen internet?).', true); return; }
+  const o = objecten[i];
+  $('print-area').innerHTML = '<div class="qr-vel">'+
+    (o.checkpoints||[]).map(c =>
+      '<div class="qr-kaart"><div class="b">'+esc(bedrijf.naam)+'</div>'+
+      '<div class="c">'+esc(c.naam)+'</div><div class="qr" id="qr-'+c.id+'"></div>'+
+      '<div class="s">'+esc(o.naam)+' · checkpoint '+c.id+' · scannen met de Oisecur-app</div></div>').join('')+
+    '</div>';
+  (o.checkpoints||[]).forEach(c => {
+    new QRCode(document.getElementById('qr-'+c.id), {
+      text: 'oisecur:cp:'+bedrijf.id+':'+c.id, width: 140, height: 140, correctLevel: QRCode.CorrectLevel.M
+    });
+  });
+  setTimeout(()=>window.print(), 300);
+}
+
+/* ═══ Portaallink voor de opdrachtgever ═══ */
+async function portaalLink(i){
+  try{
+    const d = await api('stamdata', { actie:'portaal', objectNaam: objecten[i].naam });
+    objecten[i].portaal = d.token;
+    const url = location.origin+'/portaal.html?t='+d.token;
+    try{ await navigator.clipboard.writeText(url); toast('Portaallink gekopieerd — stuur deze naar de opdrachtgever.'); }
+    catch(e){ prompt('Portaallink voor '+objecten[i].naam+':', url); }
+  }catch(e){ toast(e.message, true); }
+}
+
+/* ═══ Klok & datum ═══ */
+function tick(){
+  const d = new Date();
+  $('clock').innerHTML = d.toLocaleDateString('nl-NL',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'}) +
+    ' &nbsp;<b>' + d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit',second:'2-digit'}) + '</b>';
+}
+setInterval(tick,1000); tick();
+function nowTime(){ return new Date().toTimeString().slice(0,5); }
+function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+$('f-datum').value = todayISO();
+
+/* ═══ Navigatie & rapporttype ═══ */
+function showView(v){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));
+  $('view-nieuw').hidden = v!=='nieuw';
+  $('view-archief').hidden = v!=='archief';
+  $('view-beheer').hidden = v!=='beheer';
+  if(v==='archief') laadRapporten();
+}
+function setType(t){
+  currentType = t;
+  document.querySelectorAll('.type-card').forEach(c=>c.classList.toggle('sel',c.dataset.type===t));
+  $('sec-dienst').hidden   = t!=='dienst';
+  $('sec-incident').hidden = t!=='incident';
+  $('sec-ronde').hidden    = t!=='ronde';
+}
+
+/* ═══ Mutaties & checkpoints ═══ */
+function addMutatie(now){
+  const div = document.createElement('div');
+  div.className = 'row-item';
+  div.innerHTML =
+    '<input type="time" class="m-tijd" value="'+(now?nowTime():'')+'">'+
+    '<input class="m-oms" placeholder="Omschrijving mutatie…">'+
+    '<button class="row-del" title="Verwijderen" onclick="this.parentElement.remove()">&#10005;</button>';
+  $('mutaties').appendChild(div);
+  if(now) vraagGPS().then(g => { if(g) div._gps = g; });
+  div.querySelector(now ? '.m-oms' : '.m-tijd').focus();
+}
+function addCheckpoint(naam, focus){
+  const div = document.createElement('div');
+  div.className = 'row-item cp';
+  div.innerHTML =
+    '<input class="c-naam" placeholder="Checkpoint (bijv. nooduitgang hal B)">'+
+    '<select class="c-status"><option value="OK">OK</option><option value="Afwijking">Afwijking</option><option value="Niet gecontroleerd" selected>Niet gecontroleerd</option></select>'+
+    '<input class="c-opm" placeholder="Opmerking (bij afwijking verplicht)">'+
+    '<button class="row-del" title="Verwijderen" onclick="this.parentElement.remove()">&#10005;</button>';
+  if(typeof naam === 'string'){ div.querySelector('.c-naam').value = naam; }
+  else { div.querySelector('.c-status').value = 'OK'; }
+  $('checkpoints').appendChild(div);
+  if(focus !== false && typeof naam !== 'string') div.querySelector('.c-naam').focus();
+  return div;
+}
+function laadObjectCheckpoints(){
+  const obj = objecten[$('f-objsel').value];
+  if(!obj){ toast('Kies eerst een object.', true); return; }
+  const cps = obj.checkpoints || [];
+  if(!cps.length){ toast('Dit object heeft nog geen checkpoints. Voeg ze toe via Beheer > Objecten > QR.', true); return; }
+  $('checkpoints').innerHTML = '';
+  cps.forEach(c => { const d = addCheckpoint(c.naam, false); d._cpId = c.id; });
+  toast(cps.length+' checkpoints geladen — scan of vink af tijdens de ronde.');
+}
+addMutatie(); addMutatie(); addMutatie();
+addCheckpoint(undefined, false); addCheckpoint(undefined, false); addCheckpoint(undefined, false);
+
+/* ═══ Foto's (incident) ═══ */
+let fotos = [];
+function addFotos(input){
+  [...input.files].forEach(f=>{
+    if(!f.type.startsWith('image/')) return;
+    if(fotos.length >= 6){ toast('Maximaal 6 foto\u2019s per incident.', true); return; }
+    const img = new Image();
+    img.onload = () => {
+      const max = 1000, s = Math.min(1, max/Math.max(img.width,img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width*s); c.height = Math.round(img.height*s);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      fotos.push(c.toDataURL('image/jpeg',0.75));
+      URL.revokeObjectURL(img.src);
+      renderFotos();
+    };
+    img.src = URL.createObjectURL(f);
+  });
+  input.value = '';
+}
+function renderFotos(){
+  $('foto-grid').innerHTML = fotos.map((f,i)=>
+    '<div class="foto-thumb"><img src="'+f+'" alt="Foto '+(i+1)+'">'+
+    '<button title="Verwijderen" onclick="fotos.splice('+i+',1);renderFotos()">&#10005;</button></div>').join('');
+}
+
+/* ═══ Handtekening ═══ */
+const sig = $('sig-canvas');
+const sigCtx = sig.getContext('2d');
+let sigDrawn = false, sigDown = false;
+function sigResize(){
+  const data = sigDrawn ? sig.toDataURL() : null;
+  const r = sig.getBoundingClientRect();
+  sig.width = r.width * 2; sig.height = r.height * 2;
+  sigCtx.scale(2,2);
+  sigCtx.lineWidth = 2.2; sigCtx.lineCap = 'round'; sigCtx.lineJoin = 'round';
+  sigCtx.strokeStyle = '#10254f';
+  if(data){ const im = new Image(); im.onload = ()=>sigCtx.drawImage(im,0,0,r.width,r.height); im.src = data; }
+}
+function sigPos(e){
+  const r = sig.getBoundingClientRect();
+  return [e.clientX - r.left, e.clientY - r.top];
+}
+sig.addEventListener('pointerdown', e => {
+  sigDown = true; sigDrawn = true;
+  sig.setPointerCapture(e.pointerId);
+  const [x,y] = sigPos(e);
+  sigCtx.beginPath(); sigCtx.moveTo(x,y); sigCtx.lineTo(x+0.1,y+0.1); sigCtx.stroke();
+});
+sig.addEventListener('pointermove', e => {
+  if(!sigDown) return;
+  const [x,y] = sigPos(e);
+  sigCtx.lineTo(x,y); sigCtx.stroke();
+});
+['pointerup','pointercancel'].forEach(ev => sig.addEventListener(ev, ()=>{ sigDown=false; sigCtx.beginPath(); }));
+function clearSig(){
+  sigCtx.setTransform(1,0,0,1,0,0);
+  sigCtx.clearRect(0,0,sig.width,sig.height);
+  sigCtx.scale(2,2); sigDrawn = false;
+}
+function getSig(){ return sigDrawn ? sig.toDataURL('image/png') : null; }
+window.addEventListener('resize', sigResize);
+
+/* ═══ QR-scanner (checkpoints afvinken met de camera) ═══ */
+let scanStream = null, scanActief = false;
+async function startScan(){
+  if(typeof jsQR === 'undefined'){ toast('QR-scanner niet geladen (geen internet?).', true); return; }
+  const obj = objecten[$('f-objsel').value];
+  if(!obj){ toast('Kies eerst een object.', true); return; }
+  try{
+    scanStream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' } });
+  }catch(e){ toast('Geen toegang tot de camera.', true); return; }
+  const video = $('scan-video');
+  video.srcObject = scanStream;
+  await video.play();
+  $('scanner').classList.add('open');
+  scanActief = true;
+  const c = document.createElement('canvas');
+  const ctx = c.getContext('2d', { willReadFrequently:true });
+  const lus = () => {
+    if(!scanActief) return;
+    if(video.readyState === video.HAVE_ENOUGH_DATA){
+      c.width = video.videoWidth; c.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+      const code = jsQR(ctx.getImageData(0,0,c.width,c.height).data, c.width, c.height);
+      if(code && code.data.startsWith('oisecur:cp:')){ verwerkScan(code.data); return; }
+    }
+    requestAnimationFrame(lus);
+  };
+  requestAnimationFrame(lus);
+}
+function stopScan(){
+  scanActief = false;
+  $('scanner').classList.remove('open');
+  if(scanStream){ scanStream.getTracks().forEach(t=>t.stop()); scanStream = null; }
+}
+async function verwerkScan(data){
+  stopScan();
+  const cpId = data.split(':')[3];
+  const obj = objecten[$('f-objsel').value];
+  const cp = (obj.checkpoints||[]).find(c => c.id === cpId);
+  if(!cp){ toast('QR-code hoort niet bij dit object.', true); return; }
+  let rij = [...document.querySelectorAll('#checkpoints .row-item')].find(r => r._cpId === cpId
+    || r.querySelector('.c-naam').value.trim() === cp.naam);
+  if(!rij){ rij = addCheckpoint(cp.naam, false); rij._cpId = cpId; }
+  rij.querySelector('.c-status').value = 'OK';
+  rij._qr = true; rij._tijd = nowTime();
+  const g = await vraagGPS();
+  if(g) rij._gps = g;
+  rij.style.borderColor = 'var(--green)';
+  toast('✓ '+cp.naam+' gescand om '+rij._tijd+(g?' (GPS vastgelegd)':''));
+}
+
+/* ═══ Rapport verzamelen, valideren, opslaan ═══ */
+function collect(){
+  let naam, pnr;
+  if(rol === 'beheerder'){
+    const m = medewerkers[$('f-mw').value];
+    naam = m ? m.naam : ''; pnr = $('f-pnr').value.trim();
+  } else {
+    naam = ik.naam; pnr = ik.pnr || $('f-pnr').value.trim();
+  }
+  const obj = objecten[$('f-objsel').value];
+  const dn = diensten[$('f-dienst').value];
+  const base = {
+    type: currentType, naam, pnr,
+    object: obj ? obj.naam : '',
+    adres: obj ? (obj.adres||'') : '',
+    email: obj ? (obj.email||'') : '',
+    dienstnaam: dn ? dn.naam : '',
+    datum: $('f-datum').value,
+    van: $('f-van').value, tot: $('f-tot').value,
+    handtekening: getSig()
+  };
+  if(currentType==='dienst'){
+    base.mutaties = [...document.querySelectorAll('#mutaties .row-item')].map(r=>({
+      tijd:r.querySelector('.m-tijd').value, oms:r.querySelector('.m-oms').value.trim(),
+      gps:r._gps || null
+    })).filter(m=>m.oms);
+    base.overdracht = $('f-overdracht').value.trim();
+  }
+  if(currentType==='incident'){
+    base.incident = {
+      cat: $('i-cat').value, tijd: $('i-tijd').value, loc: $('i-loc').value.trim(),
+      prio: document.querySelector('input[name=prio]:checked').value,
+      oms: $('i-oms').value.trim(), actie: $('i-actie').value.trim(),
+      betrok: $('i-betrok').value.trim(), vervolg: $('i-vervolg').value.trim(),
+      politie: $('i-politie').checked, hulp: $('i-hulp').checked, schade: $('i-schade').checked,
+      fotos: fotos.slice()
+    };
+  }
+  if(currentType==='ronde'){
+    base.ronde = {
+      start: $('r-start').value, eind: $('r-eind').value,
+      punten: [...document.querySelectorAll('#checkpoints .row-item')].map(r=>({
+        naam:r.querySelector('.c-naam').value.trim(),
+        status:r.querySelector('.c-status').value,
+        opm:r.querySelector('.c-opm').value.trim(),
+        qr:!!r._qr, tijd:r._tijd || '', gps:r._gps || null
+      })).filter(p=>p.naam)
+    };
+  }
+  return base;
+}
+function validate(r){
+  if(!r.naam) return 'Kies een beveiliger.';
+  if(!r.object) return 'Kies een object (of voeg er een toe via Beheer).';
+  if(r.type==='dienst' && !r.mutaties.length) return 'Voeg minimaal \u00e9\u00e9n mutatie toe.';
+  if(r.type==='incident' && !r.incident.oms) return 'De omschrijving van het incident is verplicht.';
+  if(r.type==='ronde' && !r.ronde.punten.length) return 'Voeg minimaal \u00e9\u00e9n checkpoint toe.';
+  if(r.type==='ronde'){
+    const bad = r.ronde.punten.find(p=>p.status==='Afwijking' && !p.opm);
+    if(bad) return 'Checkpoint "'+bad.naam+'": opmerking is verplicht bij een afwijking.';
+  }
+  return null;
+}
+async function saveReport(andPdf){
+  const r = collect();
+  const err = validate(r);
+  if(err){ toast(err, true); return; }
+  toast('Opslaan\u2026');
+  if(r.type === 'incident') r.gps = await vraagGPS();
+  try{
+    const d = await api('rapporten', { rapport: r });
+    r.nummer = d.nummer;
+    rapportCache[r.nummer] = r;
+    toast('Opgeslagen: '+r.nummer);
+    if(andPdf) printReport(r);
+    const vraagMail = r.email && confirm('Rapport ook mailen naar '+r.email+'?');
+    resetForm(true);
+    laadRapporten();
+    if(vraagMail) mailReport(r);
+  }catch(e){ toast(e.message, true); }
+}
+function resetForm(keepHead){
+  if(!keepHead){
+    if(rol==='beheerder') $('f-mw').value='';
+    $('f-objsel').value=''; $('f-dienst').value='';
+    if(rol==='beheerder') $('f-pnr').value='';
+    $('f-van').value=$('f-tot').value=''; $('f-datum').value=todayISO();
+  }
+  $('mutaties').innerHTML=''; addMutatie(); addMutatie(); addMutatie();
+  $('f-overdracht').value='';
+  ['i-tijd','i-loc','i-oms','i-actie','i-betrok','i-vervolg'].forEach(id=>$(id).value='');
+  $('i-cat').selectedIndex=0; $('p1').checked=true;
+  ['i-politie','i-hulp','i-schade'].forEach(id=>$(id).checked=false);
+  $('r-start').value=$('r-eind').value='';
+  $('checkpoints').innerHTML=''; addCheckpoint(undefined, false); addCheckpoint(undefined, false); addCheckpoint(undefined, false);
+  fotos = []; renderFotos(); clearSig();
+}
+
+/* ═══ Archief ═══ */
+async function laadRapporten(){
+  try{
+    const d = await api('rapporten');
+    rapportLijst = d.rapporten;
+    $('count').textContent = rapportLijst.length;
+    renderList();
+  }catch(e){ toast(e.message, true); }
+}
+function renderList(){
+  const el = $('report-list');
+  if(!rapportLijst.length){
+    el.innerHTML = '<div class="empty"><b>Nog geen rapporten.</b><br>Maak een rapport aan via het tabblad \u201cNieuw rapport\u201d.</div>';
+    return;
+  }
+  el.innerHTML = rapportLijst.map((r,i)=>{
+    const tag = {dienst:'tag-dienst',incident:'tag-incident',ronde:'tag-ronde'}[r.type];
+    const naam = {dienst:'Dienst',incident:'Incident',ronde:'Ronde'}[r.type];
+    const extra = r.type==='incident' ? r.aantal
+               : r.type==='ronde' ? r.aantal+' checkpoints'
+               : r.aantal+' mutaties';
+    return '<div class="report-row">'+
+      '<span class="tag '+tag+'">'+naam+'</span>'+
+      '<div><div class="mono" style="font-size:13px">'+r.nummer+'</div>'+
+      '<div class="meta"><b>'+esc(r.object)+'</b> \u00b7 '+fmtDate(r.datum)+' \u00b7 '+esc(r.naam)+' \u00b7 '+esc(String(extra))+'</div></div>'+
+      '<div class="actions" style="margin:0">'+
+      '<button class="btn btn-ghost btn-sm" onclick="openReport(\''+r.nummer+'\',\'pdf\')">PDF</button>'+
+      '<button class="btn btn-ghost btn-sm" onclick="openReport(\''+r.nummer+'\',\'mail\')">Mail</button>'+
+      (rol==='beheerder' ? '<button class="btn btn-danger btn-sm" onclick="delReport(\''+r.nummer+'\')">&#10005;</button>' : '')+
+      '</div></div>';
+  }).join('');
+}
+async function openReport(nummer, wat){
+  try{
+    let r = rapportCache[nummer];
+    if(!r){
+      toast('Rapport ophalen\u2026');
+      r = await api('rapporten?nummer='+encodeURIComponent(nummer));
+      rapportCache[nummer] = r;
+    }
+    if(wat==='pdf') printReport(r); else mailReport(r);
+  }catch(e){ toast(e.message, true); }
+}
+async function delReport(nummer){
+  if(!confirm('Rapport '+nummer+' definitief verwijderen?')) return;
+  try{
+    await api('rapporten', { actie:'verwijderen', nummer });
+    delete rapportCache[nummer];
+    toast('Rapport verwijderd.');
+    laadRapporten();
+  }catch(e){ toast(e.message, true); }
+}
+async function exportJSON(){
+  if(!rapportLijst.length){ toast('Geen rapporten om te exporteren.', true); return; }
+  toast('Export voorbereiden\u2026');
+  try{
+    const alles = [];
+    for(const s of rapportLijst){
+      alles.push(rapportCache[s.nummer] || await api('rapporten?nummer='+encodeURIComponent(s.nummer)));
+    }
+    const blob = new Blob([JSON.stringify(alles,null,2)],{type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = bedrijf.id.toLowerCase()+'-rapporten-'+todayISO()+'.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }catch(e){ toast(e.message, true); }
+}
+
+/* ═══ Mailen ═══ */
+async function mailReport(r){
+  const to = r.email || prompt('E-mailadres opdrachtgever:');
+  if(!to) return;
+  toast('Versturen\u2026');
+  try{
+    await api('verstuur', {
+      to, onderwerp: bedrijf.naam+' \u2014 '+r.nummer+' ('+fmtDate(r.datum)+')',
+      html: buildPrintHTML(r), bedrijf: bedrijf.naam
+    });
+    toast('Rapport verstuurd naar '+to);
+  }catch(e){ toast(e.message, true); }
+}
+
+/* ═══ PDF-opbouw ═══ */
+function buildPrintHTML(r){
+  const titel = {dienst:'Dienstrapport',incident:'Incidentrapport',ronde:'Ronderapport'}[r.type];
+  let body = '';
+  body += '<table class="kv">'+
+    kv('Beveiliger', esc(r.naam) + (r.pnr?' &nbsp;(nr. '+esc(r.pnr)+')':''))+
+    kv('Object / locatie', esc(r.object) + (r.adres?' \u2014 '+esc(r.adres):''))+
+    kv('Datum', fmtDate(r.datum))+
+    kv('Dienst', (r.dienstnaam?esc(r.dienstnaam)+' \u00b7 ':'')+(r.van||'\u2014')+' \u2013 '+(r.tot||'\u2014'))+
+    '</table>';
+  if(r.type==='dienst'){
+    body += '<h2>Mutaties</h2><table><tr><th class="pr-time">Tijd</th><th>Omschrijving</th></tr>'+
+      r.mutaties.map(m=>'<tr><td class="pr-time">'+(m.tijd||'\u2014')+'</td><td>'+esc(m.oms)+(m.gps?'<div class="gps">GPS '+m.gps.lat.toFixed(5)+', '+m.gps.lng.toFixed(5)+'</div>':'')+'</td></tr>').join('')+'</table>';
+    if(r.overdracht) body += '<h2>Overdracht</h2><p>'+esc(r.overdracht).replaceAll('\n','<br>')+'</p>';
+  }
+  if(r.type==='incident'){
+    const i=r.incident;
+    body += '<h2>Incidentgegevens</h2><table class="kv">'+
+      kv('Categorie', esc(i.cat))+
+      kv('Prioriteit', i.prio==='Hoog'?'<span class="sev-hoog">HOOG</span>':esc(i.prio))+
+      kv('Tijdstip', i.tijd||'\u2014')+
+      kv('Exacte locatie', esc(i.loc)||'\u2014')+
+      (r.gps?kv('GPS-locatie','<span class="gps" style="font-size:12px">'+r.gps.lat.toFixed(5)+', '+r.gps.lng.toFixed(5)+' (\u00b1'+r.gps.acc+' m)</span>'):'')+
+      kv('Politie ter plaatse', i.politie?'Ja':'Nee')+
+      kv('Overige hulpdiensten', i.hulp?'Ja':'Nee')+
+      kv('Schade geconstateerd', i.schade?'Ja':'Nee')+
+      '</table>';
+    body += sect('Omschrijving', i.oms) + sect('Genomen acties', i.actie) +
+            sect('Betrokkenen / signalement', i.betrok) + sect('Vervolgacties', i.vervolg);
+    if(i.fotos && i.fotos.length){
+      body += '<h2>Foto\u2019s ('+i.fotos.length+')</h2><div class="pr-fotos">'+
+        i.fotos.map(f=>'<img src="'+f+'" alt="Incidentfoto">').join('')+'</div>';
+    }
+  }
+  if(r.type==='ronde'){
+    body += '<h2>Controleronde</h2><table class="kv">'+
+      kv('Gestart', r.ronde.start||'\u2014')+ kv('Afgerond', r.ronde.eind||'\u2014')+'</table>';
+    body += '<table><tr><th>Checkpoint</th><th style="width:120px">Status</th><th>Opmerking</th></tr>'+
+      r.ronde.punten.map(p=>'<tr><td>'+esc(p.naam)+(p.gps?'<div class="gps">GPS '+p.gps.lat.toFixed(5)+', '+p.gps.lng.toFixed(5)+'</div>':'')+'</td><td'+(p.status==='Afwijking'?' class="afw"':'')+'>'+p.status+(p.qr?'<div class="gps">QR gescand '+(p.tijd||'')+'</div>':'')+'</td><td>'+(esc(p.opm)||'\u2014')+'</td></tr>').join('')+'</table>';
+  }
+  return '<div class="pr">'+
+      '<div class="pr-head">'+
+        '<div><img class="pr-logo" src="'+(bedrijf.logo||OISECUR_LOGO)+'" alt="Logo"><h1>'+esc(bedrijf.naam)+' \u2014 '+titel+'</h1><div class="sub">Beveiligingsrapportage</div></div>'+
+        '<div class="pr-num">'+r.nummer+'<br>'+fmtDate(r.datum)+'<br><span class="status">'+(r.type==='incident'?'Incident':'Definitief')+'</span></div>'+
+      '</div>'+
+      body+
+      '<div class="pr-sign"><div class="sig">Handtekening beveiliger<br>'+(r.handtekening?'<img src="'+r.handtekening+'" alt="Handtekening">':'<br><br>')+esc(r.naam)+'</div>'+
+      '<div class="sig">Handtekening leidinggevende / opdrachtgever<br><br><br>&nbsp;</div></div>'+
+      '<div class="pr-foot"><span>Gegenereerd met Oisecur</span><span>'+new Date().toLocaleString('nl-NL')+'</span></div>'+
+    '</div>';
+}
+function printReport(r){
+  $('print-area').innerHTML = buildPrintHTML(r);
+  const imgs = [...$('print-area').querySelectorAll('img')];
+  Promise.all(imgs.map(im => im.complete ? 1 : new Promise(res => { im.onload = im.onerror = res; })))
+    .then(() => window.print());
+}
+function kv(k,v){ return '<tr><td>'+k+'</td><td>'+(v||'\u2014')+'</td></tr>'; }
+function sect(t,v){ return v ? '<h2>'+t+'</h2><p>'+esc(v).replaceAll('\n','<br>')+'</p>' : ''; }
+
+/* ═══ Helpers ═══ */
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtDate(iso){ if(!iso) return '\u2014'; const [y,m,d]=iso.split('-'); return d+'-'+m+'-'+y; }
+function toast(msg,isErr){
+  const t=$('toast'); t.textContent=msg;
+  t.style.background = isErr ? 'var(--red)' : 'var(--blauw)';
+  t.style.color = '#fff';
+  t.classList.add('show');
+  clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),3200);
+}
+</script>
+</body>
+</html>
