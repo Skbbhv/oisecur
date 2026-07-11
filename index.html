@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oisecur — Rapportagesoftware voor de beveiliging</title>
+<meta name="description" content="Dienstrapporten, incidentrapporten en ronderapporten op je telefoon. Met foto's, handtekening en je eigen logo als PDF bij de opdrachtgever. Vanaf €19 per maand.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0e1522;
+  --panel:#161f31;
+  --panel-2:#1d2940;
+  --line:#2b3a57;
+  --paper:#f7f8fa;
+  --blauw:#1e6ff5;
+  --blauw-licht:#6ea5ff;
+  --navy:#0d2456;
+  --red:#e5484d;
+  --green:#2fbf71;
+  --txt:#e8ecf3;
+  --muted:#93a0b5;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--ink);color:var(--txt);font-family:'Barlow',system-ui,sans-serif;line-height:1.55}
+h1,h2,h3{font-family:'Barlow Condensed',sans-serif;letter-spacing:.02em;line-height:1.08}
+.mono{font-family:'IBM Plex Mono',monospace}
+a{color:inherit}
+img{max-width:100%}
+.container{max-width:1120px;margin:0 auto;padding:0 22px}
+
+/* ── Knoppen ── */
+.btn{
+  display:inline-flex;align-items:center;gap:8px;border:none;cursor:pointer;text-decoration:none;
+  border-radius:9px;padding:13px 26px;
+  font-family:'Barlow Condensed';font-size:18px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
+}
+.btn-primary{background:var(--blauw);color:#fff}
+.btn-primary:hover{background:#3d84ff}
+.btn-ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
+.btn-ghost:hover{border-color:var(--blauw);color:var(--blauw-licht)}
+.btn-lg{padding:16px 34px;font-size:20px}
+
+/* ── Navigatie ── */
+nav{
+  position:sticky;top:0;z-index:50;
+  background:rgba(14,21,34,.92);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);
+}
+.nav-in{display:flex;align-items:center;gap:26px;padding:14px 22px;max-width:1120px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.brand img{height:40px;width:auto;background:#fff;border-radius:8px;padding:3px 7px}
+.brand b{font-family:'Barlow Condensed';font-size:23px;font-weight:700;text-transform:uppercase}
+.brand b span{color:var(--blauw-licht)}
+.nav-links{display:flex;gap:22px;margin-left:auto;align-items:center}
+.nav-links a{text-decoration:none;color:var(--muted);font-size:15px;font-weight:500}
+.nav-links a:hover{color:var(--txt)}
+.nav-links .btn{padding:9px 18px;font-size:16px}
+@media(max-width:760px){.nav-links a:not(.btn){display:none}}
+
+/* ── Hero ── */
+.hero{padding:72px 0 80px;position:relative;overflow:hidden}
+.hero::before{
+  content:"";position:absolute;inset:-40% -20% auto auto;width:70%;height:120%;
+  background:radial-gradient(closest-side,#1e6ff522,transparent 70%);pointer-events:none;
+}
+.hero-in{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}
+@media(max-width:900px){.hero-in{grid-template-columns:1fr}}
+.eyebrow{
+  display:inline-block;font-family:'IBM Plex Mono';font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--blauw-licht);border:1px solid #1e6ff555;border-radius:999px;padding:6px 14px;margin-bottom:20px;
+}
+.hero h1{font-size:clamp(42px,6vw,66px);font-weight:700;text-transform:uppercase;margin-bottom:18px}
+.hero h1 em{font-style:normal;color:var(--blauw-licht)}
+.hero p.lead{font-size:19px;color:var(--muted);max-width:52ch;margin-bottom:30px}
+.hero .cta{display:flex;gap:14px;flex-wrap:wrap}
+.hero .sub-cta{margin-top:14px;font-size:14px;color:var(--muted)}
+
+/* ── Demo-rapport (blikvanger) ── */
+.demo{
+  background:var(--paper);color:#16181c;border-radius:14px;
+  box-shadow:0 30px 60px -20px rgba(0,0,0,.55), 0 0 0 1px #ffffff14;
+  padding:22px 24px;max-width:460px;justify-self:end;width:100%;
+  transform:rotate(1.2deg);
+}
+@media(max-width:900px){.demo{justify-self:center;transform:none}}
+.demo-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid var(--navy);padding-bottom:10px;margin-bottom:12px}
+.demo-head h3{font-size:19px;text-transform:uppercase;color:var(--navy)}
+.demo-head .dn{font-family:'IBM Plex Mono';font-size:11px;color:#555;text-align:right}
+.demo-head .st{display:inline-block;border:2px solid var(--navy);color:var(--navy);font-family:'Barlow Condensed';font-weight:600;text-transform:uppercase;font-size:11.5px;padding:1px 8px;margin-top:5px;letter-spacing:.08em}
+.demo table{width:100%;border-collapse:collapse;font-size:13px}
+.demo td{padding:7px 6px;border-bottom:1px solid #e2e5ea;vertical-align:top}
+.demo td.t{font-family:'IBM Plex Mono';white-space:nowrap;width:58px;color:var(--navy);font-weight:500}
+.demo tr{opacity:0;transform:translateY(6px);animation:rowIn .5s forwards}
+.demo tr:nth-child(1){animation-delay:.3s}
+.demo tr:nth-child(2){animation-delay:1.1s}
+.demo tr:nth-child(3){animation-delay:1.9s}
+.demo tr:nth-child(4){animation-delay:2.7s}
+.demo tr:nth-child(5){animation-delay:3.5s}
+@keyframes rowIn{to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.demo tr{opacity:1;transform:none;animation:none}}
+.demo .foot{display:flex;justify-content:space-between;margin-top:12px;font-size:10.5px;color:#8a94a3}
+.demo .inc{color:#c1121f;font-weight:600}
+
+/* ── Secties ── */
+section{padding:76px 0}
+.sec-head{max-width:640px;margin-bottom:44px}
+.sec-head .eyebrow{margin-bottom:14px}
+.sec-head h2{font-size:clamp(30px,4vw,42px);text-transform:uppercase;margin-bottom:12px}
+.sec-head p{color:var(--muted);font-size:17px}
+
+/* ── Functies ── */
+.feat{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:900px){.feat{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.feat{grid-template-columns:1fr}}
+.feat article{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px}
+.feat article:hover{border-color:#1e6ff566}
+.feat .ic{
+  width:40px;height:40px;border-radius:9px;background:#1e6ff51c;border:1px solid #1e6ff544;
+  display:grid;place-items:center;margin-bottom:14px;color:var(--blauw-licht);font-size:19px;
+}
+.feat h3{font-size:20px;text-transform:uppercase;margin-bottom:7px}
+.feat p{font-size:14.5px;color:var(--muted)}
+
+/* ── Zo werkt het ── */
+#werkwijze{background:var(--panel);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:760px){.steps{grid-template-columns:1fr}}
+.step{background:var(--ink);border:1px solid var(--line);border-radius:12px;padding:24px}
+.step .num{font-family:'IBM Plex Mono';font-size:13px;color:var(--blauw-licht);letter-spacing:.12em;margin-bottom:10px}
+.step h3{font-size:21px;text-transform:uppercase;margin-bottom:8px}
+.step p{font-size:14.5px;color:var(--muted)}
+
+/* ── Prijzen ── */
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:stretch}
+@media(max-width:900px){.plans{grid-template-columns:1fr;max-width:440px;margin:0 auto}}
+.plan{
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:28px 26px;
+  display:flex;flex-direction:column;position:relative;
+}
+.plan.pop{border-color:var(--blauw);box-shadow:0 0 0 1px var(--blauw), 0 24px 50px -24px #1e6ff566}
+.plan .pop-tag{
+  position:absolute;top:-13px;left:50%;transform:translateX(-50%);
+  background:var(--blauw);color:#fff;font-family:'Barlow Condensed';font-weight:600;text-transform:uppercase;
+  font-size:13.5px;letter-spacing:.08em;border-radius:999px;padding:4px 16px;white-space:nowrap;
+}
+.plan h3{font-size:23px;text-transform:uppercase;margin-bottom:4px}
+.plan .for{font-size:13.5px;color:var(--muted);margin-bottom:18px;min-height:2.6em}
+.plan .price{font-family:'Barlow Condensed';font-size:48px;font-weight:700;line-height:1}
+.plan .price small{font-size:16px;font-weight:500;color:var(--muted);font-family:'Barlow'}
+.plan .jaar{font-size:13px;color:var(--blauw-licht);margin:6px 0 20px}
+.plan ul{list-style:none;margin-bottom:24px;display:grid;gap:9px}
+.plan li{font-size:14.5px;color:var(--txt);padding-left:24px;position:relative}
+.plan li::before{content:"✓";position:absolute;left:0;color:var(--green);font-weight:600}
+.plan .btn{margin-top:auto;justify-content:center}
+.prijs-note{color:var(--muted);font-size:13px;margin-top:18px;text-align:center}
+
+/* ── FAQ ── */
+.faq{max-width:720px}
+.faq details{border:1px solid var(--line);border-radius:10px;background:var(--panel);margin-bottom:10px}
+.faq summary{cursor:pointer;padding:16px 18px;font-family:'Barlow Condensed';font-size:19px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;list-style:none;display:flex;justify-content:space-between;align-items:center}
+.faq summary::after{content:"+";color:var(--blauw-licht);font-size:22px}
+.faq details[open] summary::after{content:"–"}
+.faq details p{padding:0 18px 16px;color:var(--muted);font-size:15px}
+
+/* ── Slot-CTA ── */
+#slot{background:linear-gradient(160deg,var(--navy),#0e1522 70%);border-top:1px solid var(--line);text-align:center}
+#slot h2{font-size:clamp(30px,4.5vw,46px);text-transform:uppercase;margin-bottom:14px}
+#slot p{color:var(--muted);font-size:17px;max-width:52ch;margin:0 auto 28px}
+
+/* ── Footer ── */
+footer{border-top:1px solid var(--line);padding:28px 0;font-size:13.5px;color:var(--muted)}
+.foot-in{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+footer a{color:var(--muted)}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-in">
+    <a class="brand" href="#top">
+      <img src="data:image/webp;base64,UklGRmAkAABXRUJQVlA4IFQkAACwrQCdASowAnUBPmEwlUekIychI5J5kOAMCWVu4XJ+VRm1HZ+t/4PZeea89/if2o/KL5/ri/g/xl+WPRcHC9mPhD+p/kfyi+XP+f/5vsy/Tf/i9wP9QP12/zfY//t//d/AD4D/zv/QfuD7rX+Z/7v+Q94X99/1H7Gf6T5Av6l/l///653sgfub7Bf7Sf//11/3U+EX+x/8P9z//t8jv7R///2AP/v6gH//6w/r9/b/7D4lf2n+6/lv4kfrH7v+Yugb/H/tP+m/sv7q+xn+c8IfjnqC/kH8s/xHow/Q9rVsf+h/2PqBe0n0L/YfmH/k/Rt/0PQj64/5/3AP6B/av+L5X3gteW+wD/Qf7d+zPuy/zn/t/y/n6/Ov9D/7v9P8Bn87/sn/T/xHaZ9H0bHuoZcxvovdQy5jfRe6hlzG+i91DLmN9F7qGXMb6L3UMuY30XuoZcxvovdQy5jfRe6hlzG+i91DLmM1CvYJeayo9fn7kyI42lXM8LP6Ydy5jfRe6hlzG+Xl80I1ej3C6dU9J1ITktv+JaOqG5cxvovdQy5jfRdVJFD1lq9NOfGyQDl6czvnSrKFYBBRxhP1GAljG+i91DLmN9F7qGVMI0qSZUiAaneKVP4JMMaJdl5aHUrwfo/vRu2+4jsyu2VBZ/TDuXMb6L3UA55LHYQdMZB8i6D7KjTs01/99rOWKSs22o0KRsUBaHqTYLpUNy5jfRe6hfeW+QAYLUE1m/N4Q6/JPmrC8ERKv4iaK2Oth/NfTALP6Ydy5jfRe6FaalNZCg80sKSUZlzmI05DJefgJlJ3MSJvxGWvfPz+AU7vk/cYR71+mHcuY30XuoZckUQ7T2BTq+w9qpuA0zfsjbfBkCJA0sCjnsis6z3doVaqiIPolMKv7ZlQWf0w7lzG+XIX8r7v/pVtI0YUiiS+Byx8GooDEjeXIiEgU+U1nYGt2Hp/uvoEoePORZ0/sb6L3UMuY30Xun6UqqzRTw/KlANRj7jg+GV9Zt+VSDOGXVulc6M9XbMqCz+mHcuY30XzrIO0LdGFGFyhxfv80j1uEcOhzWqeaSjfRe6hlzG+bx82UmKfGo8UojPwoh1gWrs1gAgbq2GLANmD9xVu2peS1plC5QNP35wHyrHQx/Q1Bk0Zb1jpUAM1I9UGbyvOkKFN++OpZ2GuFtaS6ei2jvOhgbLFdjzF1kRm2BWIFVt7wlxgcP1SihI54Q/dBVO66599K5zP9ZBdcXkp+YiUFUi2qC3TVIWBSUpXzTY2uobgVJRQS4f7fzDxEkyyYVgVziVivo7p1X9WaJChW1NpHRiVhJiidnnQmuR+JNd5fACLmsmTrfLgWMvmMFTzhg8Lu5Cu+266Jtn7pVhuVD9X6kqFP/PmZTHdE9J77qslIEL874wu5eL16XBlK8bl2lb+R6RvhP8mRvO9W9FXn5fiSSaedZO0Y88hE4PIGPwhlKBLHo1LWfa8RBfkRfsBOjVG/TqXxhq8MX/UxrKjEcOeJC2Nd8HcvyIEkA5KEtDDkFLBehlzP0EXm7BSrp14cI9Yg1tlHaFoY7PvTy08MIQ6FPIGSiMAF88R+al7NacnyH8xD0iVrQlosjSuMz6nAT84zQYtsuAIZcxvGvng5t2qriqmkkdS6yCDIryNdC5bpOVYZR7IDJEG+HvbERlf5UtKf7r+b7x1iiIlH8HCzGSJKihSLCZORVSN+wgOWQNB+tT/lHj5LVq8irlhYcGm+3RtT0ihKCEXOFmsYr7+Ll/gCzb869HIWA/S5xph3LmPpFKNi8cplqFQr+apANRe6hlzG+i91DLmN9F7qGXMb6L3UMuY30XuoZcxvovdQy5jfRe6hlzG+kizKgs/ph3LmN9F7OAA/vsIoAAAAAAAAAAxDToQDAarL3YXIahWzqCfB8GeB1UIvPzcz6V8B8JyzHCyT4PxkXKdHg8ow5hAF/crfFv2XlIZ391Adnp8ryADjMj/Rb7GEghjE4zPpyqKwI/GXWueGzX5tIdisGq6e/DABl0zK3ax+dDqEzdr4wiQgn58RBwtvjH6Eqqx215ffF8aH4e1tzmvwOvjF6Nr4KdPbkt09j/1UkhPmPutY8UO1fbBs7YU7abwKPwCfAAIldiakxapYV1e6fQf6KMPqrDYBhUpBGPpgiL6R/8+DMN8hmyV0f17Xvb8jdApvxND+tHnl+Xs11kIm4Esfbrsz9UK0/u6Is85HF2Wb4XUQ8sfv9hBP75nwvaAbt4c1JmJO/TX2woIzICkz2jkMXplfgGXhihqvYrQkfPI6+cu83EzvbMykNs87x/t0VqDrocNnpu5F6GtM24aI5FrT8r/2xzRK1/WCtOiVnxiFNdeBCKf8S8PUETqe0q/JizveFYiAEHnJnVQZFIY8MDnyrvRBLDvEFenBZBJruYCpQ3y8zTOdFu7E1Wt95XHt1AY6Aq0QxIhtZKe0JcbRY0voLcpDc4KlNPCp3k0/e5/KUju0KlpHTKp7UQnLsnCUccqd0TSCsW3yHdrechXWadeuUK7So+Wd/e2HyURwZNW334tB09mcEAnywUvj0OyebUEplslwbb+UovyhE2CK1NWCG5I4vvYgH8GABUtnhaGVJdGMZMwOdBz2w4EJSese3Q9KrldRkNxAkHm8JSRXalKLHZJ3+LAHurcQWaB0XTU03PQTBpuSxadiL7Xj7w9ysfo9yj9GVoAwoEaFEsgKhIZyrsuXTmutI7Qkva2nqsMFUQc4nd0NPOPNSfIglDWfeV8qHYJ/VtGbniUgAKTrUhpwgS0QYgiVFQzCyW6GeeqaOHxipiVpF7svP4Yd8fJEqINe7tq8uUqj9zimiEFGKG7HsSGUHQzM3tLxSZSH5oxzuHwBOvhl8KJz1eFDpRvecxlJBM+kAbhtD6+gwbL8Mj728sGFlNY2D5ACm2UmRkWXcyeLCkAuAT1uOHOLB4OsgLF5mWpCFgVca7rUDaAk7gq9HRv0MXDOgMUTWgjToYPV8Orxjx/g6zd7oAVRQ7SlrOYBgmtzFaGwav9zBgarOJnUG/vm63Nr2cgoLdN2oMnhG9hJhyb+hmoTF8glyxh+i1uDFIq0rnGIUvL2SZNqjtEsTR/rJ8h4JG3b/f0p0f74sd2EbUD4s9TzN3Sws2qjeRg8nl7je40W8dJckvF0y2j78LfrLOsvxN2ZZlKOvo61oMREGnsuSX11atwhH4UZjDE+eZCj9gYy4RdN+MweMdPJeHW9WtkOzqZ5qKHshNnJXCWxpWZ7Jr2zP8zZIDXaTUAQiJ1uOkno5MZjJ9lqRldsaeqjmmD6vZMaCoGyaqevVebFFDW67HaOVQZiUrCOEOTFQy8EilabmfblKgz0hRs6AMdAjj/hH9v+L4lgd0CJHpvG6PBto7blg+VlcXJPuWd8krISiXcCXb0xYGkrUIdPvC3NFV7fNWmAccy/bT3Ddzr6izEZPj4q0uyQ2NBkP2Hdzu4VF0Lyan2W16v4MqOTRNH4dcV9T/ERI3rYkpvId1AmEZkhUvuWiw3kQSvkzvEeZk3QFgrfOkQ3fOSxvKzGz8NXX7znjp/ClOCTI49pdADmlx1W+fqlIQoS6tkvlW+XaPr/ig7G6uVoirewifTZ5Vh4SzU2liEGoWw6+uLwD/8X58MQJC0NVJiiYDh9U43rbBfoAmCtqkvUtA/JAAT1Ld1B6WRQJ3apd+40txg08/ksJ8b9uLkto7nNzfCq6QUTveLpiShoKQ0PsNFoM1/hrnHIDRihOsYw8U86iNWekY90nscQEVwRl67S29mEzcnfLpch8WUcmOXjIGrQNIPt6sUU/fQ4bUB23QACIIZru9nbyUTPnG70TyLrwXkp4ArT4AFiXH/2B2E5Y7AuJ2ow7F0dL6vXx+FXGZvgaz3NHbfrINvO4VhnkGKm+QrJ6uJIoHMo4fSGgRWCqKMH1p5VlzUDZF3LfSQMr1BdJysi5q0VkC8RLTX+Z/BTi17DwAgUFbyfasefWE0XrlkqFWSlTlLecl6sl33LQXeEuluiNNIDTZozecWeGy4p1aJ19MQeOkdq3QOu2CyfTRpkt1qwpu95tvgY0E1rmacYm8zeT/aw37yexGBkhCePlgPL495DWbWOfiSCo/DNoztLOMZrhdFipjc+jbuGWKCDIiFcaAIMW4PjMmzLS2ZcWBxyhQL7UzyOIpk3ys0qT4ORSMsm9XkfKFZFfokrLkyAAJPQbpWYY5BHZd58lJ6BlVKi8JEwh5AyAGKQax05edvjkmcCAxo5P5oZwvCx7BXFaxwPLBVv7dEILtMHLQm5OobRdg9Qxp122NktcD6N724b8YSxod+ZsnD/OKYJ43GSZv1W1/FYF/Whl+jvcnO7tvsqBbc53oYwTGvOptehmwvD0S20HnZrfxJYj7yTdwgWQlRzi9B801+fBG2/ds9/k5kCc5q5KMLx3iJp70cNXwNOu53B0t16SjLWYgu5lIusX7OzOkv1qAIMlY2oMhjX4Ht/3Ze7RAYk1Sn2PFODAczy9lOET07B5bgO0tjMivjyJyToi9/bzvXp9A8eVDJtTc5rKr7FvJAdz865+O5LtmbqhFc6jm2pI0IGt6XZjasg+sHByoSVkuzUcjC38HzRYAEfF149FA+hdbEntyQuMw1BzJnrIgzl+9BVhcIiROM9wUmduJU+g17HWKosBZifO+CJCUNS6uTSDtYaHMOFrUyQsBo08phlRrF4OlQCEX/KhB6e8JJIY26wsomOVvRGBLQ0T5euCKOJjE/37Zl9TJGeiqFhva0yOeI4BG/RxQSdKGD3cEByJzYYut8FxhB6KaQdePpGSnZd+HYUkQlWvQNBbNWM9CngWDR2VCLLVrRosr8XPf53GJbtAhR85RFfA54Aa65LcRtBEQdpYGssSHe0W10WN86YttU8bf/uiq52nJBErydLuhadfBX/JKW8GOj0qbqxxH/HlQWwS38oouHMn2dnc0ussT8bb64O+x0KxJf3JXOoAYOFa/oVXP0Rv1G+TsnUr7BPGv5yfRzB/mrZku+sEXb2HNcTLxYAHrFzAcigP1rJq1HN3zAnrQVzUh6SeojZFfT7SOPlKdvBatEBelkDbt0SqcQ5rqA51djtoRFXOZe1gm17oCrbPcLdgA1F78XTV15nfNGbwX128cZ8QZGqfR93a6Gfzz509I29SwuUcc9UjKViQVREU/wjBiIVj95mK3pVQO6mqRYCIJN6Z8CI2B5fLom5co9VDS8Q31KLo6E/0lNFGS4ey4ZmKvgWtdCIN2Y/0l5tw7Sv0wmev1VUZF7xTXjmyjh611TCjzIA8ctl16Huz+g7Bi0MXAv+fE5NYlRdSuUluGttVzFbBbx0NXhinI9opkslMhSQ6zw/n+z4W4+7YIC6cmk+8ENeNoLMUR/V08lyqlCkH5A0fOFvySOJN3nmQblu8F4dItM1onvyba3ed5Cbz5OUav5U86Gg37jCQ4v48hlSwknJhVjxNeg4GX8elmci4DNfMZLRzpIL9CsUQTcNyHCqj0aK7uP3yjJ0Hlza/Sos9Ndd97I0rtUiJWVdZarvQ2+y7/U/IHQLv6ufjXkj2QAAQrfH0CWisMw+fIK8QwiAzK6DkHTGAJ1ZuMNwmIMUj1EhM1sQ+MJ7hCr/phbn+IF2oK982FpsilZ3Xax9WyxORdfLhgANxd8EmVi+3pmIMyvbYwhob7rn4FftHclB46eB1P4RqjauNWI84+QOkopGt5Rf4PKSdZ3fVCN0iLlEW7pi2oweZiFTU+mn6xP7S49LIYnI2N91Ke+ke8f49cZzY7oPJwcre1aVLcl4CrngVlyAre876b1LBlktwZSq/MCaZYxayRZa4WestMDPQrnEGLWGVgV3Q14/XACdZ8lOXmQePNNFugoI1UGMNvYVFXKhUeIc1K9aKBPnF7JZqjr3xu8Z8JMt6s02Jna39gr5jQqrslS+5leVVnbyEbELtsiK9Rqw9j2W2Gc5KN/oAAApb29dQVKU2GHLlJqKAoKlF+NW5UodzrzUVkxgOw3buinvMdk0gQPqPNSPYYMp/5gQKNYGYC5yJnLh1L+rHZ0tGoHPdGPKmOOuGaO2jZWe5xBzPfcritGS2JN2kKD0zCU+TKmmhe/MgYU53TMFoYlRsgXsJXvePJU6P3fxMkK2YawzcAplniRUcaMSxOcShiAp3AdC308rQT6UVV55dTU6EqI6F6IziN5AJp1PPUH41FuTPB8giuGH55fwxk4AAAGKxpNedrgkYu1xHoB+dsyjPMUWlGqUvRx1Nsf4TsnJnLc/AsYHBJ2G1seEnfNByIPPejU1VtXYlENvF1fX+yt89+5YohyPzIK8frn2y4f93cofgUx1/v8pQlRwpZPDOs+s9Tbj7EduRAyh7RkvQ+Ev8xgScbERsp5oTu0bcqw6nUHLIvONTMT1+DV8Pnmy+DYG295uXQDbztvLSd/vQfu3YalOEVlgwKJ67t6rZoYTgMyWxcvkV/f0iyl8FcYxPuXDzxpkvXvRp/M8dOmT7u162Lpw0r80c0IYiRYsGIaY/PubkCKe2X0Y/hVIjpH0u36fOqVU3cX5TXw0QIudYzijzWztaCdg9rwUrGXo3ak+X4q36XDsZvRBVEvEpqs6FcMPBh+kdjmoPw5J+tZNLDOmlo12fpyS59roHQpSTf3JoS5Hi6WGBeQAqfH+TorXUzoL2t4TBS9xH8pSyCvcs5xefx3JDOT01U/l1JoxLa2dZ9Y+MnsI251xbhBG7C8tStOucZNYIgBeXVmn5DSOOfXQaFkVB9ojjQgXB5XOc+005iijxVjTnqI+A2j10qH14eKhEwevQm4pXQ7AP/TK8rjWcpqP4F+iC7ELyhnCQgiHMgQeaWXw/oZrCQPcp/4LwlyNlgQc28GnkoTX1vtSpnjIrUkRYWmHBjeBaRspwypI1kGsOYBte4d8t/re6yVdrNGe0cZdb0bV+bIZBLee/E4Tp60mwn3nU9UZ1mrUr5zsjy0Fh6GsPFXqtNxQ+ZShA0IsEDVmRamaPriRNlxLs/U3VYJCBgGsQDazlpSJn0zshQseub0Ld5QCj0Fd9V0VY9Dr5kA4ZezIWEHgTHwvfENfJj6SVGaeUEIX8smqcjLOsJUf7Ywg118H6FAINgI3FjrmyVjO+pj6nEeFkJgVsGOsKsbyGifkcahrCkP/cuiJSj7mm8ml2eyd7YvWmsCl43lNZsqdaMh+cWk5bFwPKFtG+LjFE0BbZt6BgAyIDbm9sylaEo/K8Bap5gNDmS+Ux6YNiHdENEnmktfWSmops0uDouB9eoAuNGx/biLJ5xbVbR/kiW/wXIsq65yLc87McHKZgDWkU+B4Q5z5DOPn29+YBe1V24ye9bgNnCtpCC9PZoH2kwtxWiSRaZ2oZNseHS3XuWccqt7T4AI7hIjir6RrZaonk469Gu8Slp+JANx/bHhgOal0xvvtad4CN7tr5SLsfD5mlBJ37FLfbTVjq5b1b23pwudc0shVkzdxLoGCsUCWwT901Rw1M3QpVFyRxXJzVDzwUevKetetDt7R+NF2vT7OgI0ZoWv84S2w96oBcw4XjcDvk9jIavphj7GQW32plSr0YpHwCmMoF+oXQuZ3ayTAlhMJOd0/jQeVix8aRcCCt06xwBWSpqyD3oUnllKZOLMkbDxmUSR7QhjcNv9BwdHP0aHHHBQeHnTa5GkDM5gBDJj6F/B34hhRNCOB1llz4eBMaRIWP/+u8IX8ALGRzcZGZIk7VlpLqyP/FSp3ABn2zXx8YmQr5MXrNoc9emtgg1nwnjKuBIK3oPr/DP3ovWujZ9+WuNWJ8tHxvuJAlkNC4HeUQOYr0OTr3jqF/7mOe9N+d8CtewPLXkbBx9CaZlovokYn1nPNtqlQqODcHoY+Ux1YbuLkFdOR9jfFM0PUzHwPDeedxfBIol7wr0B7xdgUDTZi6p+3KKHNAL8IJiFdASx+jnSgq6/F6wcxgDt9zpFQXmvO8Q/mIhvMRwGJSakvB3gIOx4LGFT4NThI0JiNM28GUtg4Ba8/qGHJv5rpuKg/gARh6aWFQf1wu3tRbAC8DNBzRZhXirmvGnmibYH6zQDwyYSlUzaXQxxlLZLuDxiRfDFU8u3cJXWaV/93JdMj+D/pXAUaWJqeYq3t8oCaYITapuPQV7/QmGemNN5kjCGA+e2O/Ibss4urmARidfDEzAGZ/CP4h36QWsfcCPHF4TE2GPh90tcMBzU/iUUds/zLsIfuoHU0HzYpSMeQ2Mt2sxa/OfrPcMLzttfYmfTLalR7ISRUu80m/MN5533+599oUhhjvNETSeWvMk3zZqYcGZBWnMkm7Kk9mOHI+jIVfUed9jpVYifrB20ELfnY0n8/A9t7kEly4O92deVByjPlqW/jLa3CLeODGU+nEwmYkP1AGOaytnVqjMMT4hpXeTylrJ81wgpQgzLYVqkuofaDjlYP4sJVVKFlKKVSlGIHPHv9Lp1aou95NT6s8N44dSyOjT6m0LY6U1duUd28HwOeO2VmZfZnYXtCMiDhrKrV8M76j0lVW/dazeu/0Tn9VJA8HltklbCv+iiYCHI6ZTIndzUKx3ZNAokueGEoTG7ULS1o7jopJZfyd76DhOBAur55L+YtCtij/SAGhpkEhimuBvuMvRZX4zfW5IakgU0DSTqabCHeKvjJ59KMmC3AvNV1MhtgVcDZrgvqY3/aILEvenA14fi9rnv73qOmQBaz1yxhf9AliaERnXf4xYTO+qSD4OqpAZLaltnxlTJXPQSZ6YPoQrVotccsqUL7tF/4VZLL3qF7ZXSJESHqj9DqU/YZMLhioiQ4O5uZa6iuzeTS3M00NK2ACWMusmzskbgh8U6i95Q32o/YIYCHoOA2dstyWT2mRswvqwOwuG7JLdYg7roRL84lLUqQ1uiiPwfhPBvYG++J5YVJ0oMtRqTKWo8DW4zbfH9zsFsUhxrFoK6onirTQypJrc6s7vF1BjbzYTC0bnA65xYWFac/w1se/DBBqqQ2ABhoXOnyUO0KKhrvLEG9KgN/r5PWwXij/6quqqRdrgAoe1aj7T+aUvHtz8LtRRomGV/Ae/gAARwfq4d+4phb4jdRQUt9MwlAP07eSWkCfRLWOq46PqylhuzoaW5Rrr7ul8f9xCyxju+jWoJmuExp9QWz20gJXZ/95Qy2KdIoim28H2cF2hVZ/wXFxiMh38B2mO/OpZy3vZF5uOcMo7nBeTApI/EurKeFp7auH/KyQ42cAEd2CT0Y3Af9J0BZqW9SVg5HUbIJ/3O6uxq/tBPzOsYGET9d8ej0KTKzTK2dTYn+qvE7UHw05gGT3xaEe5BBKwGbsnQNp3TthAX//9O8gFQ6upwHxlJOj6WiiNkZusw959gwSjWv4QrSDHgmM3b5S8mJN9m0LNJIPAOLbvN9ngXiVCNHyvTRDDKSqoBK9qnhxa7evEC26vPd/yVsIt6b7PIdeDxu7LEMSDoT+fmiB3aZIu4FSE2CyEentMacDCcW3XrKYtQk5ic93zExEylWrnJZ6nSU1XLsw4gZhsjzJ0EFRboa1nv5BqviFGj0ki0vTFGxHb11rofPcNLVBHX0kaqSm/b+b5lyccEDa9sRCWZDXMHh/1bDbDiFC0bNiNSYce4zVmmgDLWG9hEM917N3qnkJOduqTFVsw6fAKquLr18840J2MdCjDJQcWyrbmEhVm3EPHsSI4tIXUSinm4+sqHd2tnRUgf6AXC8I4//vSkm7dp5IL2Bfnrnh67J5GX+hNt1TWyLL/Zi3MR/HlfSvtcaqGEjvWqO+Bvbj4IxOqX0y6uv7o9QtCvL+TeCm2HnZfDQ6U3W7qo6v2tak9fwHrixiWj5qvoLxuhebPPnIQSgBrSAL43z9BQ4BxN3Qzgk7KSx/J2bYo7UfZ+XViwk9ZbCJFJwMpo18rzB2YGDyJ67Ork3QEHRSWRQ3fFfC0cUOligihw1xPwiaGRqciP7cnTDQK7+70kizs5b/6bYMwsM/1lxhH+swRV+gvwjm91mMyXtocywtchM2qsyLBtkm3NsnNYHhgD5KlEpCeSNoCwA3G3gj5ZQo48Sx559DR67cwJd+52huYHUQhakrPIAZCSeG8v8a8au63SC4vLDhsisAus6/1ZdByXN2j27ZVKoFpS5rUpBk9hJbcPXAjKUyUmCPjiZYZ8Ghr4iRoqiEz+Qz1PcernYaZ/gg9z8iVHPa83gxNdnstVdtuXtOU8H0l+x7XIMVwO57Mzwn0oFg8JOY3bH6tnf6B2OYtA9j7cz3Ga8JPPsbRGLJdB2DC+4Gpl1I22OP/KdHTu4shlJVd46ViLCBzEnsGbx0P+kYwr0Qepo8Lq41fsLSnqzytOoCisBVCmcLWNAT3RaO6VPw8ZHzJPwQP+IDxhrfbUe24vVDysNv4GXEdSNyH5EdmwKKj73tXdt14OIw+HKLq5w08F1LQfAwL6KpYr0l9K+Icvtluv5l+oAhMmr4HwPvzDdYu84R6VZQjISDJPFCyW7D5auMpd2eegKG19HK3vyxUI+FBt5GnjY4zVdPneIEMJevM7eG9Frwg/Qqbp6Dvw5ti/xXXWWLNk5TWwy/Ivw62OMPCw6ZJ7ZNq00titC/B3fJ8XQpj25I2YDDMH5obH+F3KsjkJrlOTeudwe9v1RuotDsf/IvxCyp81OoLUgd5zItNTVU6FWniVzZjGKzV1FWwT94UbsN7vDYm9DIUCafSlthkjHi4Tt5dlZD00rORkuw8JKaubgevaotRzzA+87zdJq++cEo6BnFOJNTqsMgYpfNOThWRDRwxLNDr9zqAPCaHXaikJY1bN2xYv9YxdLzi6jYAbHjm2lloT/pabyEfINBehCzqqzpolTc6idiSCXVaBAX2HopuwI5iqm+EeS0whzKTTopPGT2vr3uG7C9GWU59DlNbP2T9mV/NskHKhjGxqnjawyYotFWFVWpzKxEA8DH4iWZHc66+YWl78pX/97g2rZQhd6nTWXStU3Qi7FVNEx7W7hXn0F2cpSVYYK25D52c8yveONS5bd+exvWbUOR6vtKFCwK8XplVMmfce/Pv239t1KQ3gItWOdOSjxHCLH1byzktWbSV6DFzBdIw6V5oW0YcO7/mAuC/f2EbSCPnHsnoqmx+hsx8CoDvDSGh+xdIMwz3Q51CzmKPGtCvD1BEMQOszlMH7hJOHrBnPawDLKqMuWJBCbPXMY7h1fTuwRzqMcQjPadJmWy1hXnYuybQ7Tmiv7gcY5OqTPeBzm+rtGvZ0Des9TKxgcimO3RF/N59KQSTo1Y5fcBgRWx94bDz6r6swwyzWk0v6Wdnf7ELeEOsHP0uFxsLSfjx2xWyMd+/I0F4f14IkI1sNtIiLCIs5RwlGEeh+LVxMLv1f4PUUd54Hnb+9MGfizcsA/+6ALzWGQ5CEpDpKl2OWhiJNRbB+dPlrkHaGALm4oFeEt84mpEc04Irs2J/H+KGHA/DjdEBcHBxa95EaQfJ3dfTSJ2ib+h+sLjw+EM9HnzXc4Y79sVSuFg9C1M1MsrLvV0htG7i5X11DO03XQl9oJtmsYDeVbBCDh6I3gxchv0Bwk5axc47WG+YS7YEBS1FFZpTVdb3jYNljw08fYM5cswJErKuwnSF7bf+qx3TjM/vQTM6CYxtmPdRKK05y0wCLDcZLd8/yvUpoecJkfqqh5NXBUWNZmQISF2Zd1GXrA/hQTuI0/hbfZH7WHLcuagzv7qzG4KvTMqoRcXuPRXsI04QogSm1/KuFRbjme+qSTxZbKCrLfEzfnLrGOuxielpiR09ivZocHDQVpj8rOJcZZ0vgHHrDT8MDi0tr1+NGNZ19znepKhWFt8So6InjmPhy7Tv9LNq+9untYA6Xm6bPGon7WXVwPzAPAv4E8M7BlrhTksflQ7ghMYm7TtoqTod18/taA4uNuuxKirL0+DKuW646N2aRhqztjjmOPikyboi744LfnAVBS9ERK40I/gIsGrwPY4b/Bl7xBpXz1z2eaKbmvWS/p7arSRntY3yLWJo9e18f2GljzVtoH+a3qoeGAG3VdMdx9w9Tmbho5FsBFYJ0XFZqiLNsfZ4RkUvae1TLj/Ap8NvgHkhhO3jIF8DnZivk18+osAyp6ZjFmuv61Mi5fjJjk/dVa8Y8Cy1GrFk9SGWDQ4C1B3jLa/OyDz/kt11P7AqWehzg0Col7HHoFrXsGXw1fg3m3iNqsrOoES4U5wAuHIBZLM2g1Vz8Y9+DTfq4sWKeSvSkDaFyCWbPJegJz+RocTg67fKURragw5MuCqV97etQwuZM5sb8YhG4/e3wGwSdHEemPtgg4dXaSkuqsf67M8eExBfnSnmkGgfheOIyoGfXYKU/pLZV/APsQkcbWb4fqAfM1ooYrnd5MV+qvnS8xnZUCgLqU7F9GRDgFYmAAAAAAAAAAAAAAAAAAAAH6JAAAAA=" alt="Oisecur logo">
+      <b>Oi<span>secur</span></b>
+    </a>
+    <div class="nav-links">
+      <a href="#functies">Functies</a>
+      <a href="#werkwijze">Zo werkt het</a>
+      <a href="#prijzen">Prijzen</a>
+      <a href="/app.html">Inloggen</a>
+      <a class="btn btn-primary" href="/app.html?demo=1">Bekijk de demo</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<header class="hero" id="top">
+  <div class="container hero-in">
+    <div>
+      <span class="eyebrow">Rapportagesoftware voor de beveiliging</span>
+      <h1>Elke dienst, elk incident. <em>Zwart op wit.</em></h1>
+      <p class="lead">Oisecur maakt van elke mutatie, elk incident en elke controleronde een professioneel PDF-rapport — met foto's, handtekening en jouw eigen logo. Ingevuld op de telefoon, binnen een minuut bij de opdrachtgever.</p>
+      <div class="cta">
+        <a class="btn btn-primary btn-lg" href="#prijzen">Bekijk prijzen</a>
+        <a class="btn btn-ghost btn-lg" href="/app.html?demo=1">Bekijk de demo</a>
+      </div>
+      <p class="sub-cta">Demo zonder registratie · maandelijks opzegbaar · gemaakt door een beveiliger met 24 jaar ervaring</p>
+    </div>
+
+    <!-- Blikvanger: rapport dat zichzelf schrijft -->
+    <div class="demo" aria-label="Voorbeeld van een dienstrapport">
+      <div class="demo-head">
+        <div>
+          <h3>Dienstrapport</h3>
+          <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#777">Nachtdienst · Bedrijventerrein Noord</div>
+        </div>
+        <div class="dn">DEMO-DR-20260711-014<br><span class="st">Definitief</span></div>
+      </div>
+      <table>
+        <tr><td class="t">23:04</td><td>Dienst aangevangen, sleutels en portofoon in orde.</td></tr>
+        <tr><td class="t">00:30</td><td>Eerste ronde gelopen — alle nooduitgangen gesloten.</td></tr>
+        <tr><td class="t">01:47</td><td><span class="inc">Incident:</span> hekwerk zuidzijde geforceerd aangetroffen. Foto's gemaakt, meldkamer geïnformeerd.</td></tr>
+        <tr><td class="t">02:10</td><td>Politie ter plaatse, terrein gecontroleerd. Geen personen aangetroffen.</td></tr>
+        <tr><td class="t">07:00</td><td>Dienst overgedragen. Rapport gemaild naar opdrachtgever.</td></tr>
+      </table>
+      <div class="foot"><span>Gegenereerd met Oisecur</span><span>incl. 3 foto's · ondertekend</span></div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ FUNCTIES ═══ -->
+<section id="functies">
+  <div class="container">
+    <div class="sec-head">
+      <span class="eyebrow">Functies</span>
+      <h2>Alles wat een rapportage nodig heeft. Niets wat afleidt.</h2>
+      <p>Geen logge planningssoftware met honderd modules. Oisecur doet één ding, en doet dat goed: rapporteren.</p>
+    </div>
+    <div class="feat">
+      <article>
+        <div class="ic">▤</div>
+        <h3>Drie rapporttypes</h3>
+        <p>Dienstrapport met mutaties op tijdstempel, incidentrapport met prioriteit en opvolging, ronderapport met checkpoints en afwijkingen.</p>
+      </article>
+      <article>
+        <div class="ic">📷</div>
+        <h3>Foto's bij het incident</h3>
+        <p>Maak direct foto's van schade of situatie met de telefoon. Ze staan automatisch in een net raster op het PDF-rapport.</p>
+      </article>
+      <article>
+        <div class="ic">✎</div>
+        <h3>Digitale handtekening</h3>
+        <p>De beveiliger ondertekent op het scherm. De handtekening staat ingebed in het rapport — direct afgerond, direct officieel.</p>
+      </article>
+      <article>
+        <div class="ic">✉</div>
+        <h3>Direct naar de opdrachtgever</h3>
+        <p>Koppel per object een e-mailadres en verstuur het rapport met één klik. De klant heeft het binnen voordat de dienst erop zit.</p>
+      </article>
+      <article>
+        <div class="ic">◈</div>
+        <h3>Jouw logo, jouw naam</h3>
+        <p>Upload je bedrijfslogo en elke PDF ziet eruit als jouw eigen briefpapier. Bij anderen een betaalde extra — bij ons standaard.</p>
+      </article>
+      <article>
+        <div class="ic">◎</div>
+        <h3>GPS en QR-checkpoints</h3>
+        <p>Hang QR-bordjes op je checkpoints; scannen legt tijd én GPS-locatie vast. Onweerlegbaar bewijs dat de ronde echt gelopen is.</p>
+      </article>
+      <article>
+        <div class="ic">🔗</div>
+        <h3>Portaal voor de opdrachtgever</h3>
+        <p>Elke klant krijgt een eigen alleen-lezen link met al zijn rapporten, plus elke maandag automatisch een weekoverzicht per e-mail.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ ZO WERKT HET ═══ -->
+<section id="werkwijze">
+  <div class="container">
+    <div class="sec-head">
+      <span class="eyebrow">Zo werkt het</span>
+      <h2>Van waarneming naar rapport in drie stappen</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="num">STAP 1</div>
+        <h3>Log in en kies</h3>
+        <p>Open Oisecur op telefoon of computer. Kies beveiliger, object en dienst uit je eigen lijsten — personeelsnummer en tijden worden automatisch ingevuld.</p>
+      </div>
+      <div class="step">
+        <div class="num">STAP 2</div>
+        <h3>Rapporteer ter plekke</h3>
+        <p>Mutaties met één tik op tijdstempel, foto's direct vanaf de camera, checkpoints afvinken tijdens de ronde. Onderteken op het scherm.</p>
+      </div>
+      <div class="step">
+        <div class="num">STAP 3</div>
+        <h3>PDF bij de klant</h3>
+        <p>Sla op en verstuur. De opdrachtgever ontvangt een professioneel rapport met jouw logo, genummerd en ondertekend.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PRIJZEN ═══ -->
+<section id="prijzen">
+  <div class="container">
+    <div class="sec-head">
+      <span class="eyebrow">Prijzen</span>
+      <h2>Eerlijke prijzen. Maandelijks opzegbaar.</h2>
+      <p>Betaal per jaar en krijg twee maanden gratis. Alle prijzen exclusief btw.</p>
+    </div>
+    <div class="plans">
+      <div class="plan">
+        <h3>Starter</h3>
+        <p class="for">Voor de zzp-beveiliger die professioneel wil rapporteren.</p>
+        <div class="price">€19<small> / maand</small></div>
+        <div class="jaar">of €190 per jaar — 2 maanden gratis</div>
+        <ul>
+          <li>1 gebruiker</li>
+          <li>3 objecten</li>
+          <li>Alle drie de rapporttypes</li>
+          <li>Foto's en handtekening</li>
+          <li>PDF-rapporten, onbeperkt</li>
+        </ul>
+        <a class="btn btn-ghost" href="/app.html">Start gratis proef</a>
+      </div>
+
+      <div class="plan pop">
+        <span class="pop-tag">Meest gekozen</span>
+        <h3>Pro</h3>
+        <p class="for">Voor beveiligingsbedrijven met een team en meerdere opdrachtgevers.</p>
+        <div class="price">€49<small> / maand</small></div>
+        <div class="jaar">of €490 per jaar — 2 maanden gratis</div>
+        <ul>
+          <li>Tot 15 medewerkers</li>
+          <li>Onbeperkt objecten</li>
+          <li>Eigen logo op elk rapport</li>
+          <li>Rapporten direct mailen naar opdrachtgevers</li>
+          <li>Eigen diensttijden en teambeheer</li>
+        </ul>
+        <a class="btn btn-primary" href="/app.html">Start gratis proef</a>
+      </div>
+
+      <div class="plan">
+        <h3>Business</h3>
+        <p class="for">Voor grotere organisaties die alles in eigen huisstijl willen.</p>
+        <div class="price">€89<small> / maand</small></div>
+        <div class="jaar">of €890 per jaar — 2 maanden gratis</div>
+        <ul>
+          <li>Onbeperkt medewerkers</li>
+          <li>Onbeperkt objecten</li>
+          <li>Eigen subdomein (rapport.uwbedrijf.nl)</li>
+          <li>Prioriteit bij support</li>
+          <li>Hulp bij inrichting en overstap</li>
+        </ul>
+        <a class="btn btn-ghost" href="/app.html">Start gratis proef</a>
+      </div>
+    </div>
+    <p class="prijs-note">14 dagen gratis proberen, zonder creditcard. Daarna maandelijks opzegbaar per de 1e van de maand.</p>
+  </div>
+</section>
+
+<!-- ═══ FAQ ═══ -->
+<section id="faq">
+  <div class="container">
+    <div class="sec-head">
+      <span class="eyebrow">Veelgestelde vragen</span>
+      <h2>Nog even dit</h2>
+    </div>
+    <div class="faq">
+      <details>
+        <summary>Moet ik een app installeren?</summary>
+        <p>Nee. Oisecur werkt in de browser op elke telefoon, tablet of computer. Zet hem op je beginscherm en hij voelt als een app — zonder installatie of updates.</p>
+      </details>
+      <details>
+        <summary>Kan de opdrachtgever de rapporten inzien?</summary>
+        <p>Je verstuurt elk rapport met één klik als PDF naar het e-mailadres van de opdrachtgever. Zo bepaal jij precies wie wat ontvangt.</p>
+      </details>
+      <details>
+        <summary>Werkt het ook 's nachts op locatie zonder goed bereik?</summary>
+        <p>Het rapport vul je gewoon in; alleen voor het versturen per e-mail is een internetverbinding nodig. De PDF kun je altijd lokaal opslaan of printen.</p>
+      </details>
+      <details>
+        <summary>Zit ik ergens aan vast?</summary>
+        <p>Nee. Abonnementen zijn maandelijks opzegbaar per de 1e van de maand, zonder opzegtermijn. Bij een jaarabonnement krijg je twee maanden gratis.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SLOT-CTA ═══ -->
+<section id="slot">
+  <div class="container">
+    <h2>Vanavond nog je eerste rapport?</h2>
+    <p>Binnen vijf minuten staan je objecten en medewerkers erin. Het eerste rapport is dan een kwestie van kiezen en typen.</p>
+    <a class="btn btn-primary btn-lg" href="/app.html">Probeer 14 dagen gratis</a>
+  </div>
+</section>
+
+<footer>
+  <div class="container foot-in">
+    <span>© 2026 Oisecur · onderdeel van Zuurman B.V., Onstwedde</span>
+    <span><a href="#prijzen">Prijzen</a> · <a href="/app.html">Inloggen</a> · <a href="mailto:info@oisecur.nl">info@oisecur.nl</a></span>
+  </div>
+</footer>
+
+</body>
+</html>
