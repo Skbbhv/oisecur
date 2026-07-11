@@ -3,12 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="/favicon.ico" sizes="any">
-  <link rel="icon" type="image/png" href="/favicon-64.png">
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#0e1522">
-
 <title>Oisecur — Beveiligingsrapportage</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -298,6 +292,11 @@ input[type=time]{font-family:'IBM Plex Mono',monospace}
     <div class="field"><label for="l-pass">Wachtwoord</label><input id="l-pass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"></div>
     <div class="login-err" id="l-err"></div>
     <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="login()">Inloggen</button>
+    <div style="margin:18px 0 6px;display:flex;align-items:center;gap:12px;color:var(--muted);font-size:12px">
+      <span style="flex:1;height:1px;background:var(--line)"></span>OF<span style="flex:1;height:1px;background:var(--line)"></span>
+    </div>
+    <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="bekijkDemo()">Bekijk demo</button>
+    <div style="font-size:12.5px;color:var(--muted);margin-top:10px">Even vrijblijvend rondkijken — geen registratie nodig.</div>
   </div>
 </div>
 
@@ -548,11 +547,13 @@ function vraagGPS(){
 }
 
 /* ═══ Demo-modus: knop op de hoofdpagina vult de inlog vast in ═══ */
-if(new URLSearchParams(location.search).get('demo')==='1'){
+function bekijkDemo(){
   $('l-user').value = 'demo@oisecur.nl';
   $('l-pass').value = 'demo12345';
-  $('l-err').textContent = 'Demo-omgeving — klik op Inloggen om rond te kijken.';
-  $('l-err').style.color = '#6ea5ff';
+  login();
+}
+if(new URLSearchParams(location.search).get('demo')==='1'){
+  bekijkDemo();
 }
 
 /* ═══ Login ═══ */
