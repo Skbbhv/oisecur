@@ -31,6 +31,7 @@ export const kv = {
   },
   async del(k) { const c = await conn(); return c.del(k); },
   async incr(k) { const c = await conn(); return c.incr(k); },
+  async expire(k, s) { const c = await conn(); return c.expire(k, s); },
   async sadd(k, v) { const c = await conn(); return c.sAdd(k, enc(v)); },
   async srem(k, v) { const c = await conn(); return c.sRem(k, enc(v)); },
   async smembers(k) { const c = await conn(); return (await c.sMembers(k)).map(dec); },
