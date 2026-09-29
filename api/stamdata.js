@@ -1,6 +1,6 @@
 // GET  /api/stamdata                      → { bedrijf, objecten, diensten, medewerkers }
 // POST /api/stamdata (alleen beheerder)   → { actie, ... }
-//   actie: 'profiel'        { naam?, logo? }
+//   actie: 'profiel'        { naam?, logo?, branche? }
 //   actie: 'objecten'       { objecten:[{naam,adres,email}] }        (hele lijst vervangen)
 //   actie: 'diensten'       { diensten:[{naam,van,tot}] }            (hele lijst vervangen)
 //   actie: 'medewerker+'    { naam, pnr, login, wachtwoord }
@@ -8,6 +8,8 @@
 //   actie: 'wachtwoord'     { login, wachtwoord }                    (reset door beheerder)
 //   actie: 'portaal'        { objectNaam }  → maakt/geeft alleen-lezen portaallink-token
 import { kv, hashWachtwoord, sessieUitToken, fout } from './_lib.js';
+
+const BRANCHES = ['beveiliging', 'schoonmaak', 'facilitair', 'techniek', 'evenementen', 'overig'];
 
 export default async function handler(req, res) {
   const sessie = await sessieUitToken(req);
@@ -28,7 +30,7 @@ export default async function handler(req, res) {
     }
     return res.status(200).json({
       rol: sessie.rol,
-      bedrijf: { id: bedrijf.id, naam: bedrijf.naam, logo: bedrijf.logo || '' },
+      bedrijf: { id: bedrijf.id, naam: bedrijf.naam, logo: bedrijf.logo || '', branche: bedrijf.branche || 'beveiliging' },
       objecten: objecten || [], diensten: diensten || [], medewerkers
     });
   }
@@ -44,6 +46,7 @@ export default async function handler(req, res) {
       if (b.logo && b.logo.length > 300000) return fout(res, 400, 'Logo te groot (max ~200 kB).');
       bedrijf.logo = b.logo;
     }
+    if (b.branche && BRANCHES.includes(b.branche)) bedrijf.branche = b.branche;
     await kv.set(`bedrijf:${bid}`, bedrijf);
     return res.status(200).json({ ok: true });
   }
