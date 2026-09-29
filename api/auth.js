@@ -25,6 +25,6 @@ export default async function handler(req, res) {
   const token = await maakSessie(user.login, user.bid, user.rol);
   return res.status(200).json({
     token, rol: user.rol, naam: user.naam, pnr: user.pnr || '',
-    bedrijf: { id: bedrijf.id, naam: bedrijf.naam, logo: bedrijf.logo || '' }
+    bedrijf: { id: bedrijf.id, naam: bedrijf.naam, logo: bedrijf.logo || '', branche: bedrijf.branche || 'beveiliging' }
   });
 }
