@@ -177,7 +177,12 @@ async function api(body) {
   const res = await fetch('/api/admin', { method: body ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json', 'x-admin-key': KEY }, body: body ? JSON.stringify(body) : undefined });
   const d = await res.json().catch(() => ({}));
   if (res.status === 401) { forget(); showLogin('De beheersleutel klopt niet (meer).'); throw new Error(d.fout || 'Ongeldige beheersleutel.'); }
-  if (!res.ok) throw new Error(d.fout || `Fout ${res.status}`);
+  if (!res.ok) {
+    if (res.status >= 500) {
+      try { const s = await (await fetch('/api/status')).json(); if (s.database !== 'ok') throw new Error('Server kan de database niet bereiken (' + s.database.replace(/^fout: /, '') + '). Controleer REDIS_URL in Vercel.'); } catch (x) { if (x.message.startsWith('Server')) throw x; }
+    }
+    throw new Error(d.fout || `Fout ${res.status}`);
+  }
   return d;
 }
 function remember(k, on) { try { (on ? localStorage : sessionStorage).setItem('ois_admin', k); } catch (e) {} }
