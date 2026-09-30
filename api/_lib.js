@@ -6,13 +6,23 @@ import { createClient } from 'redis';
 import crypto from 'crypto';
 
 // Eén gedeelde verbinding, hergebruikt over aanvragen heen.
-let _client = null;
+// Vercel/Upstash levert het adres als REDIS_URL (soms als KV_URL of REDIS_TLS_URL).
+const REDIS = process.env.REDIS_URL || process.env.KV_URL || process.env.REDIS_TLS_URL || '';
+let _client = null, _bezig = null;
 async function conn() {
   if (_client && _client.isOpen) return _client;
-  _client = createClient({ url: process.env.REDIS_URL });
-  _client.on('error', () => {}); // fouten worden per aanroep afgehandeld
-  if (!_client.isOpen) await _client.connect();
-  return _client;
+  if (!REDIS) throw new Error('Database niet ingesteld: REDIS_URL ontbreekt in Vercel.');
+  if (!_bezig) {
+    _bezig = (async () => {
+      const c = createClient({ url: REDIS, socket: { connectTimeout: 5000, reconnectStrategy: n => (n > 2 ? false : 300) } });
+      c.on('error', () => {}); // fouten worden per aanroep afgehandeld
+      await c.connect();
+      _client = c;
+      return c;
+    })().catch(e => { throw new Error('Database niet bereikbaar: ' + (e.message || e)); })
+      .finally(() => { _bezig = null; });
+  }
+  return _bezig;
 }
 
 // Waarden worden als JSON opgeslagen/gelezen, zodat objecten net als voorheen werken.
