@@ -21,6 +21,10 @@ export default async function handler(req, res) {
 
   const bedrijf = await kv.get(`bedrijf:${user.bid}`);
   if (!bedrijf) return fout(res, 401, 'Bedrijf niet gevonden.');
+  if (bedrijf.geblokkeerd)
+    return fout(res, 403, 'Dit account is tijdelijk geblokkeerd. Neem contact op met info@oisecur.nl.');
+  if (bedrijf.plan === 'proef' && bedrijf.proefTot && bedrijf.proefTot < new Date().toISOString().slice(0, 10))
+    return fout(res, 403, 'Je gratis proefperiode is afgelopen. Mail naar info@oisecur.nl om verder te gaan; je rapporten blijven bewaard.');
 
   const token = await maakSessie(user.login, user.bid, user.rol);
   return res.status(200).json({
