@@ -79,3 +79,44 @@ export async function sessieUitToken(req) {
 export function fout(res, code, melding) {
   return res.status(code).json({ fout: melding });
 }
+
+/* ── Koppeling met Oibase: klanten met Oibase Enterprise gebruiken Oisecur gratis ──
+   Vraagt aan de Oibase-database (Supabase-functie oisecur_enterprise) of dit e-mailadres
+   bij een actieve Enterprise-klant hoort. Uitkomst 6 uur onthouden.
+   Zonder OIBASE_KOPPELING_GEHEIM in Vercel staat de koppeling uit (altijd false). */
+const OIBASE_SUPABASE = 'https://uexorfxmhjrvfgawsdlu.supabase.co';
+const OIBASE_PUBLIEK = process.env.OIBASE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_FPEAeYQte7pgQWgeQ-OIsA_IkMCFMyt';
+export async function oibaseEnterprise(email, fetchFn = fetch) {
+  const geheim = process.env.OIBASE_KOPPELING_GEHEIM;
+  const e = String(email || '').toLowerCase().trim();
+  if (!geheim || !e) return false;
+  const cache = `oibase:ent:${e}`;
+  try { const c = await kv.get(cache); if (c === 1 || c === 0) return c === 1; } catch {}
+  try {
+    const r = await fetchFn(OIBASE_SUPABASE + '/rest/v1/rpc/oisecur_enterprise', {
+      method: 'POST', headers: { apikey: OIBASE_PUBLIEK, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_email: e, p_geheim: geheim }), signal: AbortSignal.timeout(4000)
+    });
+    if (!r.ok) return false;                     // bij twijfel niets veranderen
+    const ja = (await r.json()) === true;
+    try { await kv.set(cache, ja ? 1 : 0, { ex: 6 * 3600 }); } catch {}
+    return ja;
+  } catch { return false; }
+}
+
+// Pakket bijwerken op basis van Oibase: 'oibase' erbij of eraf. Geeft het (eventueel aangepaste) bedrijf terug.
+export async function synchroniseerOibase(bedrijf) {
+  if (!bedrijf || !bedrijf.email) return bedrijf;
+  if (bedrijf.plan !== 'proef' && bedrijf.plan !== 'oibase') return bedrijf;   // betalende klanten niet aanraken
+  const ent = await oibaseEnterprise(bedrijf.email);
+  if (ent && bedrijf.plan !== 'oibase') {
+    bedrijf.plan = 'oibase'; bedrijf.oibaseSinds = new Date().toISOString().slice(0, 10);
+    await kv.set(`bedrijf:${bedrijf.id}`, bedrijf);
+  } else if (!ent && bedrijf.plan === 'oibase' && process.env.OIBASE_KOPPELING_GEHEIM) {
+    // Geen Enterprise meer: 14 dagen om over te stappen, daarna als een verlopen proef
+    bedrijf.plan = 'proef'; bedrijf.proefTot = new Date(Date.now() + 14 * 864e5).toISOString().slice(0, 10);
+    bedrijf.oibaseTot = new Date().toISOString().slice(0, 10);
+    await kv.set(`bedrijf:${bedrijf.id}`, bedrijf);
+  }
+  return bedrijf;
+}

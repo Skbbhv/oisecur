@@ -12,7 +12,7 @@
 // POST /api/admin { actie:'verwijder',  bid, bevestig:bid }        → bedrijf met ALLE gegevens verwijderen
 import { kv, hashWachtwoord, fout } from './_lib.js';
 
-const PLANS = ['proef', 'starter', 'pro', 'business'];
+const PLANS = ['proef', 'starter', 'pro', 'business', 'oibase'];   // oibase = gratis via Oibase Enterprise
 const BRANCHES = ['beveiliging', 'schoonmaak', 'facilitair', 'techniek', 'evenementen', 'overig'];
 const vandaag = () => new Date().toISOString().slice(0, 10);
 
