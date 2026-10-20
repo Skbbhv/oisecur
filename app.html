@@ -301,9 +301,9 @@ input,select,textarea{min-width:0;max-width:100%}
 .chip{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;border-radius:999px;padding:6px 12px;background:#fff;border:1px solid var(--line);color:var(--txt-2);box-shadow:var(--shadow-sm)}
 .chip i{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px #16a34a22}
 .chip.off i{background:var(--line-2);box-shadow:none}
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
-.kpis.k3{grid-template-columns:repeat(3,1fr)}
-@media(max-width:760px){.kpis,.kpis.k3{grid-template-columns:1fr 1fr}}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.kpis.k3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:760px){.kpis,.kpis.k3{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:var(--shadow-sm);text-decoration:none;display:block;min-width:0}
 a.kpi:hover{border-color:var(--blauw)}
 .kpi span{font-size:13px;color:var(--muted);display:block}
@@ -312,10 +312,10 @@ a.kpi:hover{border-color:var(--blauw)}
 .kpi small.up{color:#15803d}.kpi small.down{color:#b4232e}
 .kpi.alert b{color:var(--red)}
 @media(max-width:520px){.kpi b{font-size:24px}}
-.dash{display:grid;grid-template-columns:1.35fr 1fr;gap:14px;margin-bottom:16px}
-@media(max-width:860px){.dash{grid-template-columns:1fr}}
+.dash{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:14px;margin-bottom:16px}
+@media(max-width:860px){.dash{grid-template-columns:minmax(0,1fr)}}
 .dash .card + .card{margin-top:0}
-.col{display:grid;gap:14px;align-content:start;min-width:0}
+.col{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-content:start;min-width:0}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 .bars svg{width:100%;height:auto;display:block}
@@ -324,7 +324,7 @@ a.kpi:hover{border-color:var(--blauw)}
 .hbar div{height:10px;border-radius:5px;background:var(--ink);overflow:hidden}
 .hbar div i{display:block;height:100%;border-radius:5px;background:var(--blauw)}
 .hbar b{text-align:right;font-weight:700}
-.att{display:grid;gap:8px}
+.att{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
 .att a,.att div.a{display:flex;gap:11px;align-items:flex-start;text-decoration:none;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#fff}
 .att a:hover{border-color:var(--blauw)}
 .att .dot{flex:none;width:9px;height:9px;border-radius:50%;margin-top:6px;background:var(--amber)}
@@ -382,7 +382,7 @@ a.kpi:hover{border-color:var(--blauw)}
 .tscroll{overflow-x:auto;margin:0 -4px}
 .meter{display:inline-block;width:56px;height:6px;border-radius:3px;background:var(--ink);overflow:hidden;vertical-align:middle;margin-right:6px}
 .meter i{display:block;height:100%;background:var(--green)}
-.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .tiles a{display:flex;flex-direction:column;gap:8px;text-decoration:none;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow-sm)}
 .tiles a:hover{border-color:var(--blauw)}
 .tiles svg{width:26px;height:26px;color:var(--blauw)}
@@ -391,7 +391,30 @@ a.kpi:hover{border-color:var(--blauw)}
 .more-btn{display:block;margin:14px auto 0}
 .item .stats-s{font-size:12.5px;color:var(--muted);text-align:right;flex:none;line-height:1.35}
 .item .stats-s b{display:inline;color:var(--txt);font-size:14px}
-@media(max-width:620px){.quick{grid-template-columns:repeat(3,1fr);gap:8px}.quick a{flex-direction:column;text-align:center;gap:8px;padding:12px 6px}.quick small{display:none}.quick b{font-size:13.5px}.quick .qi{width:38px;height:38px}}
+@media(max-width:620px){.quick{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.quick a{flex-direction:column;text-align:center;gap:8px;padding:12px 6px}.quick small{display:none}.quick b{font-size:13.5px}.quick .qi{width:38px;height:38px}}
+
+.filters.f4{grid-template-columns:2fr 1fr 1fr 1fr}.filters.f2{grid-template-columns:1fr 1fr}
+@media(max-width:620px){.filters.f4,.filters.f2{grid-template-columns:repeat(2,minmax(0,1fr))}.filters.f4 input{grid-column:1/-1}}
+html,body{max-width:100%}
+@supports(overflow:clip){html,body{overflow-x:clip}}
+.wrap,.card,.paper,.item,.rcard,.opv,.med,.kpi{min-width:0}
+img,svg,canvas,video{max-width:100%}
+.hbar{grid-template-columns:minmax(0,1fr) minmax(0,2fr) 34px}
+@media(max-width:620px){
+  body{font-size:16px}
+  .hint,.muted{font-size:14.5px}
+  .kpi span{font-size:14px}.kpi small,.att small,.med small,.ovd small,.opv .l2,.rcard .l3,.item small,.tl small{font-size:13.5px}
+  .rcard .l2,.att b,.med p,.ovd,.opv .l3,.tbl{font-size:15px}
+  .rcard .l1 b{font-size:16.5px}.rcard .num{font-size:12.5px}
+  .tag,.pill{font-size:12.5px;padding:3px 9px}
+  .legend{font-size:13.5px}.hbar{font-size:14.5px}
+  .card{padding:18px 16px}.card h2{font-size:18px}
+  .btn.sm{padding:10px 14px;font-size:15px}
+  .tabs a{font-size:11.5px}
+  .chip{font-size:14px}
+  .seg-f button{font-size:15px;padding:8px 14px}
+}
+@media(max-width:620px){.paper{padding:16px 14px}.paper table{font-size:13.5px;table-layout:fixed}.paper td,.paper th{word-break:break-word;padding-left:4px;padding-right:4px}.item small.wrap{white-space:normal}}
 </style>
 </head>
 <body>
@@ -882,14 +905,14 @@ function activityBars(rs, days = 14) {
   const l = L(), cols = [];
   for (let n = days - 1; n >= 0; n--) { const d = daysAgo(n); const x = rs.filter(r => r.datum === d); cols.push({ d, dienst: x.filter(r => r.type === 'dienst').length, incident: x.filter(r => r.type === 'incident').length, ronde: x.filter(r => r.type === 'ronde').length }); }
   const max = Math.max(1, ...cols.map(c => c.dienst + c.incident + c.ronde));
-  const W = 560, H = 170, pb = 22, pt = 10, bw = W / days, ih = H - pb - pt;
+  const narrow = window.innerWidth < 620, W = narrow ? 340 : 560, H = narrow ? 190 : 170, pb = 22, pt = 14, bw = W / days, ih = H - pb - pt;
   const C = { dienst: 'var(--blauw)', ronde: 'var(--green)', incident: 'var(--red)' };
   const bars = cols.map((c, i) => {
     let y = H - pb; const x = i * bw + bw * .18, w = bw * .64;
     const segs = ['dienst', 'ronde', 'incident'].map(k => { if (!c[k]) return ''; const h = c[k] / max * ih; y -= h; return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(h - 1, 1).toFixed(1)}" rx="2" fill="${C[k]}"><title>${fmtDate(c.d)}: ${c[k]} ${esc(l.types[k])}</title></rect>`; }).join('');
     const tot = c.dienst + c.incident + c.ronde;
-    const step = days <= 7 ? 1 : days <= 14 ? 2 : 5, lbl = (days - 1 - i) % step === 0 ? `<text x="${(i * bw + bw / 2).toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="11" fill="var(--muted)">${c.d.slice(8)}-${c.d.slice(5, 7)}</text>` : '';
-    return segs + (tot && days <= 14 ? `<text x="${(i * bw + bw / 2).toFixed(1)}" y="${(y - 3).toFixed(1)}" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--txt-2)">${tot}</text>` : '') + lbl;
+    const step = days <= 7 ? 1 : days <= 14 ? (narrow ? 3 : 2) : narrow ? 7 : 5, lbl = (days - 1 - i) % step === 0 ? `<text x="${(i * bw + bw / 2).toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="11" fill="var(--muted)">${c.d.slice(8)}-${c.d.slice(5, 7)}</text>` : '';
+    return segs + (tot && days <= (narrow ? 7 : 14) ? `<text x="${(i * bw + bw / 2).toFixed(1)}" y="${(y - 3).toFixed(1)}" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--txt-2)">${tot}</text>` : '') + lbl;
   }).join('');
   return `<div class="bars"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Rapporten per dag"><line x1="0" x2="${W}" y1="${H - pb}" y2="${H - pb}" stroke="var(--line)"/>${bars}</svg></div>
     <div class="legend"><span><i style="background:var(--blauw)"></i>${esc(l.types.dienst)}</span><span><i style="background:var(--green)"></i>${esc(l.types.ronde)}</span><span><i style="background:var(--red)"></i>${esc(l.types.incident)}</span></div>`;
@@ -985,7 +1008,7 @@ function viewOverzicht() {
       </div>
     </div>
     <section class="sec-t" style="margin-top:6px"><h2 style="font-size:19px">Rapporten</h2></section>
-    <div class="filters" style="grid-template-columns:2fr 1fr 1fr 1fr">
+    <div class="filters f4">
       <input type="search" id="fq" placeholder="Zoeken op nummer, naam of omschrijving…" value="${esc(F.q)}">
       <select id="fo"><option value="">Alle ${esc(l.objecten.toLowerCase())}</option>${objs.map(o => `<option${F.obj === o ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select>
       <select id="ft"><option value="">Alle soorten</option>${['dienst', 'incident', 'ronde'].map(t => `<option value="${t}"${F.type === t ? ' selected' : ''}>${esc(l.types[t])}</option>`).join('')}</select>
@@ -1024,7 +1047,7 @@ function viewOpvolging() {
   shell('opvolging', 'Opvolging', `
     <p class="muted" style="margin:-8px 0 14px;font-size:14.5px">Elke ${esc(l.types.incident.toLowerCase())} krijgt een status. Zo zie je wat nog actie vraagt, wie ermee bezig is en wat is afgehandeld. Het rapport zelf blijft ongewijzigd.</p>
     <div class="seg-f">${segs.map(([k, t]) => `<button data-st="${esc(k)}" class="${OF.st === k ? 'on' : ''}">${t}<em>${cnt(k)}</em></button>`).join('')}</div>
-    <div class="filters" style="grid-template-columns:1fr 1fr">
+    <div class="filters f2">
       <select id="of-o"><option value="">Alle ${esc(l.objecten.toLowerCase())}</option>${objs.map(o => `<option${OF.obj === o ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select>
       <select id="of-p"><option value="">Alle prioriteiten</option>${['Hoog', 'Middel', 'Laag'].map(p => `<option${OF.prio === p ? ' selected' : ''}>${p}</option>`).join('')}</select>
     </div>
@@ -1898,7 +1921,7 @@ function viewTeam() {
   const l = L();
   shell('team', 'Team', `
     <section class="card"><h2>${esc(l.persoon)}s met een eigen login</h2>
-      <div class="list" id="mw-list">${MW.map(m => `<div class="item"><div class="grow"><b>${esc(m.naam)}${m.rol === 'beheerder' ? ' <span class="pill definitief" style="margin-left:6px">beheerder</span>' : ''}</b><small>${m.pnr ? 'nr. ' + esc(m.pnr) + ' · ' : ''}login: ${esc(m.login)}</small>${(() => { const x = LIST.filter(r => r.door === m.login || (!r.door && r.naam === m.naam)); return `<small>${x.filter(r => r.datum >= daysAgo(29)).length} rapporten in 30 dagen · laatst actief ${agoTxt(x[0]?.datum).replace('—', 'nog niet')}${x.length ? ` · <a href="#/overzicht" data-who="${esc(m.naam)}" style="color:var(--blauw)">bekijk</a>` : ''}</small>`; })()}</div>
+      <div class="list" id="mw-list">${MW.map(m => `<div class="item"><div class="grow"><b>${esc(m.naam)}${m.rol === 'beheerder' ? ' <span class="pill definitief" style="margin-left:6px">beheerder</span>' : ''}</b><small>${m.pnr ? 'nr. ' + esc(m.pnr) + ' · ' : ''}login: ${esc(m.login)}</small>${(() => { const x = LIST.filter(r => r.door === m.login || (!r.door && r.naam === m.naam)); return `<small class="wrap">${x.filter(r => r.datum >= daysAgo(29)).length} rapporten in 30 dagen · laatst actief ${agoTxt(x[0]?.datum).replace('—', 'nog niet')}${x.length ? ` · <a href="#/overzicht" data-who="${esc(m.naam)}" style="color:var(--blauw)">bekijk</a>` : ''}</small>`; })()}</div>
         ${m.rol === 'beheerder' ? '' : `<button class="btn btn-ghost sm" data-pw="${esc(m.login)}">Wachtwoord</button><button class="x" data-rm="${esc(m.login)}" aria-label="Verwijderen">×</button>`}</div>`).join('') || '<p class="muted">Nog niemand.</p>'}</div>
     </section>
     <section class="card"><h2>Iemand toevoegen</h2>
