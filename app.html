@@ -415,6 +415,36 @@ img,svg,canvas,video{max-width:100%}
   .seg-f button{font-size:15px;padding:8px 14px}
 }
 @media(max-width:620px){.paper{padding:16px 14px}.paper table{font-size:13.5px;table-layout:fixed}.paper td,.paper th{word-break:break-word;padding-left:4px;padding-right:4px}.item small.wrap{white-space:normal}}
+
+/* ═══ Veld: alarmen, alleen werken, sleutels, offline ═══ */
+.alarmbar{display:flex;align-items:center;gap:12px;text-decoration:none;background:#fff4dc;border:1px solid #f6d58f;color:#7a4b00;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:15px}
+.alarmbar svg{width:22px;height:22px;flex:none}
+.alarmbar span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.alarmbar em{font-style:normal;font-weight:700;text-decoration:underline}
+.alarmbar.hard{background:var(--red);border-color:var(--red);color:#fff;animation:pulse 1.6s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 6px #d92d3a33}}
+.teamalleen{display:flex;gap:6px;flex-wrap:wrap;margin:-6px 0 14px}
+.alleenbar{display:flex;align-items:center;gap:10px;background:#e7f6ec;border:1px solid #86d4a2;border-radius:12px;padding:10px 12px;margin-bottom:14px}
+.alleenbar div{flex:1;min-width:0}
+.alleenbar b{display:block;font-size:14.5px}
+.alleenbar span{font-size:13.5px;color:var(--txt-2);font-variant-numeric:tabular-nums}
+.alleenbar.bijna{background:#fff4dc;border-color:var(--amber)}
+.alleenbar.laat{background:#fdecee;border-color:var(--red);animation:pulse 1.2s infinite}
+.alleenbar.laat span{color:#b4232e;font-weight:700}
+.ok-btn{background:var(--green);color:#fff;padding:12px 18px;font-size:16px}
+.ok-btn:hover{background:#15803d}
+.sos-btn{background:var(--red);color:#fff;font-weight:800;letter-spacing:.02em}
+.sos-btn:hover{background:#b4232e}
+.veilig{display:flex;align-items:center;gap:12px}
+.veilig .grow{flex:1;min-width:0}.veilig b{display:block;font-size:15px}.veilig small{color:var(--muted);font-size:13px}
+.slic{flex:none;width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-weight:800;background:#e7f6ec;color:#15803d}
+.slic.uit{background:#fdecee;color:#c81e2b}
+.slrow{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.2fr) 70px minmax(0,1.4fr) 40px;gap:6px;margin-bottom:8px}
+.slrow input,.slrow select{margin:0;font-size:14.5px;padding:8px}
+@media(max-width:620px){.slrow{grid-template-columns:1fr 1fr 40px}.slrow input[data-k=naam]{grid-column:1/-1}.slrow select[data-k=object]{grid-column:1/3}}
+.offlinebar{position:sticky;top:0;z-index:60;background:#0f1b2d;color:#fff;text-align:center;font-size:14px;font-weight:600;padding:8px 12px}
+.offlinebar.syncing{background:var(--blauw)}
+.seg-f button.hot:not(.on){border-color:var(--red);color:#c81e2b}
 </style>
 </head>
 <body>
@@ -528,6 +558,7 @@ Object.assign(ICON, {
   chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V4M4 20h16"/><path d="M8 16v-4M12 16V8M16 16v-6M20 16v-9"/></svg>',
   more: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>',
   bell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9"/><path d="M10 20a2.2 2.2 0 0 0 4 0"/></svg>',
+  key: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4.5"/><path d="m11.5 11.5 8-8M16 7l2.5 2.5M18.5 4.5 21 7"/></svg>',
   doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></svg>',
   swap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></svg>'
 });
@@ -604,6 +635,15 @@ async function loadAll() {
   MED = d.mededelingen || []; OVD = d.overdracht || {}; PLAN = d.plan || null;
   ME.rol = d.rol;
   await loadList();
+  try { Store.set(`ois_cache_${MODE}_${ME.login}`, { d: { ...d, bedrijf: { ...d.bedrijf } }, list: LIST, t: Date.now() }); } catch (e) {}
+  loadVeld(true); loadRooster(); loadOutbox().then(flushOutbox);
+}
+// Offline starten: laatst bekende gegevens gebruiken
+function loadCached() {
+  const c = Store.get(`ois_cache_${MODE}_${ME.login}`); if (!c) return false;
+  const d = c.d; B = d.bedrijf; OBJ = d.objecten || []; DIENST = d.diensten || []; MW = d.medewerkers || [];
+  MED = d.mededelingen || []; OVD = d.overdracht || {}; PLAN = d.plan || null; ME.rol = d.rol; LIST = c.list || [];
+  loadOutbox(); return true;
 }
 async function loadList() { LIST = (await call('rapporten')).rapporten || []; }
 async function getReport(nummer) {
@@ -684,7 +724,36 @@ function demoHandle(pad, b) {
     r.nummer = `${D.bedrijf.id}-${CODE[r.type]}-${(r.datum || todayISO()).replace(/-/g, '')}-${String(D.seq).padStart(3, '0')}`;
     D.rapporten[r.nummer] = r; D.order.unshift(r.nummer);
     if (r.type === 'dienst' && r.overdracht) D.overdracht[r.object] = { tekst: r.overdracht, naam: r.naam, datum: r.datum, tot: r.tot, nummer: r.nummer };
+    if (r.type === 'ronde') D.veld.laatste[r.object] = r.aangemaakt;
+    if (r.type === 'incident' && r.incident?.prio === 'Hoog') D.veld.alarmen.unshift({ id: uid(), t: r.aangemaakt, soort: 'incident', titel: `${r.incident.cat} op ${r.object}`, tekst: r.incident.oms + '\nDemo: in het echt gaat er nu direct een mail naar de beheerder.', wie: r.naam, object: r.object, nummer: r.nummer, afgehandeld: false });
     return { ok: true, nummer: r.nummer };
+  }
+  if (path === 'veld') {
+    const V = D.veld, t = new Date().toISOString();
+    if (!b) {
+      if (q.get('actie') === 'rooster') return D.rooster;
+      if (q.get('actie') === 'handtekening') { const h = V.sigs[q.get('id')]; if (!h) throw new ApiError('Niet gevonden.', 404); return { handtekening: h }; }
+      return { alleen: V.alleen, alarmen: V.alarmen, alleenTeam: [...V.team, ...(V.alleen ? [V.alleen] : [])], laatsteRonde: V.laatste, sleutels: V.sleutels,
+        koppeling: { aan: true, bevestigd: true, email: 'demo@oisecur.nl', beschikbaar: true, bewaking: true } };
+    }
+    switch (b.actie) {
+      case 'ping': if (b.object) V.laatste[b.object] = t; if (V.alleen) V.alleen.laatste = t; return { ok: true };
+      case 'alleen-start': V.alleen = { login: ME.login, naam: ME.naam, object: b.object || '', minuten: b.minuten, start: t, laatste: t, alarm: false }; return { ok: true, alleen: V.alleen };
+      case 'alleen-ok': if (!V.alleen) throw new ApiError('Alleen werken staat niet aan.', 404); V.alleen.laatste = t; V.alleen.alarm = false; return { ok: true, alleen: V.alleen };
+      case 'alleen-stop': V.alleen = null; return { ok: true };
+      case 'sos': V.alarmen.unshift({ id: uid(), t, soort: 'sos', titel: 'Noodmelding van ' + ME.naam, tekst: (b.tekst ? b.tekst + '\n' : '') + 'Demo: in het echt krijgt de beheerder nu direct een mail met de locatie.', wie: ME.naam, object: b.object || '', gps: b.gps, afgehandeld: false }); return { ok: true };
+      case 'alarm-af': V.alarmen.forEach(a => { if ((b.ids || [b.id]).includes(a.id)) { a.afgehandeld = true; a.afDoor = ME.naam; } }); return { ok: true };
+      case 'sleutels': V.sleutels.items = b.items.map(x => ({ ...x, id: x.id || uid(), uit: (V.sleutels.items.find(y => y.id === x.id) || {}).uit || null })); return { ok: true, sleutels: V.sleutels };
+      case 'uitgifte': case 'retour': {
+        const it = V.sleutels.items.find(x => x.id === b.itemId); if (!it) throw new ApiError('Item niet gevonden.', 404);
+        const hid = b.handtekening ? uid().toLowerCase() + 'abcd' : ''; if (hid) V.sigs[hid] = b.handtekening;
+        if (b.actie === 'uitgifte') { if (it.uit) throw new ApiError('Al uitgegeven.', 409); it.uit = { aan: b.aan, org: b.organisatie || '', t, door: ME.naam, h: hid }; V.sleutels.log.unshift({ itemId: it.id, naam: it.naam, actie: 'uit', aan: b.aan, org: b.organisatie || '', t, door: ME.naam, h: hid }); }
+        else { V.sleutels.log.unshift({ itemId: it.id, naam: it.naam, actie: 'in', aan: it.uit.aan, org: it.uit.org, t, door: ME.naam, h: hid }); it.uit = null; }
+        return { ok: true, sleutels: V.sleutels };
+      }
+      case 'koppel-oibase': return { ok: true, aan: !!b.aan, bevestigd: true };
+    }
+    throw new ApiError('Onbekende actie.', 400);
   }
   throw new ApiError('Niet beschikbaar in de demo.', 400);
 }
@@ -698,7 +767,10 @@ async function init() {
     MODE = 'server'; TOKEN = s.token; ME = s.me;
     app.innerHTML = '<div class="loading">Gegevens ophalen…</div>';
     try { await loadAll(); route(); }
-    catch (e) { if (e.status !== 401) { welcome('login'); toast(e.message, true); } }
+    catch (e) {
+      if (e.status === 0 && loadCached()) { route(); toast('Geen internet: je werkt offline. Rapporten worden later verstuurd.', false, 6000); return; }
+      if (e.status !== 401) { welcome('login'); toast(e.message, true); }
+    }
     return;
   }
   welcome(p.get('registreer') === '1' ? 'register' : 'login');
@@ -874,6 +946,7 @@ function route() {
   window.scrollTo(0, 0);
   const adminOnly = ['objecten', 'team', 'opvolging', 'inzicht', 'meer'];
   if (adminOnly.includes(p) && !isAdmin()) return go('overzicht');
+  if (p === 'opvolging' && a === 'alarmen') OF.st = 'alarmen';
   switch (p) {
     case 'nieuw': return a ? editor(a) : viewNieuw();
     case 'rapport': return viewReport(decodeURIComponent(a || ''));
@@ -883,6 +956,7 @@ function route() {
     case 'inzicht': return viewInzicht();
     case 'meer': return viewMeer();
     case 'mededelingen': return viewMededelingen();
+    case 'sleutels': return viewSleutels();
     case 'instellingen': return viewSettings();
     default: return viewOverzicht();
   }
@@ -891,21 +965,23 @@ function go(p) { if (location.hash === '#/' + p) route(); else location.hash = '
 function shell(tab, title, inner, actions = '') {
   const l = L();
   const t = (k, label, ic, cls = '', bdg = 0) => `<a href="#/${k}" class="${tab === k ? 'on' : ''} ${cls}">${ICON[ic]}<span>${esc(label)}</span>${bdg ? `<i class="bdg">${bdg > 99 ? '99+' : bdg}</i>` : ''}</a>`;
-  const open = isAdmin() ? LIST.filter(r => r.type === 'incident' && r.opv !== 'Afgehandeld').length : 0;
-  const inMeer = ['inzicht', 'team', 'instellingen', 'mededelingen', 'meer'].includes(tab);
+  const open = isAdmin() ? LIST.filter(r => r.type === 'incident' && r.opv !== 'Afgehandeld').length + openAlarms().length : 0;
+  const inMeer = ['inzicht', 'team', 'instellingen', 'mededelingen', 'meer', 'sleutels'].includes(tab);
   app.innerHTML = `
     ${MODE === 'demo' ? '<div class="demobar">Demo: je kunt alles uitproberen, er wordt niets bewaard of verstuurd · <a href="app.html?registreer=1">Zelf beginnen</a></div>' : ''}
     <header class="top"><div class="top-in">
       ${brandHTML()}<span class="company">${esc(B.naam)}</span>
       <nav class="tabs">${t('overzicht', 'Overzicht', 'home')}${t('nieuw', 'Nieuw', 'plus')}${isAdmin()
-        ? t('opvolging', 'Opvolging', 'flag', '', open) + t('inzicht', 'Inzicht', 'chart', 'd-only') + t('objecten', l.objecten, 'pin') + t('team', 'Team', 'team', 'd-only') + t('instellingen', 'Instellingen', 'gear', 'd-only')
+        ? t('opvolging', 'Opvolging', 'flag', '', open) + t('inzicht', 'Inzicht', 'chart', 'd-only') + t('objecten', l.objecten, 'pin') + t('sleutels', 'Sleutels', 'key', 'd-only') + t('team', 'Team', 'team', 'd-only') + t('instellingen', 'Instellingen', 'gear', 'd-only')
           + `<a href="#/meer" class="m-only ${inMeer ? 'on' : ''}">${ICON.more}<span>Meer</span></a>`
-        : t('mededelingen', 'Berichten', 'bell', '', unreadMed().length) + t('instellingen', 'Account', 'gear')}</nav>
+        : t('mededelingen', 'Berichten', 'bell', '', unreadMed().length) + t('sleutels', 'Sleutels', 'key') + t('instellingen', 'Account', 'gear')}</nav>
     </div></header>
     <main class="wrap">
+      ${alleenBarHTML()}
       <div class="page-head"><h1>${esc(title)}</h1><div class="actions">${actions}</div></div>
       ${inner}
     </main>`;
+  bindAlleenBar();
 }
 
 /* ═════════════ Overzicht ═════════════ */
@@ -979,9 +1055,10 @@ function detailOf(r) {
 }
 function listHTML() {
   const l = L(), rs = filtered();
-  if (!LIST.length) return `<div class="empty">Nog geen rapporten. Kies hierboven wat je wilt vastleggen.</div>`;
+  const wacht = OUTBOX.length ? `<div class="rlist" style="margin-bottom:10px">${OUTBOX.map(x => `<div class="rcard ${esc(x.rapport.type)}" style="opacity:.8"><div class="l1"><b>${esc(l.types[x.rapport.type] || '')}</b><span class="tag amber" style="margin-left:auto">Wacht op internet</span></div><div class="l2">${esc(fmtDate(x.rapport.datum))} · ${esc(x.rapport.object || '—')} · ${esc(x.rapport.naam || '')}</div></div>`).join('')}</div>` : '';
+  if (!LIST.length) return wacht + `<div class="empty">Nog geen rapporten. Kies hierboven wat je wilt vastleggen.</div>`;
   if (!rs.length) return `<div class="empty">Geen rapporten gevonden met deze filters.</div>`;
-  return `<p class="hint" style="margin:0 0 8px">${nl(rs.length)} rapport${rs.length === 1 ? '' : 'en'}</p><div class="rlist">${rs.slice(0, SHOWN).map(r => `
+  return wacht + `<p class="hint" style="margin:0 0 8px">${nl(rs.length)} rapport${rs.length === 1 ? '' : 'en'}</p><div class="rlist">${rs.slice(0, SHOWN).map(r => `
     <a class="rcard ${esc(r.type)}" href="#/rapport/${encodeURIComponent(r.nummer)}">
       <div class="l1"><b>${esc(l.types[r.type] || r.type)}</b><span class="num">${esc(r.nummer)}</span>${r.type === 'incident' ? `<span style="margin-left:auto;display:flex;gap:6px">${prioTag(r.prio)}${isAdmin() ? opvTag(r.opv) : ''}</span>` : r.afw ? `<span class="tag red" style="margin-left:auto">${r.afw} afwijking${r.afw === 1 ? '' : 'en'}</span>` : ''}</div>
       <div class="l2">${esc(fmtDate(r.datum))}${r.tijd ? ' ' + esc(r.tijd) : ''} · ${esc(r.object || '—')} · ${esc(r.naam || '—')}</div>
@@ -1032,7 +1109,9 @@ function viewOverzicht() {
   shell('overzicht', 'Overzicht', `
     ${setup ? `<div class="warn" style="margin:0 0 16px">Begin met het toevoegen van je eerste <a href="#/objecten/nieuw">${esc(l.object.toLowerCase())}</a>. Daarna kun je rapporten maken${MW.length < 2 ? ` en je <a href="#/team">team</a> uitnodigen` : ''}.</div>` : ''}
     ${PLAN && PLAN.plan === 'proef' && PLAN.proefTot ? (() => { const n = dayDiff(todayISO(), PLAN.proefTot); return n <= 7 ? `<div class="warn" style="margin:0 0 16px">Je proefperiode loopt ${n <= 0 ? 'vandaag' : `over ${n} dag${n === 1 ? '' : 'en'}`} af. Mail naar <a href="mailto:info@oisecur.nl">info@oisecur.nl</a> om door te gaan; je rapporten blijven bewaard.</div>` : ''; })() : ''}
+    <div id="alarm-slot">${alarmBannerHTML()}</div>
     ${quickHTML()}
+    ${admin ? '' : `<div class="dash" style="margin-bottom:0"><div id="veilig-slot">${veiligHTML()}</div><div id="rooster-slot">${roosterHTML()}</div></div>`}
     ${kpis}
     <div class="dash">
       <div class="col">
@@ -1040,6 +1119,7 @@ function viewOverzicht() {
         ${ovds.length ? `<section class="card"><div class="sec-t"><h2>Laatste overdracht</h2></div>${ovds.map(([o, v]) => ovdHTML(o, v)).join('')}</section>` : ''}
       </div>
       <div class="col">
+        ${admin ? `<div id="veilig-slot">${veiligHTML()}</div><div id="rooster-slot">${roosterHTML()}</div>` : ''}
         ${meds.length || admin ? `<section class="card"><div class="sec-t"><h2>Mededelingen${unread.length ? ` <span class="tag">${unread.length} nieuw</span>` : ''}</h2><a class="btn btn-ghost sm" href="#/mededelingen">${admin ? 'Beheren' : 'Alle'}</a></div>
           ${meds.length ? meds.slice(0, 2).map(m => medHTML(m, unread.includes(m))).join('') : `<p class="muted" style="font-size:14px">Nog geen mededelingen. Zet hier instructies of nieuws voor je team neer.</p>`}</section>` : ''}
         ${admin ? `<section class="card"><div class="sec-t"><h2>Aandachtspunten</h2></div>${attentionHTML()}</section>` : ''}
@@ -1062,17 +1142,35 @@ function viewOverzicht() {
   $('#ft').onchange = e => { F.type = e.target.value; relist(); };
   $('#fp').onchange = e => { F.per = e.target.value; relist(); };
   $('#b-ov').onclick = overviewDialog;
-  bindList();
+  bindList(); bindVeilig();
 }
 
 /* ═════════════ Opvolging van meldingen (beheerder) ═════════════ */
 const OF = { st: 'open', obj: '', prio: '' };
+window.addEventListener('click', e => { if (e.target.closest('[data-alarmtab]')) OF.st = 'alarmen'; }, true);
 const SEL = new Set();
 async function setOpvolging(nummers, status, notitie) {
   const d = await call('rapporten', { actie: 'opvolging', nummers, status, notitie });
   LIST.forEach(r => { if (nummers.includes(r.nummer) && status) r.opv = status; });
   nummers.forEach(n => { if (CACHE[n]) { if (d.opvolging && nummers.length === 1) CACHE[n].opvolging = d.opvolging; else delete CACHE[n]; } });
   return d;
+}
+function viewAlarmen(segsHTML) {
+  const all = VELD.alarmen || [], open = all.filter(a => !a.afgehandeld);
+  shell('opvolging', 'Opvolging', `${segsHTML}
+    <p class="muted" style="margin:0 0 12px;font-size:14.5px">Automatische alarmen: meldingen met hoge prioriteit, gemiste rondes, alleenwerkers die niet reageren en noodmeldingen. Ze gaan ook per mail naar ${esc((B.alarmEmails && B.alarmEmails.length ? [B.email, ...B.alarmEmails] : [B.email || 'de beheerder']).filter(Boolean).join(', '))}.</p>
+    ${open.length > 1 ? `<button class="btn btn-ghost sm" id="al-all" style="margin-bottom:10px">Alles afhandelen (${open.length})</button>` : ''}
+    ${all.length ? `<div class="rlist">${all.slice(0, 80).map(a => { const [lbl, c] = SOORT_A[a.soort] || ['Alarm', 'grey'];
+      return `<div class="opv ${a.afgehandeld ? 's-af' : a.soort === 'ronde' ? 's-in' : ''}"><div style="flex:1;min-width:0">
+        <div class="l1"><span class="tag ${c}">${esc(lbl)}</span><b>${esc(a.titel || '')}</b>${a.afgehandeld ? '<span class="tag green">Afgehandeld</span>' : ''}</div>
+        <div class="l2">${esc(new Date(a.t).toLocaleString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }))}${a.wie ? ' · ' + esc(a.wie) : ''}${a.object ? ' · ' + esc(a.object) : ''}${a.afgehandeld && a.afDoor ? ' · afgehandeld door ' + esc(a.afDoor) : ''}</div>
+        ${a.tekst ? `<div class="l3" style="-webkit-line-clamp:4">${esc(a.tekst)}</div>` : ''}
+        <div class="row" style="margin-top:8px">${a.gps && Number.isFinite(a.gps.lat) ? `<a class="btn btn-ghost sm" target="_blank" rel="noopener" href="https://maps.google.com/?q=${a.gps.lat},${a.gps.lng}">Kaart</a>` : ''}${a.nummer ? `<a class="btn btn-ghost sm" href="#/rapport/${encodeURIComponent(a.nummer)}">Rapport</a>` : ''}${a.afgehandeld ? '' : `<button class="btn btn-primary sm" data-af="${esc(a.id)}">Afgehandeld</button>`}</div>
+      </div></div>`; }).join('')}</div>` : '<div class="empty">Nog geen alarmen. Stel bij een object de rondebewaking in, of laat je team "Alleen werken" gebruiken.</div>'}`);
+  const af = async ids => { try { await call('veld', { actie: 'alarm-af', ids }); (VELD.alarmen || []).forEach(a => { if (ids.includes(a.id)) { a.afgehandeld = true; a.afDoor = ME.naam; } }); toast('Afgehandeld'); viewOpvolging(); } catch (x) { toast(x.message, true); } };
+  $$('[data-af]').forEach(b => b.onclick = () => af([b.dataset.af]));
+  const all2 = $('#al-all'); if (all2) all2.onclick = () => confirm('Alle open alarmen afhandelen?') && af(open.map(a => a.id));
+  $$('.seg-f [data-st]').forEach(b => b.onclick = () => { OF.st = b.dataset.st; SEL.clear(); viewOpvolging(); });
 }
 function viewOpvolging() {
   const l = L();
@@ -1081,11 +1179,14 @@ function viewOpvolging() {
   const rs = all.filter(r => (OF.st === 'alle' || (OF.st === 'open' ? r.opv !== 'Afgehandeld' : r.opv === OF.st)) && (!OF.obj || r.object === OF.obj) && (!OF.prio || r.prio === OF.prio))
     .sort((a, b) => ({ Hoog: 0, Middel: 1, Laag: 2 }[a.prio] ?? 3) - ({ Hoog: 0, Middel: 1, Laag: 2 }[b.prio] ?? 3) || (b.datum || '').localeCompare(a.datum || ''));
   [...SEL].forEach(n => { if (!rs.some(r => r.nummer === n)) SEL.delete(n); });
-  const segs = [['open', 'Nog te doen'], ['Open', 'Open'], ['In behandeling', 'In behandeling'], ['Afgehandeld', 'Afgehandeld'], ['alle', 'Alle']];
+  const segs = [['alarmen', 'Alarmen'], ['open', 'Nog te doen'], ['Open', 'Open'], ['In behandeling', 'In behandeling'], ['Afgehandeld', 'Afgehandeld'], ['alle', 'Alle']];
+  const cntA = openAlarms().length;
+  const segsHTML = `<div class="seg-f">${segs.map(([k, t]) => `<button data-st="${esc(k)}" class="${OF.st === k ? 'on' : ''}${k === 'alarmen' && cntA ? ' hot' : ''}">${t}<em>${k === 'alarmen' ? cntA : cnt(k)}</em></button>`).join('')}</div>`;
+  if (OF.st === 'alarmen') return viewAlarmen(segsHTML);
   const objs = [...new Set(all.map(r => r.object).filter(Boolean))];
   shell('opvolging', 'Opvolging', `
     <p class="muted" style="margin:-8px 0 14px;font-size:14.5px">Elke ${esc(l.types.incident.toLowerCase())} krijgt een status. Zo zie je wat nog actie vraagt, wie ermee bezig is en wat is afgehandeld. Het rapport zelf blijft ongewijzigd.</p>
-    <div class="seg-f">${segs.map(([k, t]) => `<button data-st="${esc(k)}" class="${OF.st === k ? 'on' : ''}">${t}<em>${cnt(k)}</em></button>`).join('')}</div>
+    ${segsHTML}
     <div class="filters f2">
       <select id="of-o"><option value="">Alle ${esc(l.objecten.toLowerCase())}</option>${objs.map(o => `<option${OF.obj === o ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select>
       <select id="of-p"><option value="">Alle prioriteiten</option>${['Hoog', 'Middel', 'Laag'].map(p => `<option${OF.prio === p ? ' selected' : ''}>${p}</option>`).join('')}</select>
@@ -1220,12 +1321,250 @@ function viewMededelingen() {
   $$('[data-rm-med]').forEach(b => b.onclick = () => { if (confirm('Deze mededeling verwijderen?')) save(MED.filter(m => m.id !== b.dataset.rmMed), 'Verwijderd'); });
 }
 
+/* ═════════════ Veld: alarmen, alleen werken, noodknop, sleutels, rooster ═════════════ */
+let VELD = { alleen: null, alarmen: [], alleenTeam: [], laatsteRonde: {}, sleutels: { items: [], log: [] }, koppeling: null };
+let ROOSTER = null;
+const SOORT_A = { incident: ['Hoge prioriteit', 'red'], ronde: ['Ronde gemist', 'amber'], alleen: ['Alleen werken', 'red'], sos: ['NOODMELDING', 'red'] };
+const openAlarms = () => (VELD.alarmen || []).filter(a => !a.afgehandeld);
+async function loadVeld(render = false) {
+  try {
+    const d = await call('veld');
+    VELD = { ...VELD, ...d, sleutels: d.sleutels || { items: [], log: [] }, alarmen: d.alarmen || [], alleenTeam: d.alleenTeam || [] };
+    refreshVeldUI(render);
+  } catch (e) { /* offline of fout: stil */ }
+}
+async function loadRooster() {
+  try { ROOSTER = await call('veld?actie=rooster'); } catch (e) { ROOSTER = { ok: false, reden: 'fout' }; }
+  const box = $('#rooster-slot'); if (box) box.innerHTML = roosterHTML();
+}
+function refreshVeldUI(render) {
+  const bar = $('#alleen-bar'); if (bar) bar.outerHTML = alleenBarHTML(); else if (VELD.alleen && $('main.wrap')) $('main.wrap').insertAdjacentHTML('afterbegin', alleenBarHTML());
+  bindAlleenBar();
+  const a = $('#alarm-slot'); if (a) a.innerHTML = alarmBannerHTML();
+  const v = $('#veilig-slot'); if (v) { v.innerHTML = veiligHTML(); bindVeilig(); }
+  const t = $('.tabs a[href="#/opvolging"] .bdg'), n = LIST.filter(r => r.type === 'incident' && r.opv !== 'Afgehandeld').length + openAlarms().length;
+  if (t) t.textContent = n > 99 ? '99+' : n;
+  else if (n && $('.tabs a[href="#/opvolging"]')) $('.tabs a[href="#/opvolging"]').insertAdjacentHTML('beforeend', `<i class="bdg">${n}</i>`);
+  if (render && location.hash.startsWith('#/opvolging')) viewOpvolging();
+}
+setInterval(() => { if ((MODE === 'demo' || TOKEN) && document.visibilityState === 'visible') loadVeld(); }, 60000);
+
+/* Alarm-banner (beheerder) */
+function alarmBannerHTML() {
+  if (!isAdmin()) return '';
+  const a = openAlarms(), team = (VELD.alleenTeam || []);
+  const sos = a.filter(x => x.soort === 'sos' || x.soort === 'alleen');
+  return (a.length ? `<a class="alarmbar${sos.length ? ' hard' : ''}" href="#/opvolging" data-alarmtab>${ICON.bell}<span><b>${a.length} alarm${a.length === 1 ? '' : 'en'}</b> · ${esc(a[0].titel || '')}${a.length > 1 ? ' en meer' : ''}</span><em>Bekijken</em></a>` : '')
+    + (team.length ? `<div class="teamalleen">${team.map(s => { const left = Math.round((Date.parse(s.laatste) + s.minuten * 60000 - Date.now()) / 60000);
+      return `<span class="tag ${s.alarm ? 'red' : left < 5 ? 'amber' : 'green'}">${esc(s.naam)} alleen${s.object ? ' · ' + esc(s.object) : ''} · ${s.alarm ? 'REAGEERT NIET' : left >= 0 ? 'check over ' + left + ' min' : 'te laat'}</span>`; }).join('')}</div>` : '');
+}
+
+/* Alleen werken: balk bovenaan elke pagina */
+function alleenLeft() { const s = VELD.alleen; return s ? Date.parse(s.laatste) + s.minuten * 60000 - Date.now() : 0; }
+const mmss = ms => { const n = Math.max(0, Math.round(ms / 1000)); return `${Math.floor(n / 60)}:${pad(n % 60)}`; };
+function alleenBarHTML() {
+  const s = VELD.alleen; if (!s) return '<div id="alleen-bar" hidden></div>';
+  const left = alleenLeft(), laat = left <= 0 || s.alarm, bijna = left < 120000;
+  return `<div id="alleen-bar" class="alleenbar${laat ? ' laat' : bijna ? ' bijna' : ''}"><div><b>Alleen werken${s.object ? ' · ' + esc(s.object) : ''}</b><span id="ab-t">${laat ? 'Tik nu op "Alles OK"' + (s.alarm ? ' — je beheerder is gewaarschuwd' : '') : 'Volgende check over ' + mmss(left)}</span></div>
+    <button class="btn ok-btn" data-ab="ok">Alles OK</button><button class="btn sos-btn sm" data-ab="sos" aria-label="Noodmelding">SOS</button></div>`;
+}
+function bindAlleenBar() {
+  $$('#alleen-bar [data-ab]').forEach(b => b.onclick = () => (b.dataset.ab === 'ok' ? alleenOk() : sosDialog()));
+}
+let alleenTick = 0, alleenWarned = 0;
+setInterval(() => {
+  const s = VELD.alleen; if (!s) return;
+  const left = alleenLeft(), el = $('#ab-t');
+  if (el && left > 0 && !s.alarm) el.textContent = 'Volgende check over ' + mmss(left);
+  const bar = $('#alleen-bar');
+  if (bar) { bar.classList.toggle('bijna', left < 120000 && left > 0); bar.classList.toggle('laat', left <= 0 || !!s.alarm); if (left <= 0 && el && !s.alarm) el.textContent = 'Tik nu op "Alles OK"'; }
+  if (left < 120000 && Date.now() - alleenWarned > 60000) {
+    alleenWarned = Date.now();
+    if (navigator.vibrate) navigator.vibrate([300, 150, 300, 150, 300]);
+    try { if (window.Notification && Notification.permission === 'granted') new Notification('Oisecur: tik op "Alles OK"', { body: left > 0 ? `Nog ${mmss(left)} tot je check.` : 'Je check is verlopen. Tik op Alles OK.', tag: 'alleen', renotify: true }); } catch (e) {}
+  }
+  if (++alleenTick % 5 === 0 && left > 0 && !$('#alleen-bar') && $('main.wrap')) refreshVeldUI();
+}, 1000);
+async function alleenOk() {
+  try { const g = await Promise.race([getGPS(), new Promise(r => setTimeout(() => r(null), 3000))]); const d = await call('veld', { actie: 'alleen-ok', gps: g }); VELD.alleen = d.alleen; alleenWarned = 0; toast('Gemeld: alles OK'); refreshVeldUI(); }
+  catch (e) { toast(e.status === 0 ? 'Geen verbinding. Probeer het opnieuw; bel bij nood 112.' : e.message, true); }
+}
+function alleenDialog() {
+  const l = L();
+  openModal(`<h2>Alleen werken</h2><p class="muted" style="font-size:14.5px">Werk je alleen? Je krijgt op vaste tijden een seintje om op "Alles OK" te tikken. Doe je dat niet, dan krijgt je beheerder automatisch een alarm met je laatste locatie.</p>
+    <form id="f-alleen" class="stack" style="margin-top:12px">
+      <label>${esc(l.object)}<select name="object"><option value="">—</option>${OBJ.map(o => `<option${o.naam === (draft?.object || OBJ[0]?.naam) ? ' selected' : ''}>${esc(o.naam)}</option>`).join('')}</select></label>
+      <label>Controle elke<select name="minuten">${[15, 30, 45, 60, 90, 120].map(m => `<option value="${m}"${m === 30 ? ' selected' : ''}>${m} minuten</option>`).join('')}</select></label>
+      <div class="row"><button type="button" class="btn btn-ghost" data-close style="flex:1">Annuleren</button><button class="btn btn-primary" style="flex:1">Starten</button></div>
+    </form>`);
+  $('#f-alleen').onsubmit = async e => {
+    e.preventDefault(); const f = Object.fromEntries(new FormData(e.target));
+    try {
+      try { if (window.Notification && Notification.permission === 'default') await Notification.requestPermission(); } catch (x) {}
+      const g = await Promise.race([getGPS(), new Promise(r => setTimeout(() => r(null), 3000))]);
+      const d = await call('veld', { actie: 'alleen-start', object: f.object, minuten: +f.minuten, gps: g });
+      VELD.alleen = d.alleen; closeModal(); toast(`Alleen werken gestart: elke ${f.minuten} minuten een check`); refreshVeldUI();
+    } catch (x) { toast(x.message, true); }
+  };
+}
+async function alleenStop() {
+  if (!confirm('Alleen werken stoppen?')) return;
+  try { await call('veld', { actie: 'alleen-stop' }); VELD.alleen = null; toast('Alleen werken gestopt'); refreshVeldUI(); } catch (x) { toast(x.message, true); }
+}
+function sosDialog() {
+  openModal(`<h2 style="color:var(--red)">Noodmelding</h2><p style="font-size:15px">Je beheerder krijgt direct een alarm met je locatie. Bij levensgevaar: <b>bel 112</b>.</p>
+    <textarea id="sos-txt" rows="2" placeholder="Wat is er aan de hand? (optioneel)" style="margin-top:12px"></textarea>
+    <div class="stack" style="margin-top:14px"><button class="btn sos-btn block" id="sos-go" style="padding:16px;font-size:17px">Noodmelding versturen</button>
+    <a class="btn btn-ghost block" href="tel:112">Bel 112</a><button class="btn btn-ghost block" data-close>Annuleren</button></div>`);
+  $('#sos-go').onclick = async () => {
+    const btn = $('#sos-go'); btn.disabled = true; btn.textContent = 'Versturen…';
+    const g = await Promise.race([getGPS(), new Promise(r => setTimeout(() => r(null), 4000))]);
+    try { await call('veld', { actie: 'sos', object: VELD.alleen?.object || draft?.object || '', gps: g, tekst: $('#sos-txt')?.value || '' }); closeModal(); toast('Noodmelding verstuurd. Je beheerder is gewaarschuwd.', false, 7000); if (navigator.vibrate) navigator.vibrate(200); loadVeld(); }
+    catch (x) { btn.disabled = false; btn.textContent = 'Opnieuw proberen'; toast(x.status === 0 ? 'Geen verbinding! Bel 112 of je meldkamer.' : x.message, true, 8000); }
+  };
+}
+function veiligHTML() {
+  const s = VELD.alleen;
+  return `<section class="card"><div class="sec-t"><h2>Veiligheid</h2></div>
+    <div class="veilig">${s ? `<div class="grow"><b>Alleen werken staat aan</b><small>Elke ${s.minuten} min een check${s.object ? ' · ' + esc(s.object) : ''}</small></div><button class="btn btn-ghost sm" data-vg="stop">Stoppen</button>`
+      : `<div class="grow"><b>Alleen aan het werk?</b><small>Automatisch alarm als je niet reageert</small></div><button class="btn btn-primary sm" data-vg="start">Alleen werken</button>`}</div>
+    <button class="btn sos-btn block" data-vg="sos" style="margin-top:10px">SOS · Noodmelding</button></section>`;
+}
+function bindVeilig() { $$('[data-vg]').forEach(b => b.onclick = () => ({ start: alleenDialog, stop: alleenStop, sos: sosDialog })[b.dataset.vg]()); }
+
+/* Rooster uit Oibase */
+function roosterObj(x) { return OBJ.find(o => (o.oibaseOpdracht && o.oibaseOpdracht === x.opdracht) || o.naam === x.opdracht); }
+function myRoosterNow() {
+  if (!ROOSTER?.ok) return null;
+  const t = todayISO(), h = nowHM(), y = daysAgo(1);
+  const mine = ROOSTER.diensten.filter(x => !isAdmin() || String(x.naam).toLowerCase().trim() === String(ME.naam).toLowerCase().trim());
+  return mine.find(x => (x.datum === t && x.van <= h && (x.tot > h || x.tot <= x.van)) || (x.datum === y && x.tot <= x.van && h < x.tot)) || null;
+}
+function roosterHTML() {
+  if (!ROOSTER) return '';
+  if (!ROOSTER.ok) return isAdmin() && ROOSTER.reden === 'bevestigen' ? `<section class="card"><h2>Rooster uit Oibase</h2><p class="muted" style="font-size:14.5px">Bevestig je e-mailadres via de mail die we stuurden, dan verschijnt hier het rooster.</p></section>` : '';
+  const t = todayISO(), admin = isAdmin();
+  const list = admin ? ROOSTER.diensten.filter(x => x.datum === t) : ROOSTER.diensten.filter(x => x.datum >= t).slice(0, 5);
+  return `<section class="card"><div class="sec-t"><h2>${admin ? 'Rooster vandaag' : 'Mijn diensten'}</h2><span class="tag grey">Oibase</span></div>
+    ${list.length ? `<div class="att">${list.map(x => { const o = roosterObj(x); return `<div class="a"><span class="dot b"></span><span class="grow"><b>${admin ? esc(x.naam || 'Open dienst') + ' · ' : esc(x.datum === t ? 'Vandaag' : new Date(x.datum + 'T12:00').toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short' })) + ' · '}${esc(x.van)}–${esc(x.tot)}</b><small>${esc(x.opdracht || '—')}${o ? '' : x.opdracht ? ' · niet gekoppeld aan een ' + esc(L().object.toLowerCase()) : ''}</small></span></div>`; }).join('')}</div>`
+      : `<p class="muted" style="font-size:14.5px">${admin ? 'Vandaag staan er geen diensten in het rooster.' : 'Er staan geen diensten voor je gepland.'}</p>`}</section>`;
+}
+
+/* ═════════════ Sleutels en passen ═════════════ */
+const SOORTEN = ['Sleutel', 'Pas', 'Portofoon', 'Afstandsbediening', 'Overig'];
+let SL_F = '';
+function sigPad(cv) {
+  const ctx = cv.getContext('2d'), r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  Object.assign(ctx, { lineWidth: 2.4, lineCap: 'round', lineJoin: 'round', strokeStyle: '#0d2456', fillStyle: '#0d2456' });
+  let on = false, last = null, used = false;
+  const pos = e => { const b = cv.getBoundingClientRect(); return { x: e.clientX - b.left, y: e.clientY - b.top }; };
+  cv.addEventListener('pointerdown', e => { e.preventDefault(); on = true; used = true; last = pos(e); try { cv.setPointerCapture(e.pointerId); } catch (x) {} ctx.beginPath(); ctx.arc(last.x, last.y, 1.1, 0, 7); ctx.fill(); });
+  cv.addEventListener('pointermove', e => { if (!on) return; const p = pos(e); ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke(); last = p; });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => cv.addEventListener(t, () => (on = false)));
+  return { get: () => (used ? cv.toDataURL('image/png') : null), clear: () => { ctx.clearRect(0, 0, cv.width, cv.height); used = false; } };
+}
+function viewSleutels() {
+  const l = L(), reg = VELD.sleutels || { items: [], log: [] }, admin = isAdmin();
+  const items = (reg.items || []).filter(i => !SL_F || i.object === SL_F || (SL_F === '__uit' && i.uit));
+  const uit = (reg.items || []).filter(i => i.uit).length;
+  shell('sleutels', 'Sleutels & passen', `
+    <div class="kpis k3"><div class="kpi"><span>Totaal</span><b>${(reg.items || []).length}</b></div><div class="kpi${uit ? ' alert' : ''}"><span>Uitgegeven</span><b>${uit}</b></div><div class="kpi"><span>Aanwezig</span><b>${(reg.items || []).length - uit}</b></div></div>
+    <div class="filters f2"><select id="sl-f"><option value="">Alle ${esc(l.objecten.toLowerCase())}</option><option value="__uit"${SL_F === '__uit' ? ' selected' : ''}>Alleen uitgegeven</option>${OBJ.map(o => `<option${SL_F === o.naam ? ' selected' : ''}>${esc(o.naam)}</option>`).join('')}</select>${admin ? '<button class="btn btn-ghost" id="sl-beheer">Lijst beheren</button>' : '<span></span>'}</div>
+    ${items.length ? `<div class="list">${items.map(i => `<div class="item"><span class="slic ${i.uit ? 'uit' : ''}">${esc((i.soort || 'S')[0])}</span><div class="grow"><b>${esc(i.naam)}${i.nummer ? ` <span class="num mono" style="font-size:12.5px;color:var(--muted)">#${esc(i.nummer)}</span>` : ''}</b>
+      <small>${esc(i.soort || '')}${i.object ? ' · ' + esc(i.object) : ''}</small>${i.uit ? `<small class="wrap" style="color:var(--red)">Bij ${esc(i.uit.aan)}${i.uit.org ? ' (' + esc(i.uit.org) + ')' : ''} sinds ${esc(new Date(i.uit.t).toLocaleString('nl-NL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }))}</small>` : ''}</div>
+      ${i.uit ? `<button class="btn btn-ghost sm" data-in="${esc(i.id)}">Innemen</button>` : `<button class="btn btn-primary sm" data-uit="${esc(i.id)}">Uitgeven</button>`}</div>`).join('')}</div>`
+      : `<div class="empty">${(reg.items || []).length ? 'Niets in deze selectie.' : admin ? 'Nog geen sleutels of passen. Tik op "Lijst beheren" om ze toe te voegen.' : 'Je beheerder heeft nog geen sleutels of passen toegevoegd.'}</div>`}
+    <section class="card" style="margin-top:16px"><h2>Logboek</h2>${(reg.log || []).length ? `<div class="tscroll"><table class="tbl"><tr><th>Wanneer</th><th>Item</th><th>Actie</th><th>Persoon</th><th>Door</th><th></th></tr>${reg.log.slice(0, 50).map(g => `<tr><td style="white-space:nowrap">${esc(new Date(g.t).toLocaleString('nl-NL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }))}</td><td>${esc(g.naam)}</td><td>${g.actie === 'uit' ? '<span class="tag red">Uit</span>' : '<span class="tag green">In</span>'}</td><td>${esc(g.aan)}${g.org ? '<br><small class="muted">' + esc(g.org) + '</small>' : ''}</td><td>${esc(g.door)}</td><td>${g.h ? `<a href="#" data-sig="${esc(g.h)}">handtekening</a>` : ''}</td></tr>`).join('')}</table></div>` : '<p class="muted" style="font-size:14.5px">Nog niets uitgegeven of ingenomen.</p>'}</section>`);
+  $('#sl-f').onchange = e => { SL_F = e.target.value; viewSleutels(); };
+  const bh = $('#sl-beheer'); if (bh) bh.onclick = sleutelBeheer;
+  $$('[data-uit]').forEach(b => b.onclick = () => sleutelDialog(b.dataset.uit, 'uitgifte'));
+  $$('[data-in]').forEach(b => b.onclick = () => sleutelDialog(b.dataset.in, 'retour'));
+  $$('[data-sig]').forEach(a => a.onclick = async e => { e.preventDefault(); try { const d = await call('veld?actie=handtekening&id=' + a.dataset.sig); openModal(`<h2>Handtekening</h2><div class="sigwrap" style="margin-top:10px"><img src="${esc(d.handtekening)}" alt="Handtekening" style="width:100%;display:block"></div><button class="btn btn-ghost block" data-close style="margin-top:12px">Sluiten</button>`); } catch (x) { toast(x.message, true); } });
+}
+function sleutelDialog(id, actie) {
+  const it = (VELD.sleutels.items || []).find(i => i.id === id); if (!it) return;
+  const uit = actie === 'uitgifte';
+  openModal(`<h2>${uit ? 'Uitgeven' : 'Innemen'}: ${esc(it.naam)}</h2>${!uit ? `<p class="muted" style="font-size:14.5px">Was bij ${esc(it.uit.aan)}${it.uit.org ? ' (' + esc(it.uit.org) + ')' : ''}.</p>` : ''}
+    <form id="f-sl" class="stack" style="margin-top:12px">
+      ${uit ? `<label>Aan wie<input name="aan" required placeholder="Naam ontvanger"></label><label>Organisatie (optioneel)<input name="organisatie" placeholder="bijv. Schoonmaakbedrijf X"></label>` : ''}
+      <label>Opmerking (optioneel)<input name="opm"></label>
+      <div><label>Handtekening ${uit ? 'ontvanger' : '(optioneel)'}</label><div class="sigwrap" style="margin-top:5px"><canvas id="sl-sig" style="display:block;width:100%;height:150px;touch-action:none"></canvas></div><button type="button" class="linkbtn" id="sl-clr" style="margin-top:6px">Wissen</button></div>
+      <div class="row"><button type="button" class="btn btn-ghost" data-close style="flex:1">Annuleren</button><button class="btn btn-primary" style="flex:1">${uit ? 'Uitgeven' : 'Innemen'}</button></div>
+    </form>`);
+  const pad = sigPad($('#sl-sig'));
+  $('#sl-clr').onclick = () => pad.clear();
+  $('#f-sl').onsubmit = async e => {
+    e.preventDefault(); const f = Object.fromEntries(new FormData(e.target)), h = pad.get();
+    if (uit && !String(f.aan || '').trim()) return toast('Vul in aan wie je het uitgeeft.', true);
+    if (uit && !h) return toast('Laat de ontvanger tekenen.', true);
+    try { const d = await call('veld', { actie, itemId: id, aan: f.aan, organisatie: f.organisatie, opm: f.opm, handtekening: h }); VELD.sleutels = d.sleutels; closeModal(); toast(uit ? `${it.naam} uitgegeven` : `${it.naam} ingenomen`); viewSleutels(); }
+    catch (x) { toast(x.message, true); }
+  };
+}
+function sleutelBeheer() {
+  const l = L(); let items = clone(VELD.sleutels.items || []);
+  const row = (i, n) => `<div class="slrow"><input data-k="naam" data-i="${n}" value="${esc(i.naam)}" placeholder="Naam, bijv. Hoofdsleutel"><select data-k="soort" data-i="${n}">${SOORTEN.map(s => `<option${s === i.soort ? ' selected' : ''}>${s}</option>`).join('')}</select>
+    <input data-k="nummer" data-i="${n}" value="${esc(i.nummer || '')}" placeholder="Nr."><select data-k="object" data-i="${n}"><option value="">—</option>${OBJ.map(o => `<option${o.naam === i.object ? ' selected' : ''}>${esc(o.naam)}</option>`).join('')}</select><button type="button" class="x" data-rm="${n}"${i.uit ? ' disabled title="Eerst innemen"' : ''}>×</button></div>`;
+  const draw = () => { $('#sl-rows').innerHTML = items.length ? items.map(row).join('') : '<p class="muted">Nog geen items.</p>'; };
+  openModal(`<h2>Sleutels & passen beheren</h2><p class="muted" style="font-size:14px">Naam, soort, nummer en ${esc(l.object.toLowerCase())}.</p><div id="sl-rows" style="margin-top:12px"></div>
+    <button type="button" class="btn btn-ghost sm" id="sl-add" style="margin-top:8px">+ Toevoegen</button>
+    <div class="row" style="margin-top:14px"><button type="button" class="btn btn-ghost" data-close style="flex:1">Annuleren</button><button class="btn btn-primary" id="sl-save" style="flex:1">Opslaan</button></div>`);
+  $('.modal-box').style.maxWidth = '620px';
+  draw();
+  $('#sl-rows').addEventListener('input', e => { const t = e.target; if (t.dataset.k) items[+t.dataset.i][t.dataset.k] = t.value; });
+  $('#sl-rows').addEventListener('change', e => { const t = e.target; if (t.dataset.k) items[+t.dataset.i][t.dataset.k] = t.value; });
+  $('#sl-rows').addEventListener('click', e => { const b = e.target.closest('[data-rm]'); if (b && !b.disabled) { items.splice(+b.dataset.rm, 1); draw(); } });
+  $('#sl-add').onclick = () => { items.push({ id: '', naam: '', soort: 'Sleutel', nummer: '', object: OBJ.length === 1 ? OBJ[0].naam : '' }); draw(); $$('#sl-rows input[data-k=naam]').pop()?.focus(); };
+  $('#sl-save').onclick = async () => {
+    try { const d = await call('veld', { actie: 'sleutels', items: items.filter(i => i.naam.trim()) }); VELD.sleutels = d.sleutels; closeModal(); toast('Opgeslagen'); viewSleutels(); } catch (x) { toast(x.message, true); }
+  };
+}
+
+/* ═════════════ Offline: rapporten bewaren en later versturen ═════════════ */
+const IDB = {
+  db: null,
+  open() { if (this.db) return Promise.resolve(this.db); return new Promise((res, rej) => { if (!window.indexedDB) return rej(new Error('geen opslag')); const r = indexedDB.open('oisecur', 1); r.onupgradeneeded = () => r.result.createObjectStore('outbox', { keyPath: 'id', autoIncrement: true }); r.onsuccess = () => res(this.db = r.result); r.onerror = () => rej(r.error); }); },
+  async tx(mode, fn) { const db = await this.open(); return new Promise((res, rej) => { const t = db.transaction('outbox', mode), s = t.objectStore('outbox'); const out = fn(s); t.oncomplete = () => res(out && out.result !== undefined ? out.result : out); t.onerror = () => rej(t.error); }); },
+  add(v) { return this.tx('readwrite', s => s.add(v)); },
+  all() { return this.tx('readonly', s => s.getAll()); },
+  del(id) { return this.tx('readwrite', s => s.delete(id)); }
+};
+let OUTBOX = [];
+async function loadOutbox() { try { OUTBOX = (await IDB.all()).filter(x => x.login === ME?.login && x.mode === MODE); } catch (e) { OUTBOX = []; } updateOfflineUI(); }
+function updateOfflineUI() {
+  let el = $('#offlinebar');
+  const off = !navigator.onLine, n = OUTBOX.length;
+  const html = off || n ? `<div id="offlinebar" class="offlinebar${off ? '' : ' syncing'}">${off ? 'Geen internet' : 'Weer online'}${n ? ` · ${n} rapport${n === 1 ? '' : 'en'} wacht${n === 1 ? '' : 'en'} op verzending` : ' · je kunt gewoon rapporten maken, ze worden later verstuurd'}${!off && n ? ' <button class="linkbtn" id="ob-sync" style="margin:0 0 0 8px;color:inherit">Nu versturen</button>' : ''}</div>` : '';
+  if (el) el.outerHTML = html || '<div id="offlinebar" hidden></div>'; else if (html) document.body.insertAdjacentHTML('afterbegin', html);
+  const b = $('#ob-sync'); if (b) b.onclick = flushOutbox;
+}
+async function queueReport(r) { await IDB.add({ rapport: r, t: Date.now(), login: ME.login, mode: MODE }); await loadOutbox(); }
+let flushing = false;
+async function flushOutbox() {
+  if (flushing || !navigator.onLine) return; flushing = true;
+  try {
+    await loadOutbox(); let sent = 0;
+    for (const it of OUTBOX) {
+      try { const d = await call('rapporten', { rapport: it.rapport }); await IDB.del(it.id); const r = { ...it.rapport, nummer: d.nummer, door: ME.login }; CACHE[r.nummer] = r; LIST.unshift(summaryOf(r)); sent++; }
+      catch (e) { if (e.status === 0) break; if (e.status >= 400 && e.status < 500 && e.status !== 401) { await IDB.del(it.id); toast('Een bewaard rapport kon niet worden verstuurd: ' + e.message, true, 8000); } else break; }
+    }
+    await loadOutbox();
+    if (sent) { toast(`${sent} bewaard${sent === 1 ? ' rapport' : 'e rapporten'} verstuurd`); if (location.hash.startsWith('#/overzicht') || location.hash.length < 3) route(); }
+  } finally { flushing = false; }
+}
+window.addEventListener('online', () => { updateOfflineUI(); flushOutbox(); });
+window.addEventListener('offline', updateOfflineUI);
+setInterval(() => { if (OUTBOX.length && navigator.onLine) flushOutbox(); }, 45000);
+if ('serviceWorker' in navigator && location.protocol === 'https:') window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+
 /* ═════════════ Meer (mobiel menu voor de beheerder) ═════════════ */
 function viewMeer() {
   const l = L(), un = unreadMed().length;
   shell('meer', 'Meer', `<div class="tiles">
     <a href="#/inzicht">${ICON.chart}<b>Inzicht</b><small>Cijfers per ${esc(l.object.toLowerCase())} en ${esc(l.persoon.toLowerCase())}</small></a>
     <a href="#/mededelingen">${ICON.bell}<b>Mededelingen${un ? ` <span class="tag">${un}</span>` : ''}</b><small>Berichten voor je team</small></a>
+    <a href="#/sleutels">${ICON.key}<b>Sleutels & passen</b><small>${(VELD.sleutels.items || []).filter(i => i.uit).length} uitgegeven</small></a>
     <a href="#/team">${ICON.team}<b>Team</b><small>${MW.length} account${MW.length === 1 ? '' : 's'}</small></a>
     <a href="#/instellingen">${ICON.gear}<b>Instellingen</b><small>Bedrijf, logo, diensten, account</small></a>
   </div>`);
@@ -1243,8 +1582,12 @@ function roundPoints(o) {
 }
 function newDraft(type) {
   const me = people().find(p => p.login === ME.login) || people()[0];
-  const o = OBJ[0], d = new Date();
-  const dn = DIENST.find(x => { const h = nowHM(d); return x.van <= x.tot ? h >= x.van && h < x.tot : h >= x.van || h < x.tot; });
+  const rn = myRoosterNow(), ro = rn && roosterObj(rn);
+  const o = ro || OBJ[0], d = new Date();
+  if (rn) return Object.assign(newDraftBase(type, me, o, d, null), { van: rn.van, tot: rn.tot, dienstnaam: rn.type ? rn.type + 'dienst' : '' });
+  return newDraftBase(type, me, o, d, DIENST.find(x => { const h = nowHM(d); return x.van <= x.tot ? h >= x.van && h < x.tot : h >= x.van || h < x.tot; }));
+}
+function newDraftBase(type, me, o, d, dn) {
   return {
     type, naam: me?.naam || '', pnr: me?.pnr || '', object: o?.naam || '', adres: o?.adres || '', email: o?.email || '',
     dienstnaam: dn?.naam || '', datum: todayISO(d), van: dn?.van || nowHM(d), tot: dn?.tot || '', handtekening: null,
@@ -1460,6 +1803,7 @@ async function stampCp(n, scanned) {
   const p = draft.ronde.punten[n]; if (!p) return;
   p.tijd = nowHM(); if (scanned || p.status === 'Niet gecontroleerd') p.status = 'OK'; if (scanned) p.qr = true;
   startRound(); renderCps(); keepDraft();
+  call('veld', { actie: 'ping', object: draft.object }).catch(() => {});
   const g = await getGPS();
   if (g && draft && draft.ronde?.punten[n] === p) { p.gps = g; renderCps(); keepDraft(); }
   else if (!g) toast('Tijd vastgelegd. GPS niet beschikbaar (geef locatietoestemming).');
@@ -1504,7 +1848,7 @@ async function submitReport() {
   if (!confirm('Rapport opslaan? Daarna krijgt het een nummer en kan het niet meer worden gewijzigd.')) return;
   const btn = $('[data-act=save]'); btn.disabled = true; btn.textContent = 'Opslaan…';
   try {
-    if (r.type === 'incident') r.gps = await getGPS();
+    if (r.type === 'incident') r.gps = await Promise.race([getGPS(), new Promise(res => setTimeout(() => res(null), 6000))]);
     const d = await call('rapporten', { rapport: r });
     r.nummer = d.nummer; r.door = ME.login;
     CACHE[r.nummer] = r;
@@ -1517,7 +1861,14 @@ async function submitReport() {
     const mailTo = objByName(r.object)?.email || r.email;
     if (mailTo && confirm(`Rapport nu mailen naar ${mailTo}?`)) mailReport(r);
   } catch (e) {
-    toast(e.status === 0 ? 'Geen verbinding. Je rapport blijft bewaard als concept; probeer het straks opnieuw.' : e.message, true);
+    if (e.status === 0 && MODE !== 'demo') {
+      try {
+        await queueReport(r);
+        Store.set(DRAFT_KEY(), null); draft = null;
+        toast('Geen internet. Het rapport staat veilig op je telefoon en wordt verstuurd zodra je weer online bent.', false, 8000);
+        return go('overzicht');
+      } catch (x) { toast('Geen verbinding. Je rapport blijft bewaard als concept; probeer het straks opnieuw.', true); }
+    } else toast(e.message, true);
     if (btn.isConnected) { btn.disabled = false; btn.textContent = 'Opslaan en afronden'; }
   }
 }
@@ -1788,9 +2139,16 @@ function overviewDialog() {
   openModal(`<h2>Periode-overzicht</h2><p class="muted" style="font-size:14px">Een PDF met alle rapporten van een ${esc(l.object.toLowerCase())} in een periode, bijvoorbeeld voor het maandgesprek met de opdrachtgever.</p>
     <form id="f-ov" class="stack" style="margin-top:14px">
       <label>${esc(l.object)}<select name="obj"><option value="">Alle ${esc(l.objecten.toLowerCase())}</option>${objs.map(o => `<option>${esc(o)}</option>`).join('')}</select></label>
+      <div class="seg-f" style="margin:0">${[['m0', 'Deze maand'], ['m1', 'Vorige maand'], ['d30', '30 dagen']].map(([k, t]) => `<button type="button" data-pre="${k}"${k === 'd30' ? ' class="on"' : ''}>${t}</button>`).join('')}</div>
       <div class="grid2 keep"><label>Van<input type="date" name="from" value="${daysAgo(29)}" required></label><label>Tot en met<input type="date" name="to" value="${todayISO()}" required></label></div>
       <div class="row"><button type="button" class="btn btn-ghost" data-close style="flex:1">Annuleren</button><button class="btn btn-primary" style="flex:1">PDF maken</button></div>
     </form>`);
+  $$('#f-ov [data-pre]').forEach(b => b.onclick = () => {
+    const n = new Date(), y = n.getFullYear(), m = n.getMonth(), k = b.dataset.pre;
+    const [f, t] = k === 'm0' ? [todayISO(new Date(y, m, 1)), todayISO()] : k === 'm1' ? [todayISO(new Date(y, m - 1, 1)), todayISO(new Date(y, m, 0))] : [daysAgo(29), todayISO()];
+    $('#f-ov [name=from]').value = f; $('#f-ov [name=to]').value = t;
+    $$('#f-ov [data-pre]').forEach(x => x.classList.toggle('on', x === b));
+  });
   $('#f-ov').onsubmit = async e => {
     e.preventDefault(); const f = new FormData(e.target), btn = e.target.querySelector('.btn-primary');
     const obj = f.get('obj'), from = f.get('from'), to = f.get('to');
@@ -1813,7 +2171,9 @@ function overviewPdf(obj, from, to, rs) {
   const cnt = t => rs.filter(r => r.type === t).length;
   const afw = rs.filter(r => r.type === 'ronde').reduce((n, r) => n + ((r.ronde || {}).punten || []).filter(p => p.status === 'Afwijking').length, 0);
   w.kv([[l.object, obj || `Alle ${l.objecten.toLowerCase()}`], ['Periode', `${fmtDate(from)} t/m ${fmtDate(to)}`],
-    [l.types.dienst, String(cnt('dienst'))], [l.types.incident, String(cnt('incident'))], [l.types.ronde, String(cnt('ronde'))], ['Afwijkingen bij rondes', String(afw)]]);
+    [l.types.dienst, String(cnt('dienst'))], [l.types.incident, String(cnt('incident'))], [l.types.ronde, String(cnt('ronde'))], ['Afwijkingen bij rondes', String(afw)],
+    ...(() => { const pt = rs.filter(r => r.type === 'ronde').flatMap(r => (r.ronde || {}).punten || []); return pt.length ? [['Checkpoints in orde', `${Math.round(pt.filter(p => p.status === 'OK').length / pt.length * 100)}% (${pt.filter(p => p.status === 'OK').length} van ${pt.length})`], ['Via QR gescand', `${Math.round(pt.filter(p => p.qr).length / pt.length * 100)}%`]] : []; })(),
+    ['Hoge prioriteit', String(rs.filter(r => r.type === 'incident' && r.incident?.prio === 'Hoog').length)]]);
   const inc = rs.filter(r => r.type === 'incident');
   if (inc.length) {
     w.h2(`${l.types.incident} in deze periode`);
@@ -1862,6 +2222,13 @@ function viewObject(key) {
         <label>Post- / werkinstructies<textarea name="instructie" rows="5" maxlength="5000" placeholder="bijv. openingstijden, sleutelkast, alarmprocedure, wie bellen bij calamiteiten">${esc(od.instructie || '')}</textarea></label>
         <p class="hint">Je team ziet dit bovenaan elk nieuw rapport voor deze ${esc(l.object.toLowerCase())}. Zet hier geen alarmcodes of wachtwoorden in.</p>
       </section>
+      <section class="card"><h2>Bewaking & alarm</h2><div class="stack">
+        <div class="grid3"><label>Ronde verplicht elke<select name="rondeElke">${[[0, 'Uit'], [30, '30 min'], [45, '45 min'], [60, '1 uur'], [90, '1,5 uur'], [120, '2 uur'], [180, '3 uur'], [240, '4 uur']].map(([v, t]) => `<option value="${v}"${(+od.rondeElke || 0) === v ? ' selected' : ''}>${t}</option>`).join('')}</select></label>
+        <label>Tussen<input type="time" name="rondeVan" value="${esc(od.rondeVan || '22:00')}"></label><label>En<input type="time" name="rondeTot" value="${esc(od.rondeTot || '06:00')}"></label></div>
+        <p class="hint" style="margin:0">Wordt er in die tijd te lang geen checkpoint gescand, dan krijg je automatisch een alarm.${VELD.laatsteRonde && VELD.laatsteRonde[od.naam] ? ` Laatste scan: ${esc(new Date(VELD.laatsteRonde[od.naam]).toLocaleString('nl-NL', { weekday: 'short', hour: '2-digit', minute: '2-digit' }))}.` : ''}</p>
+        <label class="check"><input type="checkbox" name="alarmKlant"${od.alarmKlant ? ' checked' : ''}> Opdrachtgever direct mailen bij een melding met hoge prioriteit</label>
+        ${ROOSTER && ROOSTER.ok && ROOSTER.opdrachten.length ? `<label>Opdracht in Oibase<select name="oibaseOpdracht"><option value="">— zelfde naam (${esc(od.naam || 'nieuw')}) —</option>${ROOSTER.opdrachten.map(n => `<option${n === od.oibaseOpdracht ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>` : ''}
+      </div></section>
       <section class="card"><div class="sec-t"><h2>Checkpoints</h2><div class="row">
         <button type="button" class="btn btn-ghost sm" id="cp-add">+ Checkpoint</button>
         <button type="button" class="btn btn-ghost sm" id="cp-qr">QR-bordjes (PDF)</button></div></div>
@@ -1918,6 +2285,9 @@ function viewObject(key) {
     od.contact = String(f.get('contact') || '').trim();
     od.telefoon = String(f.get('telefoon') || '').trim();
     od.instructie = String(f.get('instructie') || '').trim();
+    od.rondeElke = +f.get('rondeElke') || 0; od.rondeVan = String(f.get('rondeVan') || ''); od.rondeTot = String(f.get('rondeTot') || '');
+    od.alarmKlant = !!f.get('alarmKlant'); if (f.has('oibaseOpdracht')) od.oibaseOpdracht = String(f.get('oibaseOpdracht') || '');
+    if (od.rondeElke && (!od.rondeVan || !od.rondeTot || od.rondeVan === od.rondeTot)) return toast('Vul bij de rondebewaking een begin- en eindtijd in.', true);
     if (od.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(od.email)) return toast('Het e-mailadres klopt niet.', true);
     od.checkpoints = od.checkpoints.filter(c => c.naam.trim()).map(c => ({ id: c.id, naam: c.naam.trim() }));
     const list = clone(OBJ);
@@ -2020,6 +2390,14 @@ function viewSettings() {
       <p class="muted" style="font-size:14px">Download al je rapporten als bestand, voor je eigen archief.</p>
       <div class="row" style="margin-top:12px"><button class="btn btn-ghost sm" id="s-exp">Alle rapporten downloaden (JSON)</button></div>
     </section>` : ''}
+    ${admin ? `<section class="card"><h2>Alarmen</h2><form id="f-alarm" class="stack">
+      <p class="muted" style="font-size:14px">Alarmen (hoge prioriteit, gemiste ronde, alleenwerker reageert niet, noodmelding) gaan altijd naar <b style="color:var(--txt)">${esc(B.email || 'je eigen adres')}</b>. Zet hier extra adressen, bijvoorbeeld je meldkamer of leidinggevende.</p>
+      ${[0, 1, 2].map(n => `<input type="email" name="a${n}" value="${esc((B.alarmEmails || [])[n] || '')}" placeholder="extra@adres.nl" autocomplete="off">`).join('')}
+      <button class="btn btn-ghost sm" style="align-self:flex-start">Opslaan</button></form>
+      ${VELD.koppeling && !VELD.koppeling.bewaking ? '<p class="warn">De automatische controle op gemiste rondes en alleenwerkers is nog niet ingesteld op de server. Alarmen bij hoge prioriteit en noodmeldingen werken wel.</p>' : ''}</section>
+    <section class="card"><h2>Koppeling met Oibase</h2>
+      <p class="muted" style="font-size:14px">Zie het rooster uit Oibase in Oisecur: wie vandaag werkt en waar. Een nieuw rapport krijgt automatisch het juiste ${esc(L().object.toLowerCase())} en de diensttijden. Werkt met het Oibase-account op ${esc(B.email || 'je e-mailadres')}.</p>
+      <div class="row" style="margin-top:12px;align-items:center">${VELD.koppeling?.aan ? `<span class="tag ${ROOSTER?.ok ? 'green' : 'amber'}">${ROOSTER?.ok ? 'Gekoppeld · ' + ROOSTER.diensten.length + ' diensten' : ROOSTER?.reden === 'bevestigen' ? 'Wacht op bevestiging e-mail' : ROOSTER?.reden === 'niet-gevonden' ? 'Geen Oibase-account gevonden' : 'Aan'}</span><button class="btn btn-ghost sm" id="s-oib" data-aan="0">Uitzetten</button>` : '<button class="btn btn-primary sm" id="s-oib" data-aan="1">Koppelen</button>'}</div></section>` : ''}
     ${admin && PLAN ? `<section class="card"><h2>Abonnement</h2><p class="muted" style="font-size:14px">${PLAN.plan === 'proef' ? `Proefperiode${PLAN.proefTot ? ` tot en met <b style="color:var(--txt)">${esc(fmtDate(PLAN.proefTot))}</b> (${Math.max(0, dayDiff(todayISO(), PLAN.proefTot))} dagen)` : ''}. Wil je doorgaan? Mail naar <a href="mailto:info@oisecur.nl" style="color:var(--blauw)">info@oisecur.nl</a>.`
       : PLAN.plan === 'oibase' ? 'Gratis via je Oibase Enterprise-abonnement.' : 'Actief abonnement.'}</p></section>` : ''}
     <section class="card"><h2>Wachtwoord wijzigen</h2><form id="f-pw" class="stack" novalidate>
@@ -2041,6 +2419,22 @@ function viewSettings() {
     catch (x) { toast(x.message, true); }
   };
   if (!admin) return;
+  $('#f-alarm').onsubmit = async e => {
+    e.preventDefault(); const f = Object.fromEntries(new FormData(e.target));
+    const list = [f.a0, f.a1, f.a2].map(x => String(x || '').trim()).filter(Boolean);
+    if (list.some(x => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x))) return toast('Een van de e-mailadressen klopt niet.', true);
+    try { await call('stamdata', { actie: 'profiel', alarmEmails: list }); B.alarmEmails = list; toast('Alarmadressen opgeslagen'); } catch (x) { toast(x.message, true); }
+  };
+  $('#s-oib').onclick = async e => {
+    const aan = e.target.dataset.aan === '1';
+    try {
+      const d = await call('veld', { actie: 'koppel-oibase', aan });
+      VELD.koppeling = { ...(VELD.koppeling || {}), aan: d.aan, bevestigd: d.bevestigd };
+      if (aan && !d.bevestigd) toast(d.mail ? `We hebben een bevestigingsmail gestuurd naar ${B.email}. Klik op de link, dan staat de koppeling aan.` : 'Bevestig eerst je e-mailadres. De mail kon niet worden verstuurd; mail info@oisecur.nl.', !d.mail, 9000);
+      else toast(aan ? 'Gekoppeld met Oibase' : 'Koppeling uitgezet');
+      await loadRooster(); viewSettings();
+    } catch (x) { toast(x.message, true); }
+  };
   $('#f-bedrijf').onsubmit = async e => {
     e.preventDefault(); const f = Object.fromEntries(new FormData(e.target));
     if (!f.naam.trim()) return toast('Vul een bedrijfsnaam in.', true);
@@ -2189,7 +2583,7 @@ function seedDemo() {
       { tijd: '08:15', oms: 'Leverancier toegelaten bij dock 2, pakbon gecontroleerd.', gps: null }], overdracht: '' })
   ];
   const D = {
-    bedrijf: { id: 'DEMO', naam: 'Demo Beveiliging B.V.', logo: '', branche: 'beveiliging' },
+    bedrijf: { id: 'DEMO', naam: 'Demo Beveiliging B.V.', logo: '', branche: 'beveiliging', email: 'demo@oisecur.nl', alarmEmails: [] },
     objecten, diensten: [{ naam: 'Dagdienst', van: '07:00', tot: '15:00' }, { naam: 'Avonddienst', van: '15:00', tot: '23:00' }, { naam: 'Nachtdienst', van: '23:00', tot: '07:00' }],
     users: [{ naam: 'Demo Beheerder', pnr: '', login: 'demo@oisecur.nl', rol: 'beheerder' }, { naam: 'Jan de Vries', pnr: 'BV-1042', login: 'jan@demo.nl', rol: 'medewerker' },
       { naam: 'Sanne Bakker', pnr: 'BV-1077', login: 'sanne@demo.nl', rol: 'medewerker' }, { naam: 'Mehmet Yilmaz', pnr: 'BV-1103', login: 'mehmet@demo.nl', rol: 'medewerker' }],
@@ -2219,6 +2613,30 @@ function seedDemo() {
   rs.filter(r => r.type === 'incident' && r.datum < daysAgo(6)).forEach(r => (D.opv[r.nummer] = { status: 'Afgehandeld', log: [{ t: new Date(r.datum + 'T10:00').toISOString(), door: 'demo@oisecur.nl', status: 'Afgehandeld' }] }));
   const ir = rs.find(r => r.nummer === 'DEMO-IR-' + y.replace(/-/g, '') + '-002');
   if (ir) D.opv[ir.nummer] = { status: 'In behandeling', log: [{ t: new Date().toISOString(), door: 'demo@oisecur.nl', status: 'In behandeling' }, { t: new Date().toISOString(), door: 'demo@oisecur.nl', tekst: 'Opdrachtgever gebeld. Hekwerk wordt vrijdag gerepareerd, camerabeelden opgevraagd.' }] };
+  const iso = (dAgo, hm) => { const x = new Date(); x.setDate(x.getDate() - dAgo); const [H, M] = hm.split(':'); x.setHours(+H, +M, 0, 0); return x.toISOString(); };
+  const sig2 = demoSignature();
+  D.veld = {
+    alleen: null, sigs: { a1b2c3d4e5f6: sig2 },
+    team: [{ naam: 'Mehmet Yilmaz', object: o2.naam, minuten: 30, laatste: new Date(Date.now() - 18 * 60000).toISOString(), alarm: false, login: 'mehmet@demo.nl' }],
+    laatste: { [o1.naam]: iso(0, '01:00'), [o2.naam]: new Date(Date.now() - 40 * 60000).toISOString() },
+    alarmen: [
+      { id: 'AL1', t: iso(0, '03:15'), soort: 'ronde', object: o1.naam, titel: `Geen ronde op ${o1.naam}`, tekst: 'Sinds 01:00 is er geen checkpoint gescand. Afspraak: elke 2 uur een ronde tussen 22:00 en 06:00.', afgehandeld: false },
+      { id: 'AL2', t: iso(1, '01:48'), soort: 'incident', object: o1.naam, wie: 'Jan de Vries', titel: `Vandalisme / schade op ${o1.naam}`, tekst: 'Hekwerk zuidzijde geforceerd aangetroffen. Politie ter plaatse.', nummer: 'DEMO-IR-' + y.replace(/-/g, '') + '-002', gps: gps(6, 8), afgehandeld: true, afDoor: 'Demo Beheerder' }
+    ],
+    sleutels: { items: [
+      { id: 'K1', naam: 'Hoofdsleutel portiersloge', soort: 'Sleutel', nummer: '01', object: o1.naam, uit: null },
+      { id: 'K2', naam: 'Toegangspas laaddocks', soort: 'Pas', nummer: 'P-114', object: o1.naam, uit: { aan: 'R. de Boer', org: 'Schoonmaak Noord', t: iso(0, '07:15'), door: 'Sanne Bakker', h: 'a1b2c3d4e5f6' } },
+      { id: 'K3', naam: 'Sleutel serverruimte', soort: 'Sleutel', nummer: '07', object: o2.naam, uit: null },
+      { id: 'K4', naam: 'Portofoon 2', soort: 'Portofoon', nummer: 'PF-2', object: o2.naam, uit: null }],
+      log: [{ itemId: 'K2', naam: 'Toegangspas laaddocks', actie: 'uit', aan: 'R. de Boer', org: 'Schoonmaak Noord', t: iso(0, '07:15'), door: 'Sanne Bakker', h: 'a1b2c3d4e5f6' },
+        { itemId: 'K1', naam: 'Hoofdsleutel portiersloge', actie: 'in', aan: 'Installatiebedrijf Oost', org: '', t: iso(1, '16:40'), door: 'Jan de Vries', h: '' }] }
+  };
+  const rd = (dAgo, naam, pnr, obj, type, van, tot) => ({ id: uid(), datum: daysAgo(dAgo), type, van, tot, opdracht: obj, adres: '', naam, pnr });
+  D.rooster = { ok: true, bedrijf: 'Demo Beveiliging B.V.', opdrachten: [o1.naam, o2.naam], diensten: [
+    rd(0, 'Sanne Bakker', 'BV-1077', o2.naam, 'Ochtend', '07:00', '15:00'), rd(0, 'Mehmet Yilmaz', 'BV-1103', o2.naam, 'Avond', '15:00', '23:00'),
+    rd(0, 'Jan de Vries', 'BV-1042', o1.naam, 'Nacht', '23:00', '07:00'), rd(-1, 'Sanne Bakker', 'BV-1077', o2.naam, 'Ochtend', '07:00', '15:00'),
+    rd(-1, 'Jan de Vries', 'BV-1042', o1.naam, 'Nacht', '23:00', '07:00'), rd(-2, 'Mehmet Yilmaz', 'BV-1103', o1.naam, 'Nacht', '23:00', '07:00')] };
+  objecten[0].rondeElke = 120; objecten[0].rondeVan = '22:00'; objecten[0].rondeTot = '06:00'; objecten[0].alarmKlant = true;
   const od0 = rs.find(r => r.overdracht); if (od0) D.overdracht[o1.naam] = { tekst: od0.overdracht, naam: od0.naam, datum: od0.datum, tot: od0.tot, nummer: od0.nummer };
   return D;
 }

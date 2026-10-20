@@ -29,9 +29,14 @@ export default async function handler(req, res) {
   const nummers = (await kv.lrange(`bedrijf:${bid}:rapporten`, 0, 499)) || [];
   const alle = nummers.length ? await Promise.all(nummers.map(n => kv.get(`rapport:${bid}:${n}`))) : [];
   const rapporten = alle.filter(Boolean).filter(r => r.object === objectNaam)
-    .map(r => ({ nummer: r.nummer, type: r.type, naam: r.naam, datum: r.datum }));
+    .map(r => {
+      const pt = r.type === 'ronde' ? ((r.ronde || {}).punten || []) : [], i = r.incident || {};
+      return { nummer: r.nummer, type: r.type, naam: r.naam, datum: r.datum,
+        ...(r.type === 'incident' ? { cat: i.cat || '', prio: i.prio || '', politie: !!i.politie } : {}),
+        ...(r.type === 'ronde' ? { cp: pt.length, ok: pt.filter(p => p.status === 'OK').length, afw: pt.filter(p => p.status === 'Afwijking').length, qr: pt.filter(p => p.qr).length } : {}) };
+    });
   return res.status(200).json({
-    bedrijf: { naam: bedrijf.naam, logo: bedrijf.logo || '' },
+    bedrijf: { naam: bedrijf.naam, logo: bedrijf.logo || '', branche: bedrijf.branche || 'beveiliging' },
     object: objectNaam, rapporten
   });
 }

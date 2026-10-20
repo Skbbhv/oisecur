@@ -173,3 +173,78 @@ export async function synchroniseerOibase(bedrijf) {
   }
   return bedrijf;
 }
+
+/* ── Tijd in Nederland (server draait in UTC) ── */
+export const TZ = 'Europe/Amsterdam';
+export function amsParts(d = new Date()) {
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+    .formatToParts(d).map(x => [x.type, x.value]));
+  return { datum: `${p.year}-${p.month}-${p.day}`, hm: `${p.hour}:${p.minute}` };
+}
+// Nederlandse datum + tijd → UTC-milliseconden
+export function amsNaarUtc(datum, hm) {
+  const [y, m, d] = datum.split('-').map(Number), [H, M] = hm.split(':').map(Number);
+  const doel = Date.UTC(y, m - 1, d, H, M);
+  let t = doel;
+  for (let i = 0; i < 3; i++) {
+    const p = amsParts(new Date(t));
+    const [y2, m2, d2] = p.datum.split('-').map(Number), [H2, M2] = p.hm.split(':').map(Number);
+    const diff = Date.UTC(y2, m2 - 1, d2, H2, M2) - doel;
+    if (!diff) break; t -= diff;
+  }
+  return t;
+}
+export const dagErvoor = datum => new Date(Date.parse(datum + 'T12:00:00Z') - 864e5).toISOString().slice(0, 10);
+export const amsHm = ms => amsParts(new Date(ms)).hm;
+
+/* ── Alarmen: lijst per bedrijf + mail naar de alarmontvangers ── */
+export function alarmOntvangers(bedrijf) {
+  const lijst = [bedrijf && bedrijf.email, ...((bedrijf && bedrijf.alarmEmails) || [])].map(e => String(e || '').toLowerCase().trim()).filter(IS_EMAIL);
+  return [...new Set(lijst)].slice(0, 4);
+}
+const ALARM_KOP = { incident: 'Melding met hoge prioriteit', ronde: 'Ronde gemist', alleen: 'Alleenwerker reageert niet', sos: 'NOODMELDING' };
+export async function maakAlarm(bid, bedrijf, alarm, { extraTo = [], fetchFn = fetch } = {}) {
+  const a = { id: crypto.randomBytes(6).toString('hex'), t: new Date().toISOString(), afgehandeld: false, ...alarm };
+  const sleutel = `bedrijf:${bid}:alarmen`;
+  const lijst = (await kv.get(sleutel)) || [];
+  lijst.unshift(a);
+  await kv.set(sleutel, lijst.slice(0, 200));
+  const aan = [...new Set([...alarmOntvangers(bedrijf), ...extraTo.map(e => String(e || '').toLowerCase().trim()).filter(IS_EMAIL)])];
+  if (!aan.length || !process.env.RESEND_API_KEY) return a;
+  const dag = new Date().toISOString().slice(0, 10);
+  const n = await kv.incr(`mail:alarm:${bid}:${dag}`);
+  if (n === 1) await kv.expire(`mail:alarm:${bid}:${dag}`, 2 * 864e2);
+  if (n > 80) return a;
+  const kop = ALARM_KOP[a.soort] || 'Alarm';
+  const gps = a.gps && Number.isFinite(a.gps.lat) ? `<p><a href="https://maps.google.com/?q=${a.gps.lat},${a.gps.lng}">Locatie op de kaart (${a.gps.lat.toFixed(5)}, ${a.gps.lng.toFixed(5)})</a></p>` : '';
+  const html = `<div style="font-family:Arial,sans-serif;font-size:15px;color:#1f2937;max-width:600px">
+    <div style="background:${a.soort === 'sos' || a.soort === 'alleen' ? '#c1121f' : '#0d2456'};color:#fff;padding:14px 18px;border-radius:10px 10px 0 0;font-weight:bold;font-size:17px">${escHtml(kop)}</div>
+    <div style="border:1px solid #e5e7eb;border-top:none;padding:16px 18px;border-radius:0 0 10px 10px">
+    <h2 style="margin:0 0 8px;font-size:18px;color:#0d2456">${escHtml(a.titel || kop)}</h2>
+    ${a.tekst ? `<p style="white-space:pre-wrap">${escHtml(a.tekst)}</p>` : ''}
+    <p style="color:#6b7280">${a.object ? 'Locatie: ' + escHtml(a.object) + '<br>' : ''}${a.wie ? 'Medewerker: ' + escHtml(a.wie) + '<br>' : ''}Tijd: ${escHtml(amsParts(new Date(a.t)).hm)} (${escHtml(amsParts(new Date(a.t)).datum.split('-').reverse().join('-'))})</p>
+    ${gps}
+    <p><a href="https://oisecur.nl/app.html#/opvolging" style="display:inline-block;background:#0a5ff0;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:bold">Open Oisecur</a></p>
+    <p style="color:#9ca3af;font-size:12px">${escHtml((bedrijf && bedrijf.naam) || '')} · automatisch alarm van Oisecur</p></div></div>`;
+  const onderwerp = `${a.soort === 'sos' ? '🚨 ' : '⚠️ '}${kop}: ${a.titel || ''}`;
+  await Promise.all(aan.map(to => stuurMail({ to, subject: onderwerp, html }, fetchFn).catch(() => false)));
+  return a;
+}
+
+/* ── Oibase-rooster (alleen-lezen) ── */
+export const OIBASE_START = Date.UTC(2026, 6, 6);   // maandag 6 juli 2026 = week 0 in Oibase
+export const OIBASE_TYPES = { Ochtend: ['08:00', '16:00'], Avond: ['16:00', '23:00'], Nacht: ['23:00', '07:00'], Tussendienst: ['11:00', '19:00'] };
+export async function oibaseRooster(email, vanWeek, totWeek, fetchFn = fetch) {
+  const geheim = process.env.OIBASE_KOPPELING_GEHEIM;
+  if (!geheim) return { ok: false, reden: 'geen-geheim' };
+  try {
+    const r = await fetchFn(OIBASE_SUPABASE + '/rest/v1/rpc/oisecur_rooster', {
+      method: 'POST', headers: { apikey: OIBASE_PUBLIEK, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_email: String(email || '').toLowerCase().trim(), p_geheim: geheim, p_van_week: vanWeek, p_tot_week: totWeek }),
+      signal: AbortSignal.timeout(5000)
+    });
+    if (!r.ok) return { ok: false, reden: 'oibase-fout' };
+    const d = await r.json();
+    return d && d.ok ? d : { ok: false, reden: 'niet-gevonden' };
+  } catch { return { ok: false, reden: 'oibase-onbereikbaar' }; }
+}

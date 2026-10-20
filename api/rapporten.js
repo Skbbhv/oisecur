@@ -4,7 +4,7 @@
 // POST /api/rapporten {actie:'verwijderen', nummer} (alleen beheerder)
 // POST /api/rapporten {actie:'opvolging', nummer|nummers, status, notitie} (alleen beheerder)
 //   Opvolging van meldingen staat los van het (vastgelegde) rapport in bedrijf:<bid>:opvolging
-import { kv, sessieUitToken, fout, fotoSleutels, IS_AFBEELDING } from './_lib.js';
+import { kv, sessieUitToken, fout, fotoSleutels, IS_AFBEELDING, maakAlarm } from './_lib.js';
 
 const CODE = { dienst: 'DR', incident: 'IR', ronde: 'CR' };
 const STATUSSEN = ['OK', 'Afwijking', 'Niet gecontroleerd'];
@@ -185,6 +185,23 @@ export default async function handler(req, res) {
 
   await kv.set(`rapport:${bid}:${r.nummer}`, r);
   await kv.lpush(`bedrijf:${bid}:rapporten`, r.nummer);
+  // Ronde opgeslagen: telt voor de rondebewaking
+  if (r.type === 'ronde' && r.object) {
+    try { const k = `bedrijf:${bid}:laatsteronde`; const m = (await kv.get(k)) || {}; m[r.object] = r.aangemaakt; await kv.set(k, m); } catch {}
+  }
+  // Melding met hoge prioriteit: direct alarm naar de beheerder (en desgewenst de opdrachtgever)
+  if (r.type === 'incident' && r.incident.prio === 'Hoog') {
+    try {
+      const [bedrijf, objecten] = await Promise.all([kv.get(`bedrijf:${bid}`), kv.get(`bedrijf:${bid}:objecten`)]);
+      const obj = (objecten || []).find(o => o.naam === r.object);
+      const i = r.incident;
+      await maakAlarm(bid, bedrijf, {
+        soort: 'incident', object: r.object, wie: r.naam, login: r.door, nummer: r.nummer, gps: r.gps || null,
+        titel: `${i.cat || 'Melding'} op ${r.object || 'onbekende locatie'}`,
+        tekst: `${i.tijd ? i.tijd + ' · ' : ''}${i.loc ? i.loc + '\n' : ''}${i.oms}${i.politie ? '\nPolitie ter plaatse.' : ''}${i.actie ? '\nGenomen acties: ' + i.actie : ''}\nRapport: ${r.nummer}`
+      }, { extraTo: obj && obj.alarmKlant && obj.email ? [obj.email] : [] });
+    } catch {}
+  }
   // Laatste overdracht per object bewaren, zodat de volgende dienst (ook een collega) die ziet
   if (r.type === 'dienst' && r.overdracht && r.object) {
     try {

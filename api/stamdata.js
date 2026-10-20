@@ -37,7 +37,8 @@ export default async function handler(req, res) {
     }
     return res.status(200).json({
       rol: sessie.rol,
-      bedrijf: { id: bedrijf.id, naam: bedrijf.naam, logo: bedrijf.logo || '', branche: bedrijf.branche || 'beveiliging' },
+      bedrijf: { id: bedrijf.id, naam: bedrijf.naam, logo: bedrijf.logo || '', branche: bedrijf.branche || 'beveiliging',
+        ...(sessie.rol === 'beheerder' ? { alarmEmails: bedrijf.alarmEmails || [], email: bedrijf.email || '' } : {}) },
       objecten: objecten || [], diensten: diensten || [], medewerkers,
       mededelingen: (Array.isArray(mededelingen) ? mededelingen : [])
         .filter(m => sessie.rol === 'beheerder' || !m.tot || m.tot >= vandaag),
@@ -80,6 +81,8 @@ export default async function handler(req, res) {
       bedrijf.logo = b.logo || '';
     }
     if (b.branche && BRANCHES.includes(b.branche)) bedrijf.branche = b.branche;
+    if (Array.isArray(b.alarmEmails)) bedrijf.alarmEmails = b.alarmEmails.map(e => String(e || '').toLowerCase().trim())
+      .filter(e => e.length <= 200 && /^[^\s@<>"',;]+@[^\s@<>"',;]+\.[^\s@<>"',;]+$/.test(e)).slice(0, 3);
     await kv.set(`bedrijf:${bid}`, bedrijf);
     return res.status(200).json({ ok: true });
   }
@@ -89,6 +92,10 @@ export default async function handler(req, res) {
       .map(o => ({
         naam: str(o.naam, 120), adres: str(o.adres, 200), email: str(o.email, 200),
         contact: str(o.contact, 120), telefoon: str(o.telefoon, 40), instructie: str(o.instructie, 5000),
+        rondeElke: [0, 30, 45, 60, 90, 120, 180, 240].includes(Number(o.rondeElke)) ? Number(o.rondeElke) : 0,
+        rondeVan: /^\d{2}:\d{2}$/.test(String(o.rondeVan || '')) ? String(o.rondeVan) : '',
+        rondeTot: /^\d{2}:\d{2}$/.test(String(o.rondeTot || '')) ? String(o.rondeTot) : '',
+        alarmKlant: !!o.alarmKlant, oibaseOpdracht: str(o.oibaseOpdracht, 120),
         checkpoints: (Array.isArray(o.checkpoints) ? o.checkpoints : []).slice(0, 200)
           .map(c => ({ id: str(c && c.id, 40), naam: str(c && c.naam, 120) })),
         ...(typeof o.portaal === 'string' && /^[a-f0-9]{16,64}$/.test(o.portaal) ? { portaal: o.portaal } : {})

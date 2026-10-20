@@ -1,6 +1,9 @@
-// Wekelijkse samenvatting per object naar de opdrachtgever.
-// Draait via Vercel Cron (zie vercel.json, maandag 07:00). Beveiligd met CRON_SECRET.
-import { kv, fout, veiligGelijk, escHtml } from './_lib.js';
+// Samenvattingen per object naar de opdrachtgever. Draait dagelijks via Vercel Cron (zie vercel.json).
+//  - maandag: weekoverzicht van de afgelopen 7 dagen
+//  - de 1e van de maand: maandrapport van de vorige maand (cijfers + link naar het portaal met PDF)
+// Beveiligd met CRON_SECRET. Handmatig: ?soort=week of ?soort=maand
+import { kv, fout, veiligGelijk, escHtml, amsParts } from './_lib.js';
+import { maandMails } from './_maand.js';
 
 const FROM = 'Oisecur Rapportage <rapportage@oisecur.nl>';
 
@@ -8,6 +11,15 @@ export default async function handler(req, res) {
   const geheim = process.env.CRON_SECRET;
   if (!geheim || !veiligGelijk(req.headers.authorization || '', `Bearer ${geheim}`))
     return fout(res, 401, 'Geen toegang.');
+
+  const { datum } = amsParts();
+  const dagVanWeek = new Date(datum + 'T12:00:00Z').getUTCDay();   // 1 = maandag
+  const soort = String((req.query && req.query.soort) || '');
+  const doeWeek = soort ? soort === 'week' : dagVanWeek === 1;
+  const doeMaand = soort ? soort === 'maand' : datum.endsWith('-01');
+  let maand = 0;
+  if (doeMaand) { try { maand = await maandMails(datum); } catch (e) { console.error('maandmail', e); } }
+  if (!doeWeek) return res.status(200).json({ ok: true, verstuurd: 0, maand });
 
   const week = 7 * 24 * 3600 * 1000;
   const vanaf = new Date(Date.now() - week).toISOString().slice(0, 10);
@@ -52,5 +64,5 @@ export default async function handler(req, res) {
       if (r.ok) verstuurd++;
     }
   }
-  return res.status(200).json({ ok: true, verstuurd });
+  return res.status(200).json({ ok: true, verstuurd, maand });
 }

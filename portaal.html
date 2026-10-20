@@ -60,6 +60,16 @@ h1{font-family:var(--ui);font-size:26px;font-weight:800;letter-spacing:-.02em}
 .pr .pr-foot{margin-top:28px;font-size:10px;color:#888;border-top:1px solid #ccc;padding-top:6px;display:flex;justify-content:space-between}
 .pr .sev-hoog{color:#c1121f;font-weight:700}
 .pr .afw{color:#c1121f;font-weight:600}
+.maandbalk{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:14px}
+.maandbalk b{flex:1;min-width:120px}
+.maandbalk select{font:inherit;font-size:15px;padding:8px 10px;border:1px solid var(--line-2);border-radius:9px;background:#fff}
+.mr-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:6px 0 14px}
+.mr-kpi div{border:1px solid #bbb;padding:8px 10px}
+.mr-kpi span{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:#666}
+.mr-kpi b{font-family:'Barlow Condensed';font-size:26px;color:var(--navy)}
+.mr-bar{display:grid;grid-template-columns:150px 1fr 40px;gap:8px;align-items:center;margin:4px 0}
+.mr-bar i{display:block;height:10px;background:var(--navy)}
+@media(max-width:600px){.mr-kpi{grid-template-columns:1fr 1fr}.rij{grid-template-columns:1fr;gap:8px}#rapport{padding:16px}}
 @media print{
   body{background:#fff}
   .wrap>*:not(#rapport){display:none!important}
@@ -75,6 +85,7 @@ h1{font-family:var(--ui);font-size:26px;font-weight:800;letter-spacing:-.02em}
     <button class="knop" onclick="sluitRapport()">← Terug naar overzicht</button>
     <button class="knop" onclick="window.print()">Afdrukken / PDF</button>
   </div>
+  <div id="maandbalk" class="maandbalk" hidden><b>Maandrapport</b><select id="m-sel"></select><button class="knop" id="m-open">Bekijken / PDF</button></div>
   <div id="lijst"></div>
   <div id="rapport"></div>
 </div>
@@ -83,7 +94,8 @@ h1{font-family:var(--ui);font-size:26px;font-weight:800;letter-spacing:-.02em}
 'use strict';
 const $ = id => document.getElementById(id);
 const token = new URLSearchParams(location.search).get('t');
-let bedrijf = null;
+let bedrijf = null, ALLE = [], OBJECT = '';
+const MAANDEN = ['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
 
 function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 function fmtDate(iso){ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso||'')); return m ? m[3]+'-'+m[2]+'-'+m[1] : '—'; }
@@ -97,7 +109,14 @@ async function laad(){
     const res = await fetch('/api/portaal?token='+encodeURIComponent(token));
     const d = await res.json();
     if(!res.ok) throw new Error(d.fout||'Fout');
-    bedrijf = d.bedrijf;
+    bedrijf = d.bedrijf; ALLE = d.rapporten || []; OBJECT = d.object;
+    const maanden = [...new Set(ALLE.map(r => String(r.datum || '').slice(0, 7)).filter(Boolean))].sort().reverse();
+    if (maanden.length) {
+      $('m-sel').innerHTML = maanden.map(m => '<option value="'+m+'">'+MAANDEN[+m.slice(5,7)-1]+' '+m.slice(0,4)+'</option>').join('');
+      $('maandbalk').hidden = false;
+      const want = new URLSearchParams(location.search).get('maand');
+      if (want && maanden.includes(want)) { $('m-sel').value = want; setTimeout(() => openMaand(want), 50); }
+    }
     if(isImg(bedrijf.logo)){ $('p-logo').src=bedrijf.logo; $('p-logo').hidden=false; }
     $('p-titel').textContent = d.object;
     $('p-sub').textContent = 'Beveiligingsrapportages door '+bedrijf.naam+' — alleen-lezen overzicht.';
@@ -129,7 +148,31 @@ async function openRapport(nummer){
   }catch(e){ alert(e.message); }
 }
 $('lijst').addEventListener('click', e=>{ const b=e.target.closest('[data-nummer]'); if(b) openRapport(b.dataset.nummer); });
+$('m-open').addEventListener('click', () => openMaand($('m-sel').value));
+function openMaand(m){
+  const rs = ALLE.filter(r => String(r.datum || '').startsWith(m));
+  const inc = rs.filter(r => r.type === 'incident'), ron = rs.filter(r => r.type === 'ronde');
+  const cp = ron.reduce((n, r) => n + (r.cp || 0), 0), ok = ron.reduce((n, r) => n + (r.ok || 0), 0), afw = ron.reduce((n, r) => n + (r.afw || 0), 0), qr = ron.reduce((n, r) => n + (r.qr || 0), 0);
+  const cats = {}; inc.forEach(r => { const c = r.cat || 'Overig'; cats[c] = (cats[c] || 0) + 1; });
+  const ce = Object.entries(cats).sort((a, b) => b[1] - a[1]), max = Math.max(1, ...ce.map(x => x[1]));
+  const label = MAANDEN[+m.slice(5, 7) - 1] + ' ' + m.slice(0, 4);
+  const per = {}; rs.forEach(r => { per[r.datum] = (per[r.datum] || 0) + 1; });
+  $('rapport').innerHTML = '<div class="pr"><div class="pr-head"><div>'+(isImg(bedrijf.logo)?'<img class="pr-logo" src="'+esc(bedrijf.logo)+'" alt="Logo">':'')+
+    '<h1>Maandrapport '+esc(label)+'</h1><div class="sub">'+esc(OBJECT)+' · '+esc(bedrijf.naam)+'</div></div><div class="pr-num">'+rs.length+' rapporten</div></div>'+
+    '<div class="mr-kpi"><div><span>Dienstrapporten</span><b>'+rs.filter(r => r.type === 'dienst').length+'</b></div><div><span>Controlerondes</span><b>'+ron.length+'</b></div>'+
+    '<div><span>Checkpoints in orde</span><b>'+(cp ? Math.round(ok / cp * 100) + '%' : '—')+'</b></div><div><span>Meldingen</span><b>'+inc.length+'</b></div></div>'+
+    '<h2>Rondes</h2><table class="kv">'+kv('Checkpoints gecontroleerd', cp)+kv('In orde', ok)+kv('Afwijkingen', afw ? '<span class="afw">'+afw+'</span>' : '0')+kv('Via QR-code gescand', cp ? Math.round(qr / cp * 100) + '%' : '—')+'</table>'+
+    '<h2>Meldingen</h2>'+(inc.length ? '<table class="kv">'+kv('Totaal', inc.length)+kv('Hoge prioriteit', inc.filter(r => r.prio === 'Hoog').length)+kv('Politie ter plaatse', inc.filter(r => r.politie).length)+'</table>'+
+      ce.map(([k, v]) => '<div class="mr-bar"><span>'+esc(k)+'</span><div><i style="width:'+(v / max * 100)+'%"></i></div><b>'+v+'</b></div>').join('') : '<p>Geen meldingen deze maand.</p>')+
+    '<h2>Alle rapporten</h2><table><tr><th>Datum</th><th>Soort</th><th>Nummer</th><th>Door</th><th>Bijzonderheden</th></tr>'+
+      rs.slice().sort((a, b) => a.datum.localeCompare(b.datum)).map(r => '<tr><td class="pr-time">'+fmtDate(r.datum)+'</td><td>'+({dienst:'Dienst',incident:'Melding',ronde:'Ronde'}[r.type]||'')+'</td><td class="gps" style="font-size:11px">'+esc(r.nummer)+'</td><td>'+esc(r.naam)+'</td><td>'+
+        (r.type === 'incident' ? esc(r.cat)+(r.prio === 'Hoog' ? ' <span class="sev-hoog">(hoog)</span>' : '') : r.type === 'ronde' ? (r.ok||0)+'/'+(r.cp||0)+' in orde'+(r.afw ? ' · <span class="afw">'+r.afw+' afw.</span>' : '') : '—')+'</td></tr>').join('')+'</table>'+
+    '<div class="pr-foot"><span>Gegenereerd met Oisecur</span><span>'+esc(OBJECT)+' · '+esc(label)+'</span></div></div>';
+  $('rapport').classList.add('open'); $('terug').classList.add('open'); $('lijst').style.display = 'none'; $('maandbalk').style.display = 'none';
+  window.scrollTo(0, 0);
+}
 function sluitRapport(){
+  $('maandbalk').style.display = '';
   $('rapport').classList.remove('open');
   $('terug').classList.remove('open');
   $('lijst').style.display='';
