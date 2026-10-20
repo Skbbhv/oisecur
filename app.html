@@ -1625,7 +1625,7 @@ function newDraft(type) {
   const me = people().find(p => p.login === ME.login) || people()[0];
   const rn = myRoosterNow(), ro = rn && roosterObj(rn);
   const o = ro || OBJ[0], d = new Date();
-  if (rn) return Object.assign(newDraftBase(type, me, o, d, null), { van: rn.van, tot: rn.tot, dienstnaam: rn.type ? rn.type + 'dienst' : '' });
+  if (rn) return Object.assign(newDraftBase(type, me, o, d, null), { van: rn.van, tot: rn.tot, dienstnaam: rn.type ? rn.type + 'dienst' : '', oibaseDienstId: rn.id });
   return newDraftBase(type, me, o, d, DIENST.find(x => { const h = nowHM(d); return x.van <= x.tot ? h >= x.van && h < x.tot : h >= x.van || h < x.tot; }));
 }
 function newDraftBase(type, me, o, d, dn) {

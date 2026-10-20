@@ -276,6 +276,39 @@ export async function pushBeheerders(bid, data) {
   return n;
 }
 
+/* ── Oibase-koppeling ── */
+export const koppelingAan = b => !!b && (b.oibaseKoppeling === true || (b.oibaseKoppeling !== false && b.plan === 'oibase'));
+export const koppelingBevestigd = b => !!b && (b.emailBevestigd === true || b.plan === 'oibase');
+async function oibaseRpc(fn, body, fetchFn = fetch) {
+  const geheim = process.env.OIBASE_KOPPELING_GEHEIM;
+  if (!geheim) return { ok: false, reden: 'geen-geheim' };
+  try {
+    const r = await fetchFn(OIBASE_SUPABASE + '/rest/v1/rpc/' + fn, {
+      method: 'POST', headers: { apikey: OIBASE_PUBLIEK, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...body, p_geheim: geheim }), signal: AbortSignal.timeout(4000)
+    });
+    if (!r.ok) return { ok: false, reden: 'oibase-fout' };
+    return (await r.json()) || { ok: false };
+  } catch { return { ok: false, reden: 'oibase-onbereikbaar' }; }
+}
+// Rapport bij de dienst in Oibase zetten (korte samenvatting, geen foto's of handtekening)
+export function rapportSamenvatting(r) {
+  if (r.type === 'dienst') return `${(r.mutaties || []).length} ${(r.mutaties || []).length === 1 ? 'regel' : 'regels'}${r.overdracht ? ' · overdracht: ' + r.overdracht : ''}`.slice(0, 300);
+  if (r.type === 'ronde') { const p = (r.ronde || {}).punten || []; const a = p.filter(x => x.status === 'Afwijking').length;
+    return `${p.filter(x => x.status === 'OK').length}/${p.length} checkpoints in orde${a ? ' · ' + a + ' afwijking' + (a === 1 ? '' : 'en') : ''}`; }
+  const i = r.incident || {}; return `${i.cat || 'Melding'}${i.prio ? ' (' + i.prio + ')' : ''}: ${i.oms || ''}`.slice(0, 300);
+}
+export async function oibaseRapportMelden(bedrijf, r) {
+  if (!koppelingAan(bedrijf) || !koppelingBevestigd(bedrijf) || !bedrijf.email) return { ok: false, reden: 'uit' };
+  return oibaseRpc('oisecur_rapport_melden', { p_email: bedrijf.email, p_rapport: {
+    nummer: r.nummer, type: r.type, datum: r.datum, object: r.object, naam: r.naam, pnr: r.pnr || '', dienst_id: r.oibaseDienstId || '',
+    samenvatting: rapportSamenvatting(r), prio: (r.incident || {}).prio || '' } });
+}
+export async function oibaseRapportIntrekken(bedrijf, nummer) {
+  if (!koppelingAan(bedrijf) || !bedrijf.email) return { ok: false };
+  return oibaseRpc('oisecur_rapport_ingetrokken', { p_email: bedrijf.email, p_nummer: nummer });
+}
+
 /* ── Oibase-rooster (alleen-lezen) ── */
 export const OIBASE_START = Date.UTC(2026, 6, 6);   // maandag 6 juli 2026 = week 0 in Oibase
 export const OIBASE_TYPES = { Ochtend: ['08:00', '16:00'], Avond: ['16:00', '23:00'], Nacht: ['23:00', '07:00'], Tussendienst: ['11:00', '19:00'] };

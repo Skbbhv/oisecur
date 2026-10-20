@@ -22,10 +22,9 @@
 import crypto from 'crypto';
 import {
   kv, sessieUitToken, fout, veiligGelijk, IS_AFBEELDING, stuurMail, escHtml, bevestigHash,
-  amsParts, amsNaarUtc, dagErvoor, amsHm, maakAlarm, oibaseRooster, OIBASE_START, OIBASE_TYPES, stuurPush, vapidPubliek
+  amsParts, amsNaarUtc, dagErvoor, amsHm, maakAlarm, oibaseRooster, OIBASE_START, OIBASE_TYPES, stuurPush, vapidPubliek,
+  koppelingAan, koppelingBevestigd
 } from './_lib.js';
-const koppelingAan = b => !!b && (b.oibaseKoppeling === true || (b.oibaseKoppeling !== false && b.plan === 'oibase'));
-const koppelingBevestigd = b => !!b && (b.emailBevestigd === true || b.plan === 'oibase');
 
 const str = (v, max) => (v == null ? '' : String(v)).slice(0, max);
 const gpsOf = g => (g && typeof g === 'object' && Number.isFinite(g.lat) && Number.isFinite(g.lng) ? { lat: g.lat, lng: g.lng, ...(Number.isFinite(g.acc) ? { acc: Math.round(g.acc) } : {}) } : null);

@@ -4,7 +4,7 @@
 // POST /api/rapporten {actie:'verwijderen', nummer} (alleen beheerder)
 // POST /api/rapporten {actie:'opvolging', nummer|nummers, status, notitie} (alleen beheerder)
 //   Opvolging van meldingen staat los van het (vastgelegde) rapport in bedrijf:<bid>:opvolging
-import { kv, sessieUitToken, fout, fotoSleutels, IS_AFBEELDING, maakAlarm } from './_lib.js';
+import { kv, sessieUitToken, fout, fotoSleutels, IS_AFBEELDING, maakAlarm, oibaseRapportMelden, oibaseRapportIntrekken } from './_lib.js';
 
 const CODE = { dienst: 'DR', incident: 'IR', ronde: 'CR' };
 const STATUSSEN = ['OK', 'Afwijking', 'Niet gecontroleerd'];
@@ -37,6 +37,7 @@ function schoonRapport(r) {
   const s = {
     type: r.type, naam: str(r.naam, 120), pnr: str(r.pnr, 40), object: str(r.object, 120), adres: str(r.adres, 200),
     email: str(r.email, 200), dienstnaam: str(r.dienstnaam, 80), datum,
+    ...(/^[0-9]{1,20}$/.test(String(r.oibaseDienstId || '')) ? { oibaseDienstId: String(r.oibaseDienstId) } : {}),
     van: tijd(r.van, 'van'), tot: tijd(r.tot, 'tot'), handtekening
   };
   if (r.type === 'dienst') {
@@ -129,6 +130,7 @@ export default async function handler(req, res) {
     await Promise.all(fotoSleutels(bid, r).map(k => kv.del(k)));
     await kv.del(`rapport:${bid}:${b.nummer}`);
     await kv.lrem(`bedrijf:${bid}:rapporten`, 0, b.nummer);
+    try { await oibaseRapportIntrekken(await kv.get(`bedrijf:${bid}`), b.nummer); } catch {}
     const opv = await kv.get(`bedrijf:${bid}:opvolging`);
     if (opv && opv[b.nummer]) { delete opv[b.nummer]; await kv.set(`bedrijf:${bid}:opvolging`, opv); }
     return res.status(200).json({ ok: true });
@@ -202,6 +204,12 @@ export default async function handler(req, res) {
       }, { extraTo: obj && obj.alarmKlant && obj.email ? [obj.email] : [] });
     } catch {}
   }
+  // Rapport bij de dienst in het Oibase-rooster zetten
+  try {
+    const bedrijf = await kv.get(`bedrijf:${bid}`);
+    const o = await oibaseRapportMelden(bedrijf, r);
+    if (o && o.ok && o.dienst_id) { r.oibaseDienstId = String(o.dienst_id); await kv.set(`rapport:${bid}:${r.nummer}`, r); }
+  } catch {}
   // Laatste overdracht per object bewaren, zodat de volgende dienst (ook een collega) die ziet
   if (r.type === 'dienst' && r.overdracht && r.object) {
     try {
