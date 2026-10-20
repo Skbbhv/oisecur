@@ -2,6 +2,8 @@
 // GET  /api/rapporten?nummer=X    → één volledig rapport incl. foto's
 // POST /api/rapporten             → rapport opslaan, server kent nummer toe
 // POST /api/rapporten {actie:'verwijderen', nummer} (alleen beheerder)
+// POST /api/rapporten {actie:'opvolging', nummer|nummers, status, notitie} (alleen beheerder)
+//   Opvolging van meldingen staat los van het (vastgelegde) rapport in bedrijf:<bid>:opvolging
 import { kv, sessieUitToken, fout, fotoSleutels, IS_AFBEELDING } from './_lib.js';
 
 const CODE = { dienst: 'DR', incident: 'IR', ronde: 'CR' };
@@ -9,6 +11,7 @@ const STATUSSEN = ['OK', 'Afwijking', 'Niet gecontroleerd'];
 const IS_NUMMER = n => typeof n === 'string' && /^[A-Za-z0-9-]{1,60}$/.test(n);
 const IS_DATUM = s => /^\d{4}-\d{2}-\d{2}$/.test(s);
 const IS_TIJD = s => /^\d{2}:\d{2}$/.test(s);
+const OPV_STATUS = ['Open', 'In behandeling', 'Afgehandeld'];
 const MAX_FOTO = 500000, MAX_HANDTEKENING = 400000;
 
 class Ongeldig extends Error {}
@@ -68,6 +71,21 @@ function schoonRapport(r) {
   return s;
 }
 
+// Korte samenvatting voor lijsten, dashboard en inzicht (zonder foto's en lange teksten)
+function samenvatting(r, opv) {
+  const pt = r.type === 'ronde' ? ((r.ronde || {}).punten || []) : [];
+  const i = r.incident || {};
+  return {
+    nummer: r.nummer, type: r.type, naam: r.naam, object: r.object, datum: r.datum, door: r.door,
+    aantal: r.type === 'dienst' ? (r.mutaties || []).length : r.type === 'ronde' ? pt.length : (i.cat || ''),
+    ...(r.type === 'incident' ? { prio: i.prio || '', tijd: i.tijd || '', opv: (opv[r.nummer] || {}).status || 'Open',
+      kort: str(i.oms, 140), politie: !!i.politie, schade: !!i.schade } : {}),
+    ...(r.type === 'ronde' ? { ok: pt.filter(p => p.status === 'OK').length, afw: pt.filter(p => p.status === 'Afwijking').length,
+      qr: pt.filter(p => p.qr).length } : {}),
+    ...(r.type === 'dienst' ? { tijd: r.van || '' } : {})
+  };
+}
+
 export default async function handler(req, res) {
   const sessie = await sessieUitToken(req);
   if (!sessie) return fout(res, 401, 'Niet ingelogd of sessie verlopen.');
@@ -86,16 +104,17 @@ export default async function handler(req, res) {
         r.incident.fotos = (await Promise.all(refs.map(k => kv.get(k)))).filter(Boolean);
       }
       delete r.fotoRefs;
+      if (r.type === 'incident') {
+        const opv = ((await kv.get(`bedrijf:${bid}:opvolging`)) || {})[r.nummer];
+        r.opvolging = opv || { status: 'Open', log: [] };
+      }
       return res.status(200).json(r);
     }
-    const nummers = (await kv.lrange(`bedrijf:${bid}:rapporten`, 0, 499)) || [];
-    const alle = nummers.length ? await Promise.all(nummers.map(n => kv.get(`rapport:${bid}:${n}`))) : [];
+    const [nummers, opv] = await Promise.all([kv.lrange(`bedrijf:${bid}:rapporten`, 0, 499), kv.get(`bedrijf:${bid}:opvolging`)]);
+    const alle = (nummers || []).length ? await Promise.all(nummers.map(n => kv.get(`rapport:${bid}:${n}`))) : [];
     const lijst = alle.filter(Boolean)
       .filter(r => sessie.rol === 'beheerder' || r.door === sessie.login)
-      .map(r => ({ nummer: r.nummer, type: r.type, naam: r.naam, object: r.object, datum: r.datum,
-                   aantal: r.type === 'dienst' ? (r.mutaties || []).length
-                         : r.type === 'ronde' ? ((r.ronde || {}).punten || []).length
-                         : ((r.incident || {}).cat || ''), door: r.door }));
+      .map(r => samenvatting(r, opv || {}));
     return res.status(200).json({ rapporten: lijst });
   }
 
@@ -110,7 +129,35 @@ export default async function handler(req, res) {
     await Promise.all(fotoSleutels(bid, r).map(k => kv.del(k)));
     await kv.del(`rapport:${bid}:${b.nummer}`);
     await kv.lrem(`bedrijf:${bid}:rapporten`, 0, b.nummer);
+    const opv = await kv.get(`bedrijf:${bid}:opvolging`);
+    if (opv && opv[b.nummer]) { delete opv[b.nummer]; await kv.set(`bedrijf:${bid}:opvolging`, opv); }
     return res.status(200).json({ ok: true });
+  }
+
+  if (b.actie === 'opvolging') {
+    if (sessie.rol !== 'beheerder') return fout(res, 403, 'Alleen de beheerder kan de opvolging aanpassen.');
+    const lijst = (Array.isArray(b.nummers) ? b.nummers : [b.nummer]).filter(IS_NUMMER).slice(0, 500);
+    if (!lijst.length) return fout(res, 404, 'Rapport niet gevonden.');
+    const status = b.status ? String(b.status) : '';
+    if (status && !OPV_STATUS.includes(status)) return fout(res, 400, 'Ongeldige status.');
+    const notitie = str(b.notitie, 2000).trim();
+    if (!status && !notitie) return fout(res, 400, 'Kies een status of schrijf een notitie.');
+    const opv = (await kv.get(`bedrijf:${bid}:opvolging`)) || {};
+    const t = new Date().toISOString();
+    let n = 0;
+    for (const nummer of lijst) {
+      const r = await kv.get(`rapport:${bid}:${nummer}`);
+      if (!r || r.type !== 'incident') continue;
+      const e = opv[nummer] || { status: 'Open', log: [] };
+      if (status && status !== e.status) e.log.push({ t, door: sessie.login, status });
+      if (status) e.status = status;
+      if (notitie) e.log.push({ t, door: sessie.login, tekst: notitie });
+      e.log = e.log.slice(-100); e.bijgewerkt = t;
+      opv[nummer] = e; n++;
+    }
+    if (!n) return fout(res, 404, 'Melding niet gevonden.');
+    await kv.set(`bedrijf:${bid}:opvolging`, opv);
+    return res.status(200).json({ ok: true, aantal: n, opvolging: lijst.length === 1 ? opv[lijst[0]] : undefined });
   }
 
   /* ── Nieuw rapport ── */
@@ -138,5 +185,13 @@ export default async function handler(req, res) {
 
   await kv.set(`rapport:${bid}:${r.nummer}`, r);
   await kv.lpush(`bedrijf:${bid}:rapporten`, r.nummer);
+  // Laatste overdracht per object bewaren, zodat de volgende dienst (ook een collega) die ziet
+  if (r.type === 'dienst' && r.overdracht && r.object) {
+    try {
+      const ovd = (await kv.get(`bedrijf:${bid}:overdracht`)) || {};
+      ovd[r.object] = { tekst: r.overdracht.slice(0, 2000), naam: r.naam, datum: r.datum, tot: r.tot, nummer: r.nummer };
+      await kv.set(`bedrijf:${bid}:overdracht`, ovd);
+    } catch {}
+  }
   return res.status(200).json({ ok: true, nummer: r.nummer });
 }

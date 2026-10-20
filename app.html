@@ -288,6 +288,110 @@ input,select,textarea{min-width:0;max-width:100%}
 .seg button{min-width:0;flex:1 1 30%}
 .cp-top .x{width:44px;flex:none}
 .seg button{padding:9px 4px;line-height:1.25}
+
+/* ═══ Uitbreiding: navigatie, dashboard, opvolging, inzicht ═══ */
+.tabs a{position:relative}
+.tabs a.m-only{display:none}
+.tabs .bdg{font-style:normal;font-size:11px;font-weight:700;line-height:1;background:var(--red);color:#fff;border-radius:999px;padding:3px 6px;margin-left:2px}
+@media(max-width:760px){.tabs a.d-only{display:none}.tabs a.m-only{display:flex}.tabs .bdg{position:absolute;top:2px;left:calc(50% + 6px);font-size:10px;padding:2px 5px}}
+@media(min-width:761px) and (max-width:980px){.tabs a{padding:8px 9px;font-size:14px}.tabs a span{display:none}.tabs a.on span{display:inline}.company{max-width:18vw}}
+.hello{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.hello h1{font-size:clamp(24px,4.5vw,30px);font-weight:800;letter-spacing:-.03em}
+.hello p{color:var(--muted);font-size:14.5px;margin-top:2px}
+.chip{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;border-radius:999px;padding:6px 12px;background:#fff;border:1px solid var(--line);color:var(--txt-2);box-shadow:var(--shadow-sm)}
+.chip i{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px #16a34a22}
+.chip.off i{background:var(--line-2);box-shadow:none}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.kpis.k3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:760px){.kpis,.kpis.k3{grid-template-columns:1fr 1fr}}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:var(--shadow-sm);text-decoration:none;display:block;min-width:0}
+a.kpi:hover{border-color:var(--blauw)}
+.kpi span{font-size:13px;color:var(--muted);display:block}
+.kpi b{font-size:28px;font-weight:800;letter-spacing:-.03em;line-height:1.15;display:block;margin-top:2px}
+.kpi small{font-size:12.5px;color:var(--muted);display:block;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi small.up{color:#15803d}.kpi small.down{color:#b4232e}
+.kpi.alert b{color:var(--red)}
+@media(max-width:520px){.kpi b{font-size:24px}}
+.dash{display:grid;grid-template-columns:1.35fr 1fr;gap:14px;margin-bottom:16px}
+@media(max-width:860px){.dash{grid-template-columns:1fr}}
+.dash .card + .card{margin-top:0}
+.col{display:grid;gap:14px;align-content:start;min-width:0}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.bars svg{width:100%;height:auto;display:block}
+.hbar{display:grid;grid-template-columns:minmax(0,1fr) 2fr 34px;gap:10px;align-items:center;font-size:13.5px;margin-top:8px}
+.hbar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--txt-2)}
+.hbar div{height:10px;border-radius:5px;background:var(--ink);overflow:hidden}
+.hbar div i{display:block;height:100%;border-radius:5px;background:var(--blauw)}
+.hbar b{text-align:right;font-weight:700}
+.att{display:grid;gap:8px}
+.att a,.att div.a{display:flex;gap:11px;align-items:flex-start;text-decoration:none;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#fff}
+.att a:hover{border-color:var(--blauw)}
+.att .dot{flex:none;width:9px;height:9px;border-radius:50%;margin-top:6px;background:var(--amber)}
+.att .dot.r{background:var(--red)}.att .dot.g{background:var(--green)}.att .dot.b{background:var(--blauw)}
+.att b{font-size:14px;display:block;line-height:1.3}
+.att small{font-size:12.5px;color:var(--muted);display:block}
+.att .grow{min-width:0;flex:1}
+.att .grow small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.med{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#fff}
+.med + .med{margin-top:10px}
+.med.imp{border-color:#f6d58f;background:#fffaf0}
+.med.new{box-shadow:inset 3px 0 0 var(--blauw)}
+.med h3{font-size:15px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.med p{font-size:14px;color:var(--txt-2);white-space:pre-wrap;margin-top:4px}
+.med small{font-size:12.5px;color:var(--muted);display:block;margin-top:6px}
+.tag{display:inline-block;font-size:11.5px;font-weight:600;border-radius:6px;padding:2px 8px;background:var(--blauw-l);color:var(--blauw-d)}
+.tag.amber{background:#fff4dc;color:#94600a}.tag.red{background:#fdecee;color:#c81e2b}.tag.green{background:#e7f6ec;color:#15803d}.tag.grey{background:var(--ink);color:var(--muted)}
+.ovd{border-left:3px solid var(--blauw);background:var(--panel-2);border-radius:0 10px 10px 0;padding:10px 12px;font-size:14px}
+.ovd + .ovd{margin-top:10px}
+.ovd p{white-space:pre-wrap;color:var(--txt-2)}
+.ovd small{display:block;color:var(--muted);font-size:12.5px;margin-bottom:3px}
+.infobox{border:1px solid var(--line);background:var(--panel-2);border-radius:12px;padding:12px 14px;margin-top:12px;font-size:14px}
+.infobox summary{cursor:pointer;font-weight:600;color:var(--navy);list-style:none;display:flex;justify-content:space-between;gap:8px}
+.infobox summary::-webkit-details-marker{display:none}
+.infobox summary::after{content:"▾";color:var(--muted)}
+.infobox[open] summary::after{content:"▴"}
+.infobox p{white-space:pre-wrap;color:var(--txt-2);margin-top:8px}
+.seg-f{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.seg-f button{background:#fff;border:1px solid var(--line-2);border-radius:999px;padding:7px 13px;font-size:14px;font-weight:500;color:var(--txt-2);cursor:pointer}
+.seg-f button.on{background:var(--blauw);border-color:var(--blauw);color:#fff}
+.seg-f button em{font-style:normal;opacity:.7;margin-left:4px}
+.opv{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--red);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow-sm)}
+.opv.s-in{border-left-color:var(--amber)}.opv.s-af{border-left-color:var(--green);opacity:.85}
+.opv input[type=checkbox]{margin-top:3px;flex:none}
+.opv a{text-decoration:none;flex:1;min-width:0;display:block}
+.opv .l1{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.opv .l1 b{font-size:15px}
+.opv .l2{font-size:13.5px;color:var(--muted);margin-top:2px}
+.opv .l3{font-size:14px;color:var(--txt-2);margin-top:4px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.bulk{position:sticky;bottom:0;z-index:6;display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#0f1b2d;color:#fff;border-radius:12px;padding:10px 12px;margin-top:12px;box-shadow:var(--shadow)}
+.bulk span{flex:1;font-size:14px;font-weight:600}
+@media(max-width:760px){.bulk{bottom:72px}}
+.tl{list-style:none;margin-top:12px;border-left:2px solid var(--line);padding-left:14px}
+.tl li{position:relative;font-size:14px;padding-bottom:12px}
+.tl li::before{content:"";position:absolute;left:-20px;top:5px;width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid var(--blauw)}
+.tl li.st::before{background:var(--blauw)}
+.tl small{display:block;color:var(--muted);font-size:12.5px}
+.tl p{white-space:pre-wrap;color:var(--txt-2)}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;padding:8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl td.n,.tbl th.n{text-align:right;font-variant-numeric:tabular-nums}
+.tbl tr:last-child td{border-bottom:none}
+.tbl a{color:var(--blauw);text-decoration:none;font-weight:600}
+.tscroll{overflow-x:auto;margin:0 -4px}
+.meter{display:inline-block;width:56px;height:6px;border-radius:3px;background:var(--ink);overflow:hidden;vertical-align:middle;margin-right:6px}
+.meter i{display:block;height:100%;background:var(--green)}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tiles a{display:flex;flex-direction:column;gap:8px;text-decoration:none;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow-sm)}
+.tiles a:hover{border-color:var(--blauw)}
+.tiles svg{width:26px;height:26px;color:var(--blauw)}
+.tiles b{font-size:16px}
+.tiles small{color:var(--muted);font-size:13px}
+.more-btn{display:block;margin:14px auto 0}
+.item .stats-s{font-size:12.5px;color:var(--muted);text-align:right;flex:none;line-height:1.35}
+.item .stats-s b{display:inline;color:var(--txt);font-size:14px}
+@media(max-width:620px){.quick{grid-template-columns:repeat(3,1fr);gap:8px}.quick a{flex-direction:column;text-align:center;gap:8px;padding:12px 6px}.quick small{display:none}.quick b{font-size:13.5px}.quick .qi{width:38px;height:38px}}
 </style>
 </head>
 <body>
@@ -357,6 +461,14 @@ const ICON = {
   team: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c2 .7 3.2 2.5 3.6 5.2"/></svg>',
   gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
 };
+Object.assign(ICON, {
+  flag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>',
+  chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V4M4 20h16"/><path d="M8 16v-4M12 16V8M16 16v-6M20 16v-9"/></svg>',
+  more: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>',
+  bell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9"/><path d="M10 20a2.2 2.2 0 0 0 4 0"/></svg>',
+  doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></svg>',
+  swap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></svg>'
+});
 const brandHTML = () => `<a class="brand" href="#/overzicht"><img class="logo" src="${LOGO}" alt="Oisecur"></a>`;
 
 /* ═════════════ Branches ═════════════ */
@@ -393,10 +505,10 @@ let MODE = null;      // 'server' of 'demo'
 let TOKEN = null;     // sessietoken van /api/auth
 let ME = null;        // { naam, pnr, login, rol }
 let B = null;         // bedrijf { id, naam, logo, branche }
-let OBJ = [], MW = [], DIENST = [], LIST = [];
+let OBJ = [], MW = [], DIENST = [], LIST = [], MED = [], OVD = {}, PLAN = null;
 const CACHE = {};
 let draft = null;
-const F = { q: '', obj: '', type: '' };
+const F = { q: '', obj: '', type: '', per: '' };
 const L = () => SECTORS[B?.branche] || SECTORS.beveiliging;
 const isAdmin = () => ME?.rol === 'beheerder';
 const objByName = n => OBJ.find(o => o.naam === n);
@@ -427,6 +539,7 @@ async function loadAll() {
   const d = await call('stamdata');
   B = d.bedrijf; if (!B.branche) B.branche = 'beveiliging';
   OBJ = d.objecten || []; DIENST = d.diensten || []; MW = d.medewerkers || [];
+  MED = d.mededelingen || []; OVD = d.overdracht || {}; PLAN = d.plan || null;
   ME.rol = d.rol;
   await loadList();
 }
@@ -443,20 +556,28 @@ function demoApi(pad, body) {
     try { res(clone(demoHandle(pad, body ? clone(body) : null))); } catch (e) { rej(e); }
   }, 80));
 }
-function summaryOf(r) {
-  return { nummer: r.nummer, type: r.type, naam: r.naam, object: r.object, datum: r.datum,
-    aantal: r.type === 'dienst' ? (r.mutaties || []).length : r.type === 'ronde' ? ((r.ronde || {}).punten || []).length : ((r.incident || {}).cat || ''), door: r.door };
+function summaryOf(r, opv = DEMO?.opv || {}) {
+  const pt = r.type === 'ronde' ? ((r.ronde || {}).punten || []) : [], i = r.incident || {};
+  return { nummer: r.nummer, type: r.type, naam: r.naam, object: r.object, datum: r.datum, door: r.door,
+    aantal: r.type === 'dienst' ? (r.mutaties || []).length : r.type === 'ronde' ? pt.length : (i.cat || ''),
+    ...(r.type === 'incident' ? { prio: i.prio || '', tijd: i.tijd || '', opv: (opv[r.nummer] || {}).status || (r.opvolging || {}).status || 'Open',
+      kort: String(i.oms || '').slice(0, 140), politie: !!i.politie, schade: !!i.schade } : {}),
+    ...(r.type === 'ronde' ? { ok: pt.filter(p => p.status === 'OK').length, afw: pt.filter(p => p.status === 'Afwijking').length, qr: pt.filter(p => p.qr).length } : {}),
+    ...(r.type === 'dienst' ? { tijd: r.van || '' } : {}) };
 }
 function demoHandle(pad, b) {
   const [path, qs] = pad.split('?'); const q = new URLSearchParams(qs || ''); const D = DEMO;
   if (path === 'auth' || path === 'verstuur') return { ok: true };
   if (path === 'stamdata') {
-    if (!b) return { rol: 'beheerder', bedrijf: D.bedrijf, objecten: D.objecten, diensten: D.diensten, medewerkers: D.users };
+    if (!b) return { rol: 'beheerder', bedrijf: D.bedrijf, objecten: D.objecten, diensten: D.diensten, medewerkers: D.users,
+      mededelingen: D.mededelingen, overdracht: D.overdracht, plan: { plan: 'proef', proefTot: daysAgo(-11) } };
     const login = String(b.login || '').toLowerCase().trim();
     switch (b.actie) {
       case 'profiel': if (b.naam) D.bedrijf.naam = b.naam; if (b.logo !== undefined) D.bedrijf.logo = b.logo; if (b.branche) D.bedrijf.branche = b.branche; return { ok: true };
       case 'objecten': D.objecten = b.objecten; return { ok: true };
       case 'diensten': D.diensten = b.diensten; return { ok: true };
+      case 'mededelingen': D.mededelingen = b.mededelingen.map(m => ({ ...m, id: m.id || uid() })); return { ok: true };
+      case 'mijnwachtwoord': if (!b.nieuw || b.nieuw.length < 8) throw new ApiError('Nieuw wachtwoord: minimaal 8 tekens.', 400); return { ok: true };
       case 'medewerker+':
         if (!b.naam || !login || !b.wachtwoord) throw new ApiError('Naam, login en wachtwoord zijn verplicht.', 400);
         if (b.wachtwoord.length < 8) throw new ApiError('Wachtwoord: minimaal 8 tekens.', 400);
@@ -479,14 +600,28 @@ function demoHandle(pad, b) {
   }
   if (path === 'rapporten') {
     if (!b) {
-      if (q.get('nummer')) { const r = D.rapporten[q.get('nummer')]; if (!r) throw new ApiError('Rapport niet gevonden.', 404); return r; }
-      return { rapporten: D.order.map(n => D.rapporten[n]).filter(Boolean).map(summaryOf) };
+      if (q.get('nummer')) { const r = D.rapporten[q.get('nummer')]; if (!r) throw new ApiError('Rapport niet gevonden.', 404);
+        return r.type === 'incident' ? { ...r, opvolging: D.opv[r.nummer] || { status: 'Open', log: [] } } : r; }
+      return { rapporten: D.order.map(n => D.rapporten[n]).filter(Boolean).map(r => summaryOf(r)) };
     }
-    if (b.actie === 'verwijderen') { delete D.rapporten[b.nummer]; D.order = D.order.filter(n => n !== b.nummer); return { ok: true }; }
+    if (b.actie === 'verwijderen') { delete D.rapporten[b.nummer]; delete D.opv[b.nummer]; D.order = D.order.filter(n => n !== b.nummer); return { ok: true }; }
+    if (b.actie === 'opvolging') {
+      const t = new Date().toISOString(); let last;
+      for (const n of (b.nummers || [b.nummer])) {
+        if (!D.rapporten[n] || D.rapporten[n].type !== 'incident') continue;
+        const e = D.opv[n] || { status: 'Open', log: [] };
+        if (b.status && b.status !== e.status) e.log.push({ t, door: ME.login, status: b.status });
+        if (b.status) e.status = b.status;
+        if (b.notitie) e.log.push({ t, door: ME.login, tekst: b.notitie });
+        D.opv[n] = last = e;
+      }
+      return { ok: true, opvolging: last };
+    }
     const r = b.rapport;
     r.door = ME.login; r.aangemaakt = new Date().toISOString(); D.seq++;
     r.nummer = `${D.bedrijf.id}-${CODE[r.type]}-${(r.datum || todayISO()).replace(/-/g, '')}-${String(D.seq).padStart(3, '0')}`;
     D.rapporten[r.nummer] = r; D.order.unshift(r.nummer);
+    if (r.type === 'dienst' && r.overdracht) D.overdracht[r.object] = { tekst: r.overdracht, naam: r.naam, datum: r.datum, tot: r.tot, nummer: r.nummer };
     return { ok: true, nummer: r.nummer };
   }
   throw new ApiError('Niet beschikbaar in de demo.', 400);
@@ -675,13 +810,17 @@ function route() {
   const h = location.hash.replace(/^#\/?/, '') || 'overzicht';
   const [p, a] = h.split('/');
   window.scrollTo(0, 0);
-  const adminOnly = ['objecten', 'team'];
+  const adminOnly = ['objecten', 'team', 'opvolging', 'inzicht', 'meer'];
   if (adminOnly.includes(p) && !isAdmin()) return go('overzicht');
   switch (p) {
     case 'nieuw': return a ? editor(a) : viewNieuw();
     case 'rapport': return viewReport(decodeURIComponent(a || ''));
     case 'objecten': return a ? viewObject(a) : viewObjecten();
     case 'team': return viewTeam();
+    case 'opvolging': return viewOpvolging();
+    case 'inzicht': return viewInzicht();
+    case 'meer': return viewMeer();
+    case 'mededelingen': return viewMededelingen();
     case 'instellingen': return viewSettings();
     default: return viewOverzicht();
   }
@@ -689,12 +828,17 @@ function route() {
 function go(p) { if (location.hash === '#/' + p) route(); else location.hash = '#/' + p; }
 function shell(tab, title, inner, actions = '') {
   const l = L();
-  const t = (k, label, ic) => `<a href="#/${k}" class="${tab === k ? 'on' : ''}">${ICON[ic]}<span>${esc(label)}</span></a>`;
+  const t = (k, label, ic, cls = '', bdg = 0) => `<a href="#/${k}" class="${tab === k ? 'on' : ''} ${cls}">${ICON[ic]}<span>${esc(label)}</span>${bdg ? `<i class="bdg">${bdg > 99 ? '99+' : bdg}</i>` : ''}</a>`;
+  const open = isAdmin() ? LIST.filter(r => r.type === 'incident' && r.opv !== 'Afgehandeld').length : 0;
+  const inMeer = ['inzicht', 'team', 'instellingen', 'mededelingen', 'meer'].includes(tab);
   app.innerHTML = `
     ${MODE === 'demo' ? '<div class="demobar">Demo: je kunt alles uitproberen, er wordt niets bewaard of verstuurd · <a href="app.html?registreer=1">Zelf beginnen</a></div>' : ''}
     <header class="top"><div class="top-in">
       ${brandHTML()}<span class="company">${esc(B.naam)}</span>
-      <nav class="tabs">${t('overzicht', 'Overzicht', 'home')}${t('nieuw', 'Nieuw', 'plus')}${isAdmin() ? t('objecten', l.objecten, 'pin') + t('team', 'Team', 'team') : ''}${t('instellingen', isAdmin() ? 'Instellingen' : 'Account', 'gear')}</nav>
+      <nav class="tabs">${t('overzicht', 'Overzicht', 'home')}${t('nieuw', 'Nieuw', 'plus')}${isAdmin()
+        ? t('opvolging', 'Opvolging', 'flag', '', open) + t('inzicht', 'Inzicht', 'chart', 'd-only') + t('objecten', l.objecten, 'pin') + t('team', 'Team', 'team', 'd-only') + t('instellingen', 'Instellingen', 'gear', 'd-only')
+          + `<a href="#/meer" class="m-only ${inMeer ? 'on' : ''}">${ICON.more}<span>Meer</span></a>`
+        : t('mededelingen', 'Berichten', 'bell', '', unreadMed().length) + t('instellingen', 'Account', 'gear')}</nav>
     </div></header>
     <main class="wrap">
       <div class="page-head"><h1>${esc(title)}</h1><div class="actions">${actions}</div></div>
@@ -708,54 +852,323 @@ function quickHTML() {
   return `<div class="quick">${['dienst', 'incident', 'ronde'].map(t =>
     `<a href="#/nieuw/${t}"><span class="qi ${t}">${TYPE_LETTER[t]}</span><span><b>${esc(l.types[t])}</b><small>${TYPE_HINT[t]}</small></span></a>`).join('')}</div>`;
 }
+/* ═════════════ Gedeelde helpers voor dashboard en inzicht ═════════════ */
+const OPV = [['Open', 'open', 'red'], ['In behandeling', 'in', 'amber'], ['Afgehandeld', 'af', 'green']];
+const opvTag = s => { const o = OPV.find(x => x[0] === s) || OPV[0]; return `<span class="tag ${o[2]}">${esc(o[0])}</span>`; };
+const prioTag = p => p ? `<span class="tag ${p === 'Hoog' ? 'red' : p === 'Middel' ? 'amber' : 'grey'}">${esc(p)}</span>` : '';
+const dayDiff = (a, b = todayISO()) => Math.round((new Date(b + 'T12:00') - new Date(a + 'T12:00')) / 864e5);
+const agoTxt = iso => { if (!iso) return '—'; const n = dayDiff(iso); return n <= 0 ? 'vandaag' : n === 1 ? 'gisteren' : `${n} dagen geleden`; };
+const nl = n => Number(n || 0).toLocaleString('nl-NL');
+const pct = (a, b) => (b ? Math.round(a / b * 100) : 0);
+function currentDienst(d = new Date()) {
+  const h = nowHM(d);
+  return DIENST.find(x => x.van && x.tot && (x.van <= x.tot ? h >= x.van && h < x.tot : h >= x.van || h < x.tot));
+}
+function greet() { const h = new Date().getHours(); return h < 6 ? 'Goedenacht' : h < 12 ? 'Goedemorgen' : h < 18 ? 'Goedemiddag' : 'Goedenavond'; }
+const READ_KEY = () => `ois_gelezen_${MODE}_${ME?.login}`;
+const readIds = () => Store.get(READ_KEY()) || [];
+function visibleMed() { const t = todayISO(); return MED.filter(m => (!m.tot || m.tot >= t)).sort((a, b) => (b.belangrijk - a.belangrijk) || (b.datum || '').localeCompare(a.datum || '')); }
+function unreadMed() { const r = readIds(); return visibleMed().filter(m => !r.includes(m.id)); }
+function markRead(ids) { Store.set(READ_KEY(), [...new Set([...readIds(), ...ids])].slice(-200)); }
+function medHTML(m, unread) {
+  return `<div class="med${m.belangrijk ? ' imp' : ''}${unread ? ' new' : ''}"><h3>${m.belangrijk ? '<span class="tag amber">Belangrijk</span>' : ''}${esc(m.titel || 'Mededeling')}${m.object ? `<span class="tag grey">${esc(m.object)}</span>` : ''}</h3>
+    ${m.tekst ? `<p>${esc(m.tekst)}</p>` : ''}<small>${esc(fmtDate(m.datum))}${m.door ? ' · ' + esc(m.door) : ''}${m.tot ? ` · zichtbaar t/m ${esc(fmtDate(m.tot))}` : ''}</small></div>`;
+}
+function ovdHTML(objNaam, o) {
+  return `<div class="ovd"><small><b style="color:var(--txt)">${esc(objNaam)}</b> · ${esc(o.naam || '—')} · ${esc(fmtDate(o.datum))}${o.tot ? ' tot ' + esc(o.tot) : ''}</small><p>${esc(o.tekst)}</p></div>`;
+}
+// Gestapelde staafgrafiek per dag (dienst / incident / ronde)
+function activityBars(rs, days = 14) {
+  const l = L(), cols = [];
+  for (let n = days - 1; n >= 0; n--) { const d = daysAgo(n); const x = rs.filter(r => r.datum === d); cols.push({ d, dienst: x.filter(r => r.type === 'dienst').length, incident: x.filter(r => r.type === 'incident').length, ronde: x.filter(r => r.type === 'ronde').length }); }
+  const max = Math.max(1, ...cols.map(c => c.dienst + c.incident + c.ronde));
+  const W = 560, H = 170, pb = 22, pt = 10, bw = W / days, ih = H - pb - pt;
+  const C = { dienst: 'var(--blauw)', ronde: 'var(--green)', incident: 'var(--red)' };
+  const bars = cols.map((c, i) => {
+    let y = H - pb; const x = i * bw + bw * .18, w = bw * .64;
+    const segs = ['dienst', 'ronde', 'incident'].map(k => { if (!c[k]) return ''; const h = c[k] / max * ih; y -= h; return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(h - 1, 1).toFixed(1)}" rx="2" fill="${C[k]}"><title>${fmtDate(c.d)}: ${c[k]} ${esc(l.types[k])}</title></rect>`; }).join('');
+    const tot = c.dienst + c.incident + c.ronde;
+    const step = days <= 7 ? 1 : days <= 14 ? 2 : 5, lbl = (days - 1 - i) % step === 0 ? `<text x="${(i * bw + bw / 2).toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="11" fill="var(--muted)">${c.d.slice(8)}-${c.d.slice(5, 7)}</text>` : '';
+    return segs + (tot && days <= 14 ? `<text x="${(i * bw + bw / 2).toFixed(1)}" y="${(y - 3).toFixed(1)}" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--txt-2)">${tot}</text>` : '') + lbl;
+  }).join('');
+  return `<div class="bars"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Rapporten per dag"><line x1="0" x2="${W}" y1="${H - pb}" y2="${H - pb}" stroke="var(--line)"/>${bars}</svg></div>
+    <div class="legend"><span><i style="background:var(--blauw)"></i>${esc(l.types.dienst)}</span><span><i style="background:var(--green)"></i>${esc(l.types.ronde)}</span><span><i style="background:var(--red)"></i>${esc(l.types.incident)}</span></div>`;
+}
+function hbars(rows, color = 'var(--blauw)') {
+  const max = Math.max(1, ...rows.map(r => r[1]));
+  return rows.map(([k, v]) => `<div class="hbar"><span title="${esc(k)}">${esc(k)}</span><div><i style="width:${Math.max(3, v / max * 100)}%;background:${color}"></i></div><b>${nl(v)}</b></div>`).join('');
+}
+const countBy = (rs, f) => Object.entries(rs.reduce((a, r) => { const k = f(r); if (k) a[k] = (a[k] || 0) + 1; return a; }, {})).sort((a, b) => b[1] - a[1]);
+
+/* ═════════════ Overzicht (dashboard) ═════════════ */
+const PAGE = 15;
+let SHOWN = PAGE;
+function filtered() {
+  const q = F.q.trim().toLowerCase(), since = F.per ? daysAgo(+F.per - 1) : '';
+  return LIST.filter(r => (!F.obj || r.object === F.obj) && (!F.type || r.type === F.type) && (!since || r.datum >= since) &&
+    (!q || [r.nummer, r.object, r.naam, r.aantal, r.kort, fmtDate(r.datum)].join(' ').toLowerCase().includes(q)))
+    .sort((a, b) => (b.datum || '').localeCompare(a.datum || '') || (b.nummer || '').localeCompare(a.nummer || ''));
+}
 function detailOf(r) {
   const l = L();
-  if (r.type === 'incident') return r.aantal || l.incident;
-  if (r.type === 'ronde') return `${r.aantal} checkpoint${r.aantal === 1 ? '' : 's'}`;
+  if (r.type === 'incident') return [r.aantal || l.incident, r.kort].filter(Boolean).join(' — ');
+  if (r.type === 'ronde') return `${r.aantal} checkpoint${r.aantal === 1 ? '' : 's'}${r.ok != null ? ` · ${r.ok} in orde` : ''}${r.afw ? ` · ${r.afw} afwijking${r.afw === 1 ? '' : 'en'}` : ''}`;
   return `${r.aantal} ${r.aantal === 1 ? 'regel' : 'regels'}`;
-}
-function filtered() {
-  const q = F.q.trim().toLowerCase();
-  return LIST.filter(r => (!F.obj || r.object === F.obj) && (!F.type || r.type === F.type) &&
-    (!q || [r.nummer, r.object, r.naam, r.aantal, fmtDate(r.datum)].join(' ').toLowerCase().includes(q)))
-    .sort((a, b) => (b.datum || '').localeCompare(a.datum || '') || (b.nummer || '').localeCompare(a.nummer || ''));
 }
 function listHTML() {
   const l = L(), rs = filtered();
   if (!LIST.length) return `<div class="empty">Nog geen rapporten. Kies hierboven wat je wilt vastleggen.</div>`;
   if (!rs.length) return `<div class="empty">Geen rapporten gevonden met deze filters.</div>`;
-  return `<div class="rlist">${rs.map(r => `
+  return `<p class="hint" style="margin:0 0 8px">${nl(rs.length)} rapport${rs.length === 1 ? '' : 'en'}</p><div class="rlist">${rs.slice(0, SHOWN).map(r => `
     <a class="rcard ${esc(r.type)}" href="#/rapport/${encodeURIComponent(r.nummer)}">
-      <div class="l1"><b>${esc(l.types[r.type] || r.type)}</b><span class="num">${esc(r.nummer)}</span></div>
-      <div class="l2">${esc(fmtDate(r.datum))} · ${esc(r.object || '—')} · ${esc(r.naam || '—')}</div>
+      <div class="l1"><b>${esc(l.types[r.type] || r.type)}</b><span class="num">${esc(r.nummer)}</span>${r.type === 'incident' ? `<span style="margin-left:auto;display:flex;gap:6px">${prioTag(r.prio)}${isAdmin() ? opvTag(r.opv) : ''}</span>` : r.afw ? `<span class="tag red" style="margin-left:auto">${r.afw} afwijking${r.afw === 1 ? '' : 'en'}</span>` : ''}</div>
+      <div class="l2">${esc(fmtDate(r.datum))}${r.tijd ? ' ' + esc(r.tijd) : ''} · ${esc(r.object || '—')} · ${esc(r.naam || '—')}</div>
       <div class="l3">${esc(detailOf(r))}</div>
-    </a>`).join('')}</div>`;
+    </a>`).join('')}</div>${rs.length > SHOWN ? `<button class="btn btn-ghost sm more-btn" id="b-more">Meer tonen (${nl(rs.length - SHOWN)})</button>` : ''}`;
+}
+function bindList() {
+  const m = $('#b-more'); if (m) m.onclick = () => { SHOWN += PAGE * 2; $('#lst').innerHTML = listHTML(); bindList(); };
+}
+function attentionHTML() {
+  const l = L(), items = [], wk = daysAgo(6), m30 = daysAgo(29);
+  LIST.filter(r => r.type === 'incident' && r.opv !== 'Afgehandeld' && r.prio === 'Hoog').slice(0, 4).forEach(r =>
+    items.push(`<a href="#/rapport/${encodeURIComponent(r.nummer)}"><span class="dot r"></span><span class="grow"><b>${esc(r.aantal || l.incident)} · ${esc(r.object)}</b><small>Hoge prioriteit · ${esc(r.opv)} · ${agoTxt(r.datum)}</small></span></a>`));
+  LIST.filter(r => r.type === 'ronde' && r.afw && r.datum >= wk).slice(0, 3).forEach(r =>
+    items.push(`<a href="#/rapport/${encodeURIComponent(r.nummer)}"><span class="dot"></span><span class="grow"><b>${r.afw} afwijking${r.afw === 1 ? '' : 'en'} · ${esc(r.object)}</b><small>${esc(l.types.ronde)} door ${esc(r.naam)} · ${agoTxt(r.datum)}</small></span></a>`));
+  OBJ.filter(o => (o.checkpoints || []).length && !LIST.some(r => r.type === 'ronde' && r.object === o.naam && r.datum >= wk)).slice(0, 3).forEach((o) =>
+    items.push(`<a href="#/objecten/${OBJ.indexOf(o)}"><span class="dot b"></span><span class="grow"><b>Geen ${esc(l.types.ronde.toLowerCase())} · ${esc(o.naam)}</b><small>Laatste 7 dagen niet gelopen</small></span></a>`));
+  OBJ.filter(o => !LIST.some(r => r.object === o.naam && r.datum >= m30)).slice(0, 2).forEach(o =>
+    items.push(`<a href="#/objecten/${OBJ.indexOf(o)}"><span class="dot b"></span><span class="grow"><b>Stil op ${esc(o.naam)}</b><small>Geen rapporten in 30 dagen</small></span></a>`));
+  return items.length ? `<div class="att">${items.slice(0, 7).join('')}</div>` : `<div class="att"><div class="a"><span class="dot g"></span><span class="grow"><b>Alles onder controle</b><small>Geen open meldingen met hoge prioriteit of afwijkingen deze week.</small></span></div></div>`;
 }
 function viewOverzicht() {
-  const l = L();
-  const week = daysAgo(6), month = todayISO(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+  const l = L(), admin = isAdmin();
+  const wk = daysAgo(6), pwk = daysAgo(13), m30 = daysAgo(29), month = todayISO(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const objs = [...new Set([...OBJ.map(o => o.naam), ...LIST.map(r => r.object).filter(Boolean)])];
-  const setup = isAdmin() && !OBJ.length;
+  const setup = admin && !OBJ.length, dn = currentDienst();
+  const thisW = LIST.filter(r => r.datum >= wk).length, prevW = LIST.filter(r => r.datum >= pwk && r.datum < wk).length;
+  const delta = thisW - prevW;
+  const openInc = LIST.filter(r => r.type === 'incident' && r.opv !== 'Afgehandeld');
+  const rondes30 = LIST.filter(r => r.type === 'ronde' && r.datum >= m30);
+  const cpTot = rondes30.reduce((n, r) => n + (r.aantal || 0), 0), cpOk = rondes30.reduce((n, r) => n + (r.ok || 0), 0);
+  const actief = new Set(LIST.filter(r => r.datum >= wk).map(r => r.door || r.naam)).size;
+  const meds = visibleMed(), unread = unreadMed();
+  const ovds = Object.entries(OVD).filter(([o]) => admin || OBJ.some(x => x.naam === o)).sort((a, b) => (b[1].datum || '').localeCompare(a[1].datum || '')).slice(0, admin ? 3 : 4);
+  const cats = countBy(LIST.filter(r => r.type === 'incident' && r.datum >= m30), r => r.aantal).slice(0, 6);
+
+  const kpis = admin ? `<div class="kpis">
+      <div class="kpi"><span>Rapporten, 7 dagen</span><b>${nl(thisW)}</b><small class="${delta > 0 ? 'up' : delta < 0 ? 'down' : ''}">${delta === 0 ? 'gelijk aan' : (delta > 0 ? '+' : '') + delta + ' t.o.v.'} vorige week</small></div>
+      <a class="kpi${openInc.some(r => r.prio === 'Hoog') ? ' alert' : ''}" href="#/opvolging"><span>Open meldingen</span><b>${nl(openInc.length)}</b><small>${openInc.filter(r => r.prio === 'Hoog').length} met hoge prioriteit</small></a>
+      <div class="kpi"><span>Checkpoints in orde, 30 d</span><b>${cpTot ? pct(cpOk, cpTot) + '%' : '—'}</b><small>${nl(cpOk)} van ${nl(cpTot)} · ${rondes30.length} rondes</small></div>
+      <a class="kpi" href="#/team"><span>Actief deze week</span><b>${nl(actief)}</b><small>van ${nl(MW.length || 1)} ${esc(l.persoon.toLowerCase())}s</small></a>
+    </div>` : `<div class="kpis k3">
+      <div class="kpi"><span>Mijn rapporten, 7 dagen</span><b>${nl(thisW)}</b><small>${nl(LIST.length)} in totaal</small></div>
+      <div class="kpi"><span>${esc(l.types.ronde)}, deze maand</span><b>${nl(LIST.filter(r => r.type === 'ronde' && r.datum >= month).length)}</b><small>${cpTot ? pct(cpOk, cpTot) + '% checkpoints in orde' : 'nog geen rondes'}</small></div>
+      <div class="kpi"><span>${esc(l.types.incident)}, deze maand</span><b>${nl(LIST.filter(r => r.type === 'incident' && r.datum >= month).length)}</b><small>Laatste: ${agoTxt((LIST.find(r => r.type === 'incident') || {}).datum)}</small></div>
+    </div>`;
+
   shell('overzicht', 'Overzicht', `
     ${setup ? `<div class="warn" style="margin:0 0 16px">Begin met het toevoegen van je eerste <a href="#/objecten/nieuw">${esc(l.object.toLowerCase())}</a>. Daarna kun je rapporten maken${MW.length < 2 ? ` en je <a href="#/team">team</a> uitnodigen` : ''}.</div>` : ''}
+    ${PLAN && PLAN.plan === 'proef' && PLAN.proefTot ? (() => { const n = dayDiff(todayISO(), PLAN.proefTot); return n <= 7 ? `<div class="warn" style="margin:0 0 16px">Je proefperiode loopt ${n <= 0 ? 'vandaag' : `over ${n} dag${n === 1 ? '' : 'en'}`} af. Mail naar <a href="mailto:info@oisecur.nl">info@oisecur.nl</a> om door te gaan; je rapporten blijven bewaard.</div>` : ''; })() : ''}
     ${quickHTML()}
-    <div class="stats">
-      <div class="stat"><b>${LIST.filter(r => r.datum >= week).length}</b><span>Rapporten, laatste 7 dagen</span></div>
-      <div class="stat"><b>${LIST.filter(r => r.type === 'incident' && r.datum >= month).length}</b><span>${esc(l.types.incident)}, deze maand</span></div>
-      <div class="stat"><b>${LIST.length}</b><span>${isAdmin() ? 'Rapporten totaal' : 'Mijn rapporten'}</span></div>
+    ${kpis}
+    <div class="dash">
+      <div class="col">
+        <section class="card"><div class="sec-t"><h2>Activiteit, laatste 14 dagen</h2>${admin ? '<a class="btn btn-ghost sm" href="#/inzicht">Meer inzicht</a>' : ''}</div>${activityBars(LIST)}</section>
+        ${ovds.length ? `<section class="card"><div class="sec-t"><h2>Laatste overdracht</h2></div>${ovds.map(([o, v]) => ovdHTML(o, v)).join('')}</section>` : ''}
+      </div>
+      <div class="col">
+        ${meds.length || admin ? `<section class="card"><div class="sec-t"><h2>Mededelingen${unread.length ? ` <span class="tag">${unread.length} nieuw</span>` : ''}</h2><a class="btn btn-ghost sm" href="#/mededelingen">${admin ? 'Beheren' : 'Alle'}</a></div>
+          ${meds.length ? meds.slice(0, 2).map(m => medHTML(m, unread.includes(m))).join('') : `<p class="muted" style="font-size:14px">Nog geen mededelingen. Zet hier instructies of nieuws voor je team neer.</p>`}</section>` : ''}
+        ${admin ? `<section class="card"><div class="sec-t"><h2>Aandachtspunten</h2></div>${attentionHTML()}</section>` : ''}
+        ${admin && cats.length ? `<section class="card"><div class="sec-t"><h2>${esc(l.types.incident)} per categorie, 30 d</h2></div>${hbars(cats, 'var(--red)')}</section>` : ''}
+      </div>
     </div>
-    <div class="filters">
-      <input type="search" id="fq" placeholder="Zoeken op nummer, naam of categorie…" value="${esc(F.q)}">
+    <section class="sec-t" style="margin-top:6px"><h2 style="font-size:19px">Rapporten</h2></section>
+    <div class="filters" style="grid-template-columns:2fr 1fr 1fr 1fr">
+      <input type="search" id="fq" placeholder="Zoeken op nummer, naam of omschrijving…" value="${esc(F.q)}">
       <select id="fo"><option value="">Alle ${esc(l.objecten.toLowerCase())}</option>${objs.map(o => `<option${F.obj === o ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select>
       <select id="ft"><option value="">Alle soorten</option>${['dienst', 'incident', 'ronde'].map(t => `<option value="${t}"${F.type === t ? ' selected' : ''}>${esc(l.types[t])}</option>`).join('')}</select>
+      <select id="fp"><option value="">Hele periode</option>${[['1', 'Vandaag'], ['7', 'Laatste 7 dagen'], ['30', 'Laatste 30 dagen'], ['90', 'Laatste 90 dagen']].map(([v, t]) => `<option value="${v}"${F.per === v ? ' selected' : ''}>${t}</option>`).join('')}</select>
     </div>
     <div id="lst">${listHTML()}</div>`,
-    `<button class="btn btn-ghost sm" id="b-ov">Periode-overzicht (PDF)</button>`);
-  $('#fq').oninput = e => { F.q = e.target.value; $('#lst').innerHTML = listHTML(); };
-  $('#fo').onchange = e => { F.obj = e.target.value; $('#lst').innerHTML = listHTML(); };
-  $('#ft').onchange = e => { F.type = e.target.value; $('#lst').innerHTML = listHTML(); };
+    `${dn ? `<span class="chip"><i></i>${esc(dn.naam)} · ${esc(dn.van)}–${esc(dn.tot)}</span>` : ''}<button class="btn btn-ghost sm" id="b-ov">Periode-overzicht (PDF)</button>`);
+  const h1 = $('.page-head h1'); if (h1) h1.innerHTML = `${esc(greet())}, ${esc((ME.naam || '').split(' ')[0])}<span style="display:block;font-size:14.5px;font-weight:500;color:var(--muted);letter-spacing:0;margin-top:4px">${esc(new Date().toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' }))} · ${esc(B.naam)}</span>`;
+  const relist = () => { SHOWN = PAGE; $('#lst').innerHTML = listHTML(); bindList(); };
+  $('#fq').oninput = e => { F.q = e.target.value; relist(); };
+  $('#fo').onchange = e => { F.obj = e.target.value; relist(); };
+  $('#ft').onchange = e => { F.type = e.target.value; relist(); };
+  $('#fp').onchange = e => { F.per = e.target.value; relist(); };
   $('#b-ov').onclick = overviewDialog;
+  bindList();
 }
+
+/* ═════════════ Opvolging van meldingen (beheerder) ═════════════ */
+const OF = { st: 'open', obj: '', prio: '' };
+const SEL = new Set();
+async function setOpvolging(nummers, status, notitie) {
+  const d = await call('rapporten', { actie: 'opvolging', nummers, status, notitie });
+  LIST.forEach(r => { if (nummers.includes(r.nummer) && status) r.opv = status; });
+  nummers.forEach(n => { if (CACHE[n]) { if (d.opvolging && nummers.length === 1) CACHE[n].opvolging = d.opvolging; else delete CACHE[n]; } });
+  return d;
+}
+function viewOpvolging() {
+  const l = L();
+  const all = LIST.filter(r => r.type === 'incident');
+  const cnt = k => all.filter(r => k === 'alle' ? true : k === 'open' ? r.opv !== 'Afgehandeld' : r.opv === k).length;
+  const rs = all.filter(r => (OF.st === 'alle' || (OF.st === 'open' ? r.opv !== 'Afgehandeld' : r.opv === OF.st)) && (!OF.obj || r.object === OF.obj) && (!OF.prio || r.prio === OF.prio))
+    .sort((a, b) => ({ Hoog: 0, Middel: 1, Laag: 2 }[a.prio] ?? 3) - ({ Hoog: 0, Middel: 1, Laag: 2 }[b.prio] ?? 3) || (b.datum || '').localeCompare(a.datum || ''));
+  [...SEL].forEach(n => { if (!rs.some(r => r.nummer === n)) SEL.delete(n); });
+  const segs = [['open', 'Nog te doen'], ['Open', 'Open'], ['In behandeling', 'In behandeling'], ['Afgehandeld', 'Afgehandeld'], ['alle', 'Alle']];
+  const objs = [...new Set(all.map(r => r.object).filter(Boolean))];
+  shell('opvolging', 'Opvolging', `
+    <p class="muted" style="margin:-8px 0 14px;font-size:14.5px">Elke ${esc(l.types.incident.toLowerCase())} krijgt een status. Zo zie je wat nog actie vraagt, wie ermee bezig is en wat is afgehandeld. Het rapport zelf blijft ongewijzigd.</p>
+    <div class="seg-f">${segs.map(([k, t]) => `<button data-st="${esc(k)}" class="${OF.st === k ? 'on' : ''}">${t}<em>${cnt(k)}</em></button>`).join('')}</div>
+    <div class="filters" style="grid-template-columns:1fr 1fr">
+      <select id="of-o"><option value="">Alle ${esc(l.objecten.toLowerCase())}</option>${objs.map(o => `<option${OF.obj === o ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select>
+      <select id="of-p"><option value="">Alle prioriteiten</option>${['Hoog', 'Middel', 'Laag'].map(p => `<option${OF.prio === p ? ' selected' : ''}>${p}</option>`).join('')}</select>
+    </div>
+    ${rs.length ? `<label class="check" style="font-size:14px;color:var(--muted)"><input type="checkbox" id="of-all"${SEL.size && SEL.size === rs.length ? ' checked' : ''}> Alles selecteren</label>
+    <div class="rlist" id="of-list">${rs.map(r => `<div class="opv s-${(OPV.find(x => x[0] === r.opv) || OPV[0])[1]}">
+      <input type="checkbox" data-sel="${esc(r.nummer)}"${SEL.has(r.nummer) ? ' checked' : ''} aria-label="Selecteer ${esc(r.nummer)}">
+      <a href="#/rapport/${encodeURIComponent(r.nummer)}">
+        <div class="l1"><b>${esc(r.aantal || l.incident)}</b>${prioTag(r.prio)}${opvTag(r.opv)}${r.politie ? '<span class="tag grey">Politie</span>' : ''}${r.schade ? '<span class="tag grey">Schade</span>' : ''}</div>
+        <div class="l2">${esc(fmtDate(r.datum))}${r.tijd ? ' ' + esc(r.tijd) : ''} · ${esc(r.object || '—')} · ${esc(r.naam || '—')}${r.opv !== 'Afgehandeld' ? ` · <b style="color:${dayDiff(r.datum) > 7 ? 'var(--red)' : 'var(--muted)'}">${dayDiff(r.datum)} d open</b>` : ''}</div>
+        ${r.kort ? `<div class="l3">${esc(r.kort)}</div>` : ''}
+      </a></div>`).join('')}</div>` : `<div class="empty">${all.length ? 'Niets in deze selectie. Mooi zo.' : `Nog geen ${esc(l.types.incident.toLowerCase())}en.`}</div>`}
+    <div class="bulk" id="of-bulk"${SEL.size ? '' : ' hidden'}><span id="of-n">${SEL.size} geselecteerd</span>
+      ${OPV.map(([s]) => `<button class="btn btn-ghost sm" data-bulk="${esc(s)}">${esc(s)}</button>`).join('')}</div>`);
+  $$('.seg-f [data-st]').forEach(b => b.onclick = () => { OF.st = b.dataset.st; SEL.clear(); viewOpvolging(); });
+  $('#of-o').onchange = e => { OF.obj = e.target.value; viewOpvolging(); };
+  $('#of-p').onchange = e => { OF.prio = e.target.value; viewOpvolging(); };
+  const upd = () => { $('#of-bulk').hidden = !SEL.size; $('#of-n').textContent = `${SEL.size} geselecteerd`; };
+  $$('[data-sel]').forEach(c => c.onchange = () => { c.checked ? SEL.add(c.dataset.sel) : SEL.delete(c.dataset.sel); upd(); });
+  const allC = $('#of-all'); if (allC) allC.onchange = () => { rs.forEach(r => allC.checked ? SEL.add(r.nummer) : SEL.delete(r.nummer)); $$('[data-sel]').forEach(c => (c.checked = allC.checked)); upd(); };
+  $$('[data-bulk]').forEach(b => b.onclick = async () => {
+    const ns = [...SEL]; if (!ns.length) return;
+    if (!confirm(`${ns.length} melding${ns.length === 1 ? '' : 'en'} op "${b.dataset.bulk}" zetten?`)) return;
+    try { await setOpvolging(ns, b.dataset.bulk); SEL.clear(); toast('Status bijgewerkt'); viewOpvolging(); } catch (x) { toast(x.message, true); }
+  });
+}
+function opvolgingCard(r) {
+  const o = r.opvolging || { status: 'Open', log: [] }, admin = isAdmin(), wie = login => (MW.find(m => m.login === login) || {}).naam || login;
+  return `<section class="card" id="opv-card" style="max-width:780px;margin-top:14px"><div class="sec-t"><h2>Opvolging</h2>${opvTag(o.status)}</div>
+    ${admin ? `<div class="seg" style="margin-top:0">${OPV.map(([s, k, c]) => `<button type="button" data-opv="${esc(s)}" class="${o.status === s ? 'on ' + (k === 'af' ? 'ok' : k === 'in' ? 'overgeslagen' : 'afwijking') : ''}">${esc(s)}</button>`).join('')}</div>
+      <label style="margin-top:12px">Notitie<textarea id="opv-txt" rows="2" placeholder="Bijv. opdrachtgever gebeld, reparatie ingepland op vrijdag"></textarea></label>
+      <div class="row" style="margin-top:8px"><button type="button" class="btn btn-primary sm" id="opv-add">Notitie toevoegen</button></div>` : '<p class="muted" style="font-size:14px">De beheerder houdt hier de opvolging van deze melding bij.</p>'}
+    ${o.log && o.log.length ? `<ul class="tl">${[...o.log].reverse().map(e => `<li class="${e.status ? 'st' : ''}"><small>${esc(new Date(e.t).toLocaleString('nl-NL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }))} · ${esc(wie(e.door))}</small>${e.status ? `<p>Status gewijzigd naar <b>${esc(e.status)}</b></p>` : ''}${e.tekst ? `<p>${esc(e.tekst)}</p>` : ''}</li>`).join('')}</ul>` : '<p class="hint">Nog geen notities.</p>'}
+  </section>`;
+}
+function bindOpvolging(r) {
+  const card = $('#opv-card'); if (!card || !isAdmin()) return;
+  const redraw = () => { card.outerHTML = opvolgingCard(r); bindOpvolging(r); };
+  $$('[data-opv]', card).forEach(b => b.onclick = async () => {
+    if (b.dataset.opv === (r.opvolging || {}).status) return;
+    try { const d = await setOpvolging([r.nummer], b.dataset.opv); r.opvolging = d.opvolging; toast('Status: ' + b.dataset.opv); redraw(); } catch (x) { toast(x.message, true); }
+  });
+  $('#opv-add', card).onclick = async () => {
+    const t = $('#opv-txt', card).value.trim(); if (!t) return toast('Schrijf eerst een notitie.', true);
+    try { const d = await setOpvolging([r.nummer], '', t); r.opvolging = d.opvolging; toast('Notitie toegevoegd'); redraw(); } catch (x) { toast(x.message, true); }
+  };
+}
+
+/* ═════════════ Inzicht (beheerder) ═════════════ */
+let INZ = '30';
+function viewInzicht() {
+  const l = L(), since = daysAgo(+INZ - 1), rs = LIST.filter(r => r.datum >= since);
+  const by = t => rs.filter(r => r.type === t);
+  const ron = by('ronde'), inc = by('incident');
+  const cpT = ron.reduce((n, r) => n + (r.aantal || 0), 0), cpO = ron.reduce((n, r) => n + (r.ok || 0), 0), cpA = ron.reduce((n, r) => n + (r.afw || 0), 0), cpQ = ron.reduce((n, r) => n + (r.qr || 0), 0);
+  const objs = [...new Set([...OBJ.map(o => o.naam), ...rs.map(r => r.object).filter(Boolean)])];
+  const objRows = objs.map(o => { const x = rs.filter(r => r.object === o), rx = x.filter(r => r.type === 'ronde'); const t = rx.reduce((n, r) => n + (r.aantal || 0), 0), ok = rx.reduce((n, r) => n + (r.ok || 0), 0);
+    return { o, n: x.length, d: x.filter(r => r.type === 'dienst').length, r: rx.length, i: x.filter(r => r.type === 'incident').length, ok: t ? pct(ok, t) : null, afw: rx.reduce((n, r) => n + (r.afw || 0), 0), last: (LIST.find(r => r.object === o) || {}).datum }; })
+    .sort((a, b) => b.n - a.n);
+  const ppl = [...new Set([...MW.map(m => m.naam), ...rs.map(r => r.naam).filter(Boolean)])];
+  const pRows = ppl.map(p => { const x = rs.filter(r => r.naam === p); return { p, n: x.length, d: x.filter(r => r.type === 'dienst').length, r: x.filter(r => r.type === 'ronde').length, i: x.filter(r => r.type === 'incident').length, last: (LIST.find(r => r.naam === p) || {}).datum }; })
+    .sort((a, b) => b.n - a.n);
+  const wd = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'], wdc = wd.map(() => 0);
+  rs.forEach(r => { const d = new Date(r.datum + 'T12:00').getDay(); wdc[(d + 6) % 7]++; });
+  const hrs = Array(8).fill(0); inc.forEach(r => { if (r.tijd) hrs[Math.floor(+r.tijd.slice(0, 2) / 3)]++; });
+  const days = Math.min(+INZ, 31);
+  shell('inzicht', 'Inzicht', `
+    <div class="seg-f">${[['7', '7 dagen'], ['30', '30 dagen'], ['90', '90 dagen'], ['365', '12 maanden']].map(([v, t]) => `<button data-p="${v}" class="${INZ === v ? 'on' : ''}">${t}</button>`).join('')}</div>
+    <div class="kpis">
+      <div class="kpi"><span>Rapporten</span><b>${nl(rs.length)}</b><small>${nl(by('dienst').length)} ${esc(l.types.dienst.toLowerCase())} · ${nl(ron.length)} rondes</small></div>
+      <div class="kpi${inc.some(r => r.prio === 'Hoog') ? ' alert' : ''}"><span>${esc(l.types.incident)}</span><b>${nl(inc.length)}</b><small>${inc.filter(r => r.prio === 'Hoog').length} hoog · ${inc.filter(r => r.politie).length} met politie</small></div>
+      <div class="kpi"><span>Checkpoints in orde</span><b>${cpT ? pct(cpO, cpT) + '%' : '—'}</b><small>${nl(cpA)} afwijking${cpA === 1 ? '' : 'en'} · ${nl(cpT)} totaal</small></div>
+      <div class="kpi"><span>Via QR gescand</span><b>${cpT ? pct(cpQ, cpT) + '%' : '—'}</b><small>bewijs dat de ronde gelopen is</small></div>
+    </div>
+    <div class="dash">
+      <section class="card"><div class="sec-t"><h2>Rapporten per dag</h2><span class="hint" style="margin:0">laatste ${days} dagen</span></div>${activityBars(LIST, days)}</section>
+      <div class="col">
+        <section class="card"><h2>${esc(l.types.incident)} per categorie</h2>${inc.length ? hbars(countBy(inc, r => r.aantal), 'var(--red)') : '<p class="muted" style="font-size:14px">Geen meldingen in deze periode.</p>'}</section>
+      </div>
+    </div>
+    <section class="card"><div class="sec-t"><h2>Per ${esc(l.object.toLowerCase())}</h2><button class="btn btn-ghost sm" data-csv="obj">CSV</button></div>
+      ${objRows.length ? `<div class="tscroll"><table class="tbl"><tr><th>${esc(l.object)}</th><th class="n">Totaal</th><th class="n">${esc(l.types.dienst)}</th><th class="n">Rondes</th><th class="n">${esc(l.types.incident)}</th><th>Checkpoints in orde</th><th>Laatste</th></tr>
+      ${objRows.map(x => `<tr><td><b>${esc(x.o)}</b></td><td class="n">${x.n}</td><td class="n">${x.d}</td><td class="n">${x.r}</td><td class="n">${x.i ? `<b style="color:var(--red)">${x.i}</b>` : 0}</td><td>${x.ok == null ? '<span class="muted">—</span>' : `<span class="meter"><i style="width:${x.ok}%;background:${x.ok < 80 ? 'var(--amber)' : 'var(--green)'}"></i></span>${x.ok}%${x.afw ? ` <span class="muted">(${x.afw} afw.)</span>` : ''}`}</td><td class="muted" style="white-space:nowrap">${agoTxt(x.last)}</td></tr>`).join('')}</table></div>` : '<p class="muted">Nog geen gegevens.</p>'}
+    </section>
+    <section class="card"><div class="sec-t"><h2>Per ${esc(l.persoon.toLowerCase())}</h2><button class="btn btn-ghost sm" data-csv="ppl">CSV</button></div>
+      ${pRows.length ? `<div class="tscroll"><table class="tbl"><tr><th>Naam</th><th class="n">Totaal</th><th class="n">${esc(l.types.dienst)}</th><th class="n">Rondes</th><th class="n">${esc(l.types.incident)}</th><th>Laatst actief</th></tr>
+      ${pRows.map(x => `<tr><td><a href="#/overzicht" data-who="${esc(x.p)}">${esc(x.p)}</a></td><td class="n">${x.n}</td><td class="n">${x.d}</td><td class="n">${x.r}</td><td class="n">${x.i}</td><td class="muted" style="white-space:nowrap">${agoTxt(x.last)}</td></tr>`).join('')}</table></div>` : '<p class="muted">Nog geen gegevens.</p>'}
+    </section>
+    <div class="dash" style="margin-top:14px">
+      <section class="card"><h2>Rapporten per weekdag</h2>${hbars(wd.map((d, i) => [d, wdc[i]]))}</section>
+      <section class="card"><h2>${esc(l.types.incident)} per tijdvak</h2>${inc.some(r => r.tijd) ? hbars(hrs.map((v, i) => [`${pad(i * 3)}:00 – ${pad(i * 3 + 3 === 24 ? 0 : i * 3 + 3)}:00`, v]), 'var(--red)') : '<p class="muted" style="font-size:14px">Geen meldingen met tijdstip in deze periode.</p>'}</section>
+    </div>`, `<button class="btn btn-ghost sm" id="b-ov">Periode-overzicht (PDF)</button>`);
+  $$('.seg-f [data-p]').forEach(b => b.onclick = () => { INZ = b.dataset.p; viewInzicht(); });
+  $('#b-ov').onclick = overviewDialog;
+  $$('[data-who]').forEach(a => a.onclick = () => { F.q = a.dataset.who; F.obj = ''; F.type = ''; F.per = ''; });
+  $$('[data-csv]').forEach(b => b.onclick = () => {
+    const rows = b.dataset.csv === 'obj'
+      ? [[l.object, 'Totaal', l.types.dienst, 'Rondes', l.types.incident, 'Checkpoints in orde %', 'Afwijkingen', 'Laatste rapport'], ...objRows.map(x => [x.o, x.n, x.d, x.r, x.i, x.ok ?? '', x.afw, x.last ? fmtDate(x.last) : ''])]
+      : [['Naam', 'Totaal', l.types.dienst, 'Rondes', l.types.incident, 'Laatst actief'], ...pRows.map(x => [x.p, x.n, x.d, x.r, x.i, x.last ? fmtDate(x.last) : ''])];
+    const csv = '﻿' + rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\r\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = `oisecur-inzicht-${b.dataset.csv === 'obj' ? 'objecten' : 'medewerkers'}-${todayISO()}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  });
+}
+
+/* ═════════════ Mededelingen ═════════════ */
+function viewMededelingen() {
+  const admin = isAdmin(), l = L(), t = todayISO();
+  const list = admin ? [...MED].sort((a, b) => (b.datum || '').localeCompare(a.datum || '')) : visibleMed();
+  const unread = unreadMed().map(m => m.id);
+  shell(admin ? 'mededelingen' : 'mededelingen', 'Mededelingen', `
+    ${admin ? `<section class="card"><h2>Nieuwe mededeling</h2><form id="f-med" class="stack" novalidate>
+      <label>Titel<input name="titel" maxlength="120" required placeholder="bijv. Nieuwe sleutelprocedure"></label>
+      <label>Bericht<textarea name="tekst" rows="4" maxlength="3000" placeholder="Wat moet het team weten?"></textarea></label>
+      <div class="grid2"><label>Voor ${esc(l.object.toLowerCase())}<select name="object"><option value="">Iedereen</option>${OBJ.map(o => `<option>${esc(o.naam)}</option>`).join('')}</select></label>
+      <label>Zichtbaar tot en met (optioneel)<input type="date" name="tot" min="${t}"></label></div>
+      <label class="check"><input type="checkbox" name="belangrijk"> Belangrijk (valt op in het overzicht)</label>
+      <button class="btn btn-primary">Plaatsen</button></form></section>` : ''}
+    <section class="card"><h2>${admin ? 'Geplaatst' : 'Voor jou'}</h2>
+      ${list.length ? list.map(m => `<div style="position:relative">${medHTML(m, unread.includes(m.id))}${admin ? `<div class="row" style="margin:6px 0 4px">${m.tot && m.tot < t ? '<span class="tag grey">Verlopen</span>' : ''}<button class="btn btn-danger sm" data-rm-med="${esc(m.id)}">Verwijderen</button></div>` : ''}</div>`).join('')
+        : `<div class="empty">${admin ? 'Nog niets geplaatst.' : 'Geen mededelingen.'}</div>`}
+    </section>`);
+  if (unread.length) setTimeout(() => markRead(unread), 1500);
+  if (!admin) return;
+  const save = async (lst, msg) => { try { await call('stamdata', { actie: 'mededelingen', mededelingen: lst }); MED = (await call('stamdata')).mededelingen || lst; toast(msg); viewMededelingen(); } catch (x) { toast(x.message, true); } };
+  $('#f-med').onsubmit = e => {
+    e.preventDefault(); const f = Object.fromEntries(new FormData(e.target));
+    if (!f.titel.trim()) return toast('Vul een titel in.', true);
+    const m = { id: uid() + uid(), titel: f.titel.trim(), tekst: f.tekst.trim(), object: f.object || '', tot: f.tot || '', belangrijk: !!f.belangrijk, datum: t, door: ME.naam };
+    markRead([m.id]); save([m, ...MED], 'Mededeling geplaatst');
+  };
+  $$('[data-rm-med]').forEach(b => b.onclick = () => { if (confirm('Deze mededeling verwijderen?')) save(MED.filter(m => m.id !== b.dataset.rmMed), 'Verwijderd'); });
+}
+
+/* ═════════════ Meer (mobiel menu voor de beheerder) ═════════════ */
+function viewMeer() {
+  const l = L(), un = unreadMed().length;
+  shell('meer', 'Meer', `<div class="tiles">
+    <a href="#/inzicht">${ICON.chart}<b>Inzicht</b><small>Cijfers per ${esc(l.object.toLowerCase())} en ${esc(l.persoon.toLowerCase())}</small></a>
+    <a href="#/mededelingen">${ICON.bell}<b>Mededelingen${un ? ` <span class="tag">${un}</span>` : ''}</b><small>Berichten voor je team</small></a>
+    <a href="#/team">${ICON.team}<b>Team</b><small>${MW.length} account${MW.length === 1 ? '' : 's'}</small></a>
+    <a href="#/instellingen">${ICON.gear}<b>Instellingen</b><small>Bedrijf, logo, diensten, account</small></a>
+  </div>`);
+}
+
 function viewNieuw() {
   shell('nieuw', 'Nieuw rapport', `${quickHTML()}<p class="muted">Kies het soort rapport. Datum, tijd en checkpoints worden automatisch ingevuld.</p>`);
 }
@@ -861,7 +1274,7 @@ function editor(type) {
           <label>Van<input type="time" data-f="van"></label>
           <label>Tot<input type="time" data-f="tot"></label>
         </div>
-      </div></section>
+      </div><div id="e-info"></div></section>
       ${typeSec}
       <section class="card"><div class="sec-t"><h2>Handtekening</h2><button type="button" class="btn btn-ghost sm" data-act="sig-clear">Wissen</button></div>
         <div class="sigwrap"><canvas id="sig"></canvas></div>
@@ -885,7 +1298,7 @@ function editor(type) {
     else if (t.dataset.c != null) draft.ronde.punten[+t.dataset.c][t.dataset.k] = t.value;
     else if (t.id === 'e-person') { const p = ppl[+t.value]; draft.naam = p.naam; draft.pnr = p.pnr || ''; $('[data-f=pnr]').value = draft.pnr; }
     else if (t.id === 'e-obj' && e.type === 'change') {
-      const o = objByName(t.value); draft.object = o.naam; draft.adres = o.adres || ''; draft.email = o.email || '';
+      const o = objByName(t.value); draft.object = o.naam; draft.adres = o.adres || ''; draft.email = o.email || ''; renderObjInfo();
       if (draft.ronde) {
         const touched = draft.ronde.punten.some(p => p.tijd || p.opm);
         if (!touched || confirm(`Checkpoints van ${o.naam} laden? Wat je al hebt ingevuld vervalt.`)) { draft.ronde.punten = roundPoints(o); renderCps(); }
@@ -930,10 +1343,19 @@ function editor(type) {
     }
     renderPhotos(); keepDraft();
   });
+  renderObjInfo();
   if (type === 'dienst') renderEntries();
   if (type === 'ronde') renderCps();
   if (type === 'incident') renderPhotos();
   initSig();
+}
+function renderObjInfo() {
+  const box = $('#e-info'); if (!box || !draft) return;
+  const o = objByName(draft.object) || {}, ov = OVD[draft.object];
+  const ovdOk = ov && ov.tekst && dayDiff(ov.datum) <= 14;
+  box.innerHTML = (o.instructie ? `<details class="infobox"${draft.type === 'ronde' ? '' : ' open'}><summary>Instructies voor ${esc(o.naam)}</summary><p>${esc(o.instructie)}</p>${o.contact || o.telefoon ? `<p style="margin-top:8px"><b>Contact:</b> ${esc(o.contact || '')}${o.telefoon ? ` · <a href="tel:${esc(o.telefoon.replace(/[^\d+]/g, ''))}" style="color:var(--blauw)">${esc(o.telefoon)}</a>` : ''}</p>` : ''}</details>`
+    : o.contact || o.telefoon ? `<div class="infobox"><b>Contact ${esc(o.naam)}:</b> ${esc(o.contact || '')}${o.telefoon ? ` · <a href="tel:${esc(o.telefoon.replace(/[^\d+]/g, ''))}" style="color:var(--blauw)">${esc(o.telefoon)}</a>` : ''}</div>` : '')
+    + (ovdOk ? `<details class="infobox" open><summary>Overdracht vorige dienst</summary><p><small class="muted">${esc(ov.naam || '')} · ${esc(fmtDate(ov.datum))}${ov.tot ? ' tot ' + esc(ov.tot) : ''}</small></p><p>${esc(ov.tekst)}</p></details>` : '');
 }
 function startRound() { if (draft.ronde && !draft.ronde.start) { draft.ronde.start = nowHM(); const el = $('[data-f="ronde.start"]'); if (el) el.value = draft.ronde.start; } }
 function renderEntries(focusLast) {
@@ -1026,6 +1448,7 @@ async function submitReport() {
     CACHE[r.nummer] = r;
     Store.set(DRAFT_KEY(), null); draft = null;
     LIST.unshift(summaryOf(r));
+    if (r.type === 'dienst' && r.overdracht) OVD[r.object] = { tekst: r.overdracht, naam: r.naam, datum: r.datum, tot: r.tot, nummer: r.nummer };
     toast('Opgeslagen: ' + r.nummer);
     go('rapport/' + encodeURIComponent(r.nummer));
     loadList().catch(() => {});
@@ -1121,11 +1544,13 @@ async function viewReport(nummer) {
       <div class="sig">${r.handtekening ? `<img src="${esc(r.handtekening)}" alt="Handtekening">` : '<p>Niet ondertekend.</p>'}
       <p style="font-size:13px;color:#555;margin-top:6px">${esc(r.naam || '')}</p></div>
     </article>
-    <p class="hint">${r.email ? `Opdrachtgever: ${esc(r.email)}` : ''}${o?.portaal ? `${r.email ? ' · ' : ''}Dit rapport staat ook in het portaal van de opdrachtgever.` : ''}</p>`, `
+    <p class="hint">${r.email ? `Opdrachtgever: ${esc(r.email)}` : ''}${o?.portaal ? `${r.email ? ' · ' : ''}Dit rapport staat ook in het portaal van de opdrachtgever.` : ''}</p>
+    ${r.type === 'incident' ? opvolgingCard(r) : ''}`, `
     <button class="btn btn-ghost sm" id="b-pdf">PDF</button>
     <button class="btn btn-ghost sm" id="b-share">Delen</button>
     <button class="btn btn-primary sm" id="b-mail">Mailen</button>
     ${isAdmin() ? '<button class="btn btn-danger sm" id="b-del">Verwijderen</button>' : ''}`);
+  if (r.type === 'incident') bindOpvolging(r);
   $('#b-pdf').onclick = () => withPdf(() => reportPdf(r).save(`${r.nummer}.pdf`));
   $('#b-share').onclick = () => withPdf(() => shareReport(r));
   $('#b-mail').onclick = () => mailReport(r);
@@ -1346,9 +1771,14 @@ function overviewPdf(obj, from, to, rs) {
 /* ═════════════ Objecten / locaties (beheerder) ═════════════ */
 async function saveObjects(list) { await call('stamdata', { actie: 'objecten', objecten: list }); OBJ = list; }
 function viewObjecten() {
-  const l = L();
-  shell('objecten', l.objecten, OBJ.length ? `<div class="list">${OBJ.map((o, n) => `
-    <a class="item" href="#/objecten/${n}"><div class="grow"><b>${esc(o.naam)}</b><small>${esc(o.adres || 'Geen adres')} · ${(o.checkpoints || []).length} checkpoint${(o.checkpoints || []).length === 1 ? '' : 's'}${o.email ? ' · ' + esc(o.email) : ''}${o.portaal ? ' · portaal actief' : ''}</small></div><span class="muted">›</span></a>`).join('')}</div>`
+  const l = L(), m30 = daysAgo(29), wk = daysAgo(6);
+  shell('objecten', l.objecten, OBJ.length ? `<div class="list">${OBJ.map((o, n) => {
+    const x = LIST.filter(r => r.object === o.naam), x30 = x.filter(r => r.datum >= m30), last = x[0]?.datum;
+    const ronde7 = x.some(r => r.type === 'ronde' && r.datum >= wk), cps = (o.checkpoints || []).length;
+    const open = x.filter(r => r.type === 'incident' && r.opv !== 'Afgehandeld').length;
+    return `<a class="item" href="#/objecten/${n}"><div class="grow"><b>${esc(o.naam)}</b><small>${esc(o.adres || 'Geen adres')} · ${cps} checkpoint${cps === 1 ? '' : 's'}${o.email ? ' · mail' : ''}${o.portaal ? ' · portaal' : ''}${o.instructie ? ' · instructies' : ''}</small>
+      <div class="row" style="gap:6px;margin-top:6px">${open ? `<span class="tag red">${open} open</span>` : ''}${cps && !ronde7 ? '<span class="tag amber">Geen ronde 7 d</span>' : ''}${!last ? '<span class="tag grey">Nog geen rapporten</span>' : ''}</div></div>
+      <div class="stats-s"><b>${x30.length}</b> rapp. / 30 d<br>${last ? 'laatste ' + agoTxt(last) : ''}</div></a>`; }).join('')}</div>`
     : `<div class="empty">Nog geen ${esc(l.objecten.toLowerCase())}. Voeg de plekken toe waar jullie werken.</div>`,
     `<a class="btn btn-primary sm" href="#/objecten/nieuw">+ ${esc(l.object)}</a>`);
 }
@@ -1362,8 +1792,14 @@ function viewObject(key) {
       <section class="card"><h2>Gegevens</h2><div class="stack">
         <label>Naam${isNew ? `<input name="naam" required placeholder="bijv. Bedrijventerrein Noord">` : `<input value="${esc(od.naam)}" disabled><span class="hint" style="display:block">De naam ligt vast, omdat rapporten en het portaal eraan gekoppeld zijn.</span>`}</label>
         <label>Adres<input name="adres" value="${esc(od.adres || '')}"></label>
+        <div class="grid2"><label>Contactpersoon ter plaatse<input name="contact" value="${esc(od.contact || '')}" placeholder="bijv. P. Jansen (facilitair)"></label>
+        <label>Telefoon<input type="tel" name="telefoon" value="${esc(od.telefoon || '')}" placeholder="06 12345678"></label></div>
         <label>E-mail opdrachtgever<input type="email" name="email" value="${esc(od.email || '')}" placeholder="naam@bedrijf.nl"><span class="hint" style="display:block">Hierheen gaan rapporten en elke maandag het weekoverzicht.</span></label>
       </div></section>
+      <section class="card"><h2>Instructies</h2>
+        <label>Post- / werkinstructies<textarea name="instructie" rows="5" maxlength="5000" placeholder="bijv. openingstijden, sleutelkast, alarmprocedure, wie bellen bij calamiteiten">${esc(od.instructie || '')}</textarea></label>
+        <p class="hint">Je team ziet dit bovenaan elk nieuw rapport voor deze ${esc(l.object.toLowerCase())}. Zet hier geen alarmcodes of wachtwoorden in.</p>
+      </section>
       <section class="card"><div class="sec-t"><h2>Checkpoints</h2><div class="row">
         <button type="button" class="btn btn-ghost sm" id="cp-add">+ Checkpoint</button>
         <button type="button" class="btn btn-ghost sm" id="cp-qr">QR-bordjes (PDF)</button></div></div>
@@ -1373,8 +1809,13 @@ function viewObject(key) {
       ${isNew ? '' : `<section class="card"><h2>Portaal voor de opdrachtgever</h2>
         <p class="muted" style="font-size:14px">Een vaste link waarmee de opdrachtgever alle rapporten van deze ${esc(l.object.toLowerCase())} kan bekijken, zonder account.</p>
         <div class="row" style="margin-top:12px"><button type="button" class="btn btn-ghost sm" id="obj-portaal">${od.portaal ? 'Portaallink kopiëren' : 'Portaallink maken'}</button></div></section>`}
+      ${isNew ? '' : (() => { const x = LIST.filter(r => r.object === od.naam); return `<section class="card"><div class="sec-t"><h2>Recente rapporten</h2>${x.length ? `<a class="btn btn-ghost sm" href="#/overzicht" id="obj-all">Alle ${x.length}</a>` : ''}</div>
+        ${x.length ? `<div class="kpis k3" style="margin-bottom:12px"><div class="kpi"><span>30 dagen</span><b>${x.filter(r => r.datum >= daysAgo(29)).length}</b></div><div class="kpi"><span>Open meldingen</span><b>${x.filter(r => r.type === 'incident' && r.opv !== 'Afgehandeld').length}</b></div><div class="kpi"><span>Laatste</span><b style="font-size:18px">${agoTxt(x[0].datum)}</b></div></div>
+        <div class="att">${x.slice(0, 5).map(r => `<a href="#/rapport/${encodeURIComponent(r.nummer)}"><span class="dot ${r.type === 'incident' ? 'r' : r.type === 'ronde' ? 'g' : 'b'}"></span><span class="grow"><b>${esc(l.types[r.type])} · ${esc(fmtDate(r.datum))}</b><small>${esc(r.naam || '')} · ${esc(detailOf(r))}</small></span></a>`).join('')}</div>` : '<p class="muted" style="font-size:14px">Nog geen rapporten voor deze locatie.</p>'}
+        ${OVD[od.naam] ? `<div style="margin-top:12px">${ovdHTML('Laatste overdracht', OVD[od.naam])}</div>` : ''}</section>`; })()}
       <div class="savebar"><button class="btn btn-primary">Opslaan</button>${isNew ? '' : '<button type="button" class="btn btn-danger" id="obj-del">Verwijderen</button>'}</div>
     </form>`, `<a class="btn btn-ghost sm" href="#/objecten">Terug</a>`);
+  const allBtn = $('#obj-all'); if (allBtn) allBtn.onclick = () => { F.obj = od.naam; F.q = ''; F.type = ''; F.per = ''; };
   const renderList = focus => {
     $('#cp-list').innerHTML = od.checkpoints.length ? od.checkpoints.map((c, n) => `<div class="entry" style="grid-template-columns:1fr 44px">
       <input data-i="${n}" value="${esc(c.naam)}" placeholder="Naam checkpoint, bijv. Hoofdpoort" aria-label="Checkpoint ${n + 1}"><button type="button" class="x" data-rm="${n}" aria-label="Verwijderen">×</button></div>`).join('')
@@ -1412,6 +1853,9 @@ function viewObject(key) {
     }
     od.adres = String(f.get('adres') || '').trim();
     od.email = String(f.get('email') || '').trim();
+    od.contact = String(f.get('contact') || '').trim();
+    od.telefoon = String(f.get('telefoon') || '').trim();
+    od.instructie = String(f.get('instructie') || '').trim();
     if (od.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(od.email)) return toast('Het e-mailadres klopt niet.', true);
     od.checkpoints = od.checkpoints.filter(c => c.naam.trim()).map(c => ({ id: c.id, naam: c.naam.trim() }));
     const list = clone(OBJ);
@@ -1454,7 +1898,7 @@ function viewTeam() {
   const l = L();
   shell('team', 'Team', `
     <section class="card"><h2>${esc(l.persoon)}s met een eigen login</h2>
-      <div class="list" id="mw-list">${MW.map(m => `<div class="item"><div class="grow"><b>${esc(m.naam)}${m.rol === 'beheerder' ? ' <span class="pill definitief" style="margin-left:6px">beheerder</span>' : ''}</b><small>${m.pnr ? 'nr. ' + esc(m.pnr) + ' · ' : ''}login: ${esc(m.login)}</small></div>
+      <div class="list" id="mw-list">${MW.map(m => `<div class="item"><div class="grow"><b>${esc(m.naam)}${m.rol === 'beheerder' ? ' <span class="pill definitief" style="margin-left:6px">beheerder</span>' : ''}</b><small>${m.pnr ? 'nr. ' + esc(m.pnr) + ' · ' : ''}login: ${esc(m.login)}</small>${(() => { const x = LIST.filter(r => r.door === m.login || (!r.door && r.naam === m.naam)); return `<small>${x.filter(r => r.datum >= daysAgo(29)).length} rapporten in 30 dagen · laatst actief ${agoTxt(x[0]?.datum).replace('—', 'nog niet')}${x.length ? ` · <a href="#/overzicht" data-who="${esc(m.naam)}" style="color:var(--blauw)">bekijk</a>` : ''}</small>`; })()}</div>
         ${m.rol === 'beheerder' ? '' : `<button class="btn btn-ghost sm" data-pw="${esc(m.login)}">Wachtwoord</button><button class="x" data-rm="${esc(m.login)}" aria-label="Verwijderen">×</button>`}</div>`).join('') || '<p class="muted">Nog niemand.</p>'}</div>
     </section>
     <section class="card"><h2>Iemand toevoegen</h2>
@@ -1465,6 +1909,7 @@ function viewTeam() {
         <p class="hint">Geef de login en het wachtwoord door aan je collega. Die logt in op oisecur.nl/app.html en ziet alleen zijn of haar eigen rapporten.</p>
       </form>
     </section>`);
+  $$('#mw-list [data-who]').forEach(a => a.onclick = () => { F.q = a.dataset.who; F.obj = ''; F.type = ''; F.per = ''; });
   $('#mw-list').addEventListener('click', async e => {
     const pw = e.target.closest('[data-pw]'), rm = e.target.closest('[data-rm]');
     if (pw) {
@@ -1513,12 +1958,26 @@ function viewSettings() {
       <p class="muted" style="font-size:14px">Download al je rapporten als bestand, voor je eigen archief.</p>
       <div class="row" style="margin-top:12px"><button class="btn btn-ghost sm" id="s-exp">Alle rapporten downloaden (JSON)</button></div>
     </section>` : ''}
+    ${admin && PLAN ? `<section class="card"><h2>Abonnement</h2><p class="muted" style="font-size:14px">${PLAN.plan === 'proef' ? `Proefperiode${PLAN.proefTot ? ` tot en met <b style="color:var(--txt)">${esc(fmtDate(PLAN.proefTot))}</b> (${Math.max(0, dayDiff(todayISO(), PLAN.proefTot))} dagen)` : ''}. Wil je doorgaan? Mail naar <a href="mailto:info@oisecur.nl" style="color:var(--blauw)">info@oisecur.nl</a>.`
+      : PLAN.plan === 'oibase' ? 'Gratis via je Oibase Enterprise-abonnement.' : 'Actief abonnement.'}</p></section>` : ''}
+    <section class="card"><h2>Wachtwoord wijzigen</h2><form id="f-pw" class="stack" novalidate>
+      <div class="grid2"><label>Huidig wachtwoord<input type="password" name="oud" autocomplete="current-password" required></label>
+      <label>Nieuw wachtwoord (minimaal 8 tekens)<input type="password" name="nieuw" minlength="8" autocomplete="new-password" required></label></div>
+      <button class="btn btn-ghost sm" style="align-self:flex-start">Wachtwoord wijzigen</button></form></section>
     <section class="card"><h2>Account</h2>
       <p class="muted" style="font-size:14px">${MODE === 'demo' ? 'Je bekijkt de demo. Niets wordt bewaard of verstuurd.' : `Ingelogd als <b style="color:var(--txt)">${esc(ME.naam)}</b> (${esc(ME.login)}) · ${admin ? 'beheerder' : L().persoon.toLowerCase()} bij ${esc(B.naam)}.`}</p>
       <div class="row" style="margin-top:12px">${MODE === 'demo' ? '<a class="btn btn-primary sm" href="app.html?registreer=1">Zelf beginnen</a>' : ''}<button class="btn btn-ghost sm" id="s-out">${MODE === 'demo' ? 'Demo sluiten' : 'Uitloggen'}</button></div>
     </section>
     <p class="hint" style="text-align:center;margin-top:20px">Oisecur · <a href="/" style="color:var(--muted)">oisecur.nl</a> · <a href="mailto:info@oisecur.nl" style="color:var(--muted)">info@oisecur.nl</a></p>`);
   $('#s-out').onclick = logout;
+  $('#f-pw').onsubmit = async e => {
+    e.preventDefault(); const f = Object.fromEntries(new FormData(e.target));
+    if (!f.oud || !f.nieuw) return toast('Vul beide velden in.', true);
+    if (f.nieuw.length < 8) return toast('Het nieuwe wachtwoord moet minimaal 8 tekens hebben.', true);
+    if (f.nieuw === f.oud) return toast('Kies een ander wachtwoord dan je huidige.', true);
+    try { await call('stamdata', { actie: 'mijnwachtwoord', oud: f.oud, nieuw: f.nieuw }); e.target.reset(); toast(MODE === 'demo' ? 'Demo: in het echt is je wachtwoord nu gewijzigd.' : 'Wachtwoord gewijzigd'); }
+    catch (x) { toast(x.message, true); }
+  };
   if (!admin) return;
   $('#f-bedrijf').onsubmit = async e => {
     e.preventDefault(); const f = Object.fromEntries(new FormData(e.target));
@@ -1672,9 +2131,33 @@ function seedDemo() {
     objecten, diensten: [{ naam: 'Dagdienst', van: '07:00', tot: '15:00' }, { naam: 'Avonddienst', van: '15:00', tot: '23:00' }, { naam: 'Nachtdienst', van: '23:00', tot: '07:00' }],
     users: [{ naam: 'Demo Beheerder', pnr: '', login: 'demo@oisecur.nl', rol: 'beheerder' }, { naam: 'Jan de Vries', pnr: 'BV-1042', login: 'jan@demo.nl', rol: 'medewerker' },
       { naam: 'Sanne Bakker', pnr: 'BV-1077', login: 'sanne@demo.nl', rol: 'medewerker' }, { naam: 'Mehmet Yilmaz', pnr: 'BV-1103', login: 'mehmet@demo.nl', rol: 'medewerker' }],
-    rapporten: {}, order: [], seq: 5
+    rapporten: {}, order: [], seq: 5,
+    mededelingen: [
+      { id: 'M1', titel: 'Hekwerk zuidzijde tijdelijk afgezet', tekst: 'Na de inbraakpoging van gisternacht staat er een bouwhek. Loop de komende nachten een extra ronde langs laaddock 3 en meld afwijkingen direct.', belangrijk: true, object: 'Bedrijventerrein Noord', tot: daysAgo(-6), datum: y, door: 'Demo Beheerder' },
+      { id: 'M2', titel: 'Nieuwe portofoons', tekst: 'Vanaf maandag liggen de nieuwe portofoons in de sleutelkast. Kanaal 4 is de meldkamer.', belangrijk: false, object: '', tot: '', datum: y2, door: 'Demo Beheerder' }
+    ],
+    overdracht: {}, opv: {}
   };
+  objecten[0].contact = 'P. Jansen (facilitair)'; objecten[0].telefoon = '06 12345678';
+  objecten[0].instructie = 'Toegang via hoofdpoort met pas. Sleutels in sleutelkast portiersloge (code bij meldkamer).\nBij alarm: eerst meldkamer bellen, daarna contactpersoon.\nLaaddocks na 22:00 altijd dicht.';
+  objecten[1].instructie = 'Serverruimte alleen controleren vanaf de gang, niet betreden.';
+  // Extra demo-historie zodat dashboard en inzicht iets laten zien
+  const ppl = [['Jan de Vries', 'BV-1042', 'jan@demo.nl'], ['Sanne Bakker', 'BV-1077', 'sanne@demo.nl'], ['Mehmet Yilmaz', 'BV-1103', 'mehmet@demo.nl']];
+  const cats = ['Overlast', 'Alarmmelding', 'Verdachte situatie', 'Alarmmelding', 'Onbevoegde toegang', 'Brand / brandmelding'];
+  let k = 10;
+  for (let d = 4; d <= 26; d++) {
+    const datum = daysAgo(d), [nm, pn, lg] = ppl[d % 3], o = objecten[d % 2];
+    const mk = (type, extra) => { k++; return Object.assign(base(type, k, datum, nm, pn, o, extra), { nummer: `DEMO-${CODE[type]}-${datum.replace(/-/g, '')}-${String(k).padStart(3, '0')}`, door: lg }); };
+    rs.push(mk('dienst', { mutaties: [{ tijd: '23:05', oms: 'Dienst aangevangen.', gps: null }, { tijd: '03:10', oms: 'Ronde gelopen, geen bijzonderheden.', gps: null }], overdracht: '' }));
+    if (d % 2 === 0) rs.push(mk('ronde', { ronde: { start: '01:00', eind: '01:20', punten: o.checkpoints.map((c, j) => ({ naam: c.naam, status: (d + j) % 9 === 0 ? 'Afwijking' : 'OK', opm: (d + j) % 9 === 0 ? 'Deur stond open, gesloten.' : '', qr: (d + j) % 5 !== 0, tijd: '01:' + pad(j * 5), gps: null })) } }));
+    if (d % 5 === 1) rs.push(mk('incident', { incident: { cat: cats[d % cats.length], tijd: pad((d * 7) % 24) + ':15', loc: o.checkpoints[0].naam, prio: d % 3 ? 'Laag' : 'Middel', oms: 'Melding afgehandeld ter plaatse, geen verdere bijzonderheden.', actie: 'Gecontroleerd.', betrok: '', vervolg: '', politie: false, hulp: false, schade: false, fotos: [] } }));
+  }
+  rs.sort((a, b) => a.datum.localeCompare(b.datum));
   rs.forEach(r => { D.rapporten[r.nummer] = r; D.order.unshift(r.nummer); });
+  rs.filter(r => r.type === 'incident' && r.datum < daysAgo(6)).forEach(r => (D.opv[r.nummer] = { status: 'Afgehandeld', log: [{ t: new Date(r.datum + 'T10:00').toISOString(), door: 'demo@oisecur.nl', status: 'Afgehandeld' }] }));
+  const ir = rs.find(r => r.nummer === 'DEMO-IR-' + y.replace(/-/g, '') + '-002');
+  if (ir) D.opv[ir.nummer] = { status: 'In behandeling', log: [{ t: new Date().toISOString(), door: 'demo@oisecur.nl', status: 'In behandeling' }, { t: new Date().toISOString(), door: 'demo@oisecur.nl', tekst: 'Opdrachtgever gebeld. Hekwerk wordt vrijdag gerepareerd, camerabeelden opgevraagd.' }] };
+  const od0 = rs.find(r => r.overdracht); if (od0) D.overdracht[o1.naam] = { tekst: od0.overdracht, naam: od0.naam, datum: od0.datum, tot: od0.tot, nummer: od0.nummer };
   return D;
 }
 

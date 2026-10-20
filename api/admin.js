@@ -131,7 +131,7 @@ export default async function handler(req, res) {
       }
       for (const o of objecten || []) if (o.portaal) await kv.del(`portaal:${o.portaal}`);
       for (const l of logins) await kv.del(`user:${l}`);
-      for (const k of ['users', 'rapporten', 'objecten', 'diensten', 'seq']) await kv.del(`bedrijf:${bid}:${k}`);
+      for (const k of ['users', 'rapporten', 'objecten', 'diensten', 'seq', 'mededelingen', 'opvolging', 'overdracht']) await kv.del(`bedrijf:${bid}:${k}`);
       await kv.del(`bedrijf:${bid}`);
       await kv.srem('bedrijven', bid);
       return res.status(200).json({ ok: true });

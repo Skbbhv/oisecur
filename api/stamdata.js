@@ -7,7 +7,10 @@
 //   actie: 'medewerker-'    { login }
 //   actie: 'wachtwoord'     { login, wachtwoord }                    (reset door beheerder)
 //   actie: 'portaal'        { objectNaam }  → maakt/geeft alleen-lezen portaallink-token
-import { kv, hashWachtwoord, sessieUitToken, fout, IS_AFBEELDING } from './_lib.js';
+//   actie: 'mededelingen'   { mededelingen:[{id,titel,tekst,belangrijk,object,tot}] } (hele lijst vervangen)
+// POST /api/stamdata (iedereen)
+//   actie: 'mijnwachtwoord' { oud, nieuw }                           (eigen wachtwoord wijzigen)
+import { kv, hashWachtwoord, controleerWachtwoord, sessieUitToken, fout, IS_AFBEELDING } from './_lib.js';
 
 const str = (v, max) => (v == null ? '' : String(v)).slice(0, max);
 const BRANCHES = ['beveiliging', 'schoonmaak', 'facilitair', 'techniek', 'evenementen', 'overig'];
@@ -18,12 +21,15 @@ export default async function handler(req, res) {
   const bid = sessie.bid;
 
   if (req.method === 'GET') {
-    const [bedrijf, objecten, diensten, logins] = await Promise.all([
+    const [bedrijf, objecten, diensten, logins, mededelingen, overdracht] = await Promise.all([
       kv.get(`bedrijf:${bid}`),
       kv.get(`bedrijf:${bid}:objecten`),
       kv.get(`bedrijf:${bid}:diensten`),
-      kv.smembers(`bedrijf:${bid}:users`)
+      kv.smembers(`bedrijf:${bid}:users`),
+      kv.get(`bedrijf:${bid}:mededelingen`),
+      kv.get(`bedrijf:${bid}:overdracht`)
     ]);
+    const vandaag = new Date().toISOString().slice(0, 10);
     let medewerkers = [];
     if (sessie.rol === 'beheerder' && logins.length) {
       const users = await Promise.all(logins.map(l => kv.get(`user:${l}`)));
@@ -32,13 +38,38 @@ export default async function handler(req, res) {
     return res.status(200).json({
       rol: sessie.rol,
       bedrijf: { id: bedrijf.id, naam: bedrijf.naam, logo: bedrijf.logo || '', branche: bedrijf.branche || 'beveiliging' },
-      objecten: objecten || [], diensten: diensten || [], medewerkers
+      objecten: objecten || [], diensten: diensten || [], medewerkers,
+      mededelingen: (Array.isArray(mededelingen) ? mededelingen : [])
+        .filter(m => sessie.rol === 'beheerder' || !m.tot || m.tot >= vandaag),
+      overdracht: overdracht && typeof overdracht === 'object' ? overdracht : {},
+      plan: sessie.rol === 'beheerder' ? { plan: bedrijf.plan || '', proefTot: bedrijf.proefTot || '' } : undefined
     });
   }
 
   if (req.method !== 'POST') return fout(res, 405, 'Method not allowed');
-  if (sessie.rol !== 'beheerder') return fout(res, 403, 'Alleen de beheerder kan dit aanpassen.');
   const b = req.body || {};
+
+  if (b.actie === 'mijnwachtwoord') {
+    const user = await kv.get(`user:${sessie.login}`);
+    if (!user || user.bid !== bid) return fout(res, 404, 'Account niet gevonden.');
+    if (!b.oud || !controleerWachtwoord(String(b.oud), user.salt, user.hash)) return fout(res, 400, 'Je huidige wachtwoord klopt niet.');
+    if (!b.nieuw || String(b.nieuw).length < 8) return fout(res, 400, 'Nieuw wachtwoord: minimaal 8 tekens.');
+    const { salt, hash } = hashWachtwoord(String(b.nieuw));
+    await kv.set(`user:${sessie.login}`, { ...user, salt, hash });
+    return res.status(200).json({ ok: true });
+  }
+
+  if (sessie.rol !== 'beheerder') return fout(res, 403, 'Alleen de beheerder kan dit aanpassen.');
+
+  if (b.actie === 'mededelingen') {
+    const datum = v => (/^\d{4}-\d{2}-\d{2}$/.test(String(v ?? '')) ? String(v) : '');
+    const lijst = (Array.isArray(b.mededelingen) ? b.mededelingen : []).slice(0, 50).filter(m => m && typeof m === 'object' && (m.titel || m.tekst))
+      .map(m => ({ id: str(m.id, 20) || Math.random().toString(36).slice(2, 10), titel: str(m.titel, 120), tekst: str(m.tekst, 3000),
+        belangrijk: !!m.belangrijk, object: str(m.object, 120), tot: datum(m.tot), datum: datum(m.datum) || new Date().toISOString().slice(0, 10),
+        door: str(m.door, 120) }));
+    await kv.set(`bedrijf:${bid}:mededelingen`, lijst);
+    return res.status(200).json({ ok: true });
+  }
 
   if (b.actie === 'profiel') {
     const bedrijf = await kv.get(`bedrijf:${bid}`);
@@ -57,6 +88,7 @@ export default async function handler(req, res) {
     const lijst = (Array.isArray(b.objecten) ? b.objecten : []).slice(0, 200).filter(o => o && typeof o === 'object' && o.naam)
       .map(o => ({
         naam: str(o.naam, 120), adres: str(o.adres, 200), email: str(o.email, 200),
+        contact: str(o.contact, 120), telefoon: str(o.telefoon, 40), instructie: str(o.instructie, 5000),
         checkpoints: (Array.isArray(o.checkpoints) ? o.checkpoints : []).slice(0, 200)
           .map(c => ({ id: str(c && c.id, 40), naam: str(c && c.naam, 120) })),
         ...(typeof o.portaal === 'string' && /^[a-f0-9]{16,64}$/.test(o.portaal) ? { portaal: o.portaal } : {})
