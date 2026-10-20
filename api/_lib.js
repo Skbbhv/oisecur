@@ -68,11 +68,63 @@ export async function maakSessie(login, bid, rol) {
   await kv.set(`sessie:${token}`, { login, bid, rol }, { ex: 60 * 60 * 12 });
   return token;
 }
+// Sessie ophalen én controleren of de gebruiker en het bedrijf nog toegang hebben.
+// Verwijderde/gedeactiveerde gebruikers, geblokkeerde bedrijven en verlopen proeven → sessie vervalt.
 export async function sessieUitToken(req) {
   const auth = req.headers.authorization || '';
   const token = auth.replace('Bearer ', '').trim();
-  if (!token) return null;
-  return await kv.get(`sessie:${token}`);
+  if (!token || !/^[a-f0-9]{16,128}$/i.test(token)) return null;
+  const sleutel = `sessie:${token}`;
+  const sessie = await kv.get(sleutel);
+  if (!sessie || typeof sessie !== 'object' || !sessie.login || !sessie.bid) return null;
+  const [user, bedrijf] = await Promise.all([kv.get(`user:${sessie.login}`), kv.get(`bedrijf:${sessie.bid}`)]);
+  const vandaag = new Date().toISOString().slice(0, 10);
+  const ongeldig = !user || user.actief === false || user.bid !== sessie.bid ||
+    !bedrijf || bedrijf.geblokkeerd ||
+    (bedrijf.plan === 'proef' && bedrijf.proefTot && bedrijf.proefTot < vandaag);
+  if (ongeldig) { try { await kv.del(sleutel); } catch {} return null; }
+  return { ...sessie, rol: user.rol || sessie.rol };
+}
+
+/* ── Kleine beveiligingshelpers ── */
+// Tijdsonafhankelijk vergelijken van geheimen (voorkomt timing-aanvallen).
+export function veiligGelijk(a, b) {
+  const x = Buffer.from(String(a ?? '')), y = Buffer.from(String(b ?? ''));
+  if (!x.length || x.length !== y.length) return false;
+  return crypto.timingSafeEqual(x, y);
+}
+export function escHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+export function clientIp(req) {
+  return String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'onbekend').split(',')[0].trim();
+}
+export const IS_AFBEELDING = s => typeof s === 'string' && /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(s);
+export const IS_EMAIL = s => typeof s === 'string' && s.length <= 200 && /^[^\s@<>"',;]+@[^\s@<>"',;]+\.[^\s@<>"',;]+$/.test(s);
+
+// Alleen sleutels die de server zelf voor dit rapport heeft aangemaakt: foto:<bid>:<nummer>:<i>
+export function fotoSleutels(bid, r) {
+  if (!r || !Array.isArray(r.fotoRefs) || typeof r.nummer !== 'string') return [];
+  const prefix = `foto:${bid}:${r.nummer}:`;
+  return r.fotoRefs.filter(k => typeof k === 'string' && k.startsWith(prefix) && /^\d{1,2}$/.test(k.slice(prefix.length))).slice(0, 6);
+}
+
+/* ── Mail via Resend ── */
+export const AFZENDER = 'Oisecur Rapportage <rapportage@oisecur.nl>';
+export async function stuurMail({ to, subject, html }, fetchFn = fetch) {
+  const r = await fetchFn('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from: AFZENDER, to: [to], subject: String(subject).replace(/[\r\n]+/g, ' ').slice(0, 200), html })
+  });
+  return r.ok;
+}
+
+/* ── Bevestigingslink voor de Oibase-koppeling ── */
+export function bevestigHash(bid, email) {
+  const geheim = process.env.OIBASE_KOPPELING_GEHEIM;
+  if (!geheim) return '';
+  return crypto.createHmac('sha256', geheim).update('bevestig:' + bid + ':' + String(email || '').toLowerCase().trim()).digest('hex');
 }
 
 /* ── Standaard antwoorden ── */
@@ -109,7 +161,8 @@ export async function synchroniseerOibase(bedrijf) {
   if (!bedrijf || !bedrijf.email) return bedrijf;
   if (bedrijf.plan !== 'proef' && bedrijf.plan !== 'oibase') return bedrijf;   // betalende klanten niet aanraken
   const ent = await oibaseEnterprise(bedrijf.email);
-  if (ent && bedrijf.plan !== 'oibase') {
+  // Upgraden alleen als het e-mailadres via de bevestigingslink is geverifieerd.
+  if (ent && bedrijf.plan !== 'oibase' && bedrijf.emailBevestigd === true) {
     bedrijf.plan = 'oibase'; bedrijf.oibaseSinds = new Date().toISOString().slice(0, 10);
     await kv.set(`bedrijf:${bedrijf.id}`, bedrijf);
   } else if (!ent && bedrijf.plan === 'oibase' && process.env.OIBASE_KOPPELING_GEHEIM) {

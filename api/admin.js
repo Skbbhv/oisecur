@@ -10,7 +10,7 @@
 // POST /api/admin { actie:'wachtwoord', bid, login, wachtwoord }   → wachtwoord van een gebruiker resetten
 // POST /api/admin { actie:'notitie',    bid, notitie }             → eigen notitie bij het bedrijf
 // POST /api/admin { actie:'verwijder',  bid, bevestig:bid }        → bedrijf met ALLE gegevens verwijderen
-import { kv, hashWachtwoord, fout } from './_lib.js';
+import { kv, hashWachtwoord, fout, veiligGelijk, clientIp, fotoSleutels } from './_lib.js';
 
 const PLANS = ['proef', 'starter', 'pro', 'business', 'oibase'];   // oibase = gratis via Oibase Enterprise
 const BRANCHES = ['beveiliging', 'schoonmaak', 'facilitair', 'techniek', 'evenementen', 'overig'];
@@ -34,9 +34,14 @@ async function statistiek(bid) {
 }
 
 export default async function handler(req, res) {
-  const key = req.headers['x-admin-key'];
-  if (!process.env.OISECUR_ADMIN_KEY || key !== process.env.OISECUR_ADMIN_KEY)
+  // Max. 20 foute sleutels per IP-adres per 15 minuten
+  const teller = `admin:fout:ip:${clientIp(req)}`;
+  if (Number(await kv.get(teller)) >= 20)
+    return fout(res, 429, 'Te veel mislukte pogingen. Probeer het over 15 minuten opnieuw.');
+  if (!process.env.OISECUR_ADMIN_KEY || !veiligGelijk(req.headers['x-admin-key'], process.env.OISECUR_ADMIN_KEY)) {
+    const n = await kv.incr(teller); if (n === 1) await kv.expire(teller, 15 * 60);
     return fout(res, 401, 'Ongeldige beheersleutel.');
+  }
 
   if (req.method === 'GET') {
     const bids = await kv.smembers('bedrijven');
@@ -121,7 +126,7 @@ export default async function handler(req, res) {
       ]);
       for (const n of nummers || []) {
         const r = await kv.get(`rapport:${bid}:${n}`);
-        if (r && r.fotoRefs) for (const f of r.fotoRefs) await kv.del(f);
+        for (const f of fotoSleutels(bid, r)) await kv.del(f);
         await kv.del(`rapport:${bid}:${n}`);
       }
       for (const o of objecten || []) if (o.portaal) await kv.del(`portaal:${o.portaal}`);

@@ -7,8 +7,9 @@
 //   actie: 'medewerker-'    { login }
 //   actie: 'wachtwoord'     { login, wachtwoord }                    (reset door beheerder)
 //   actie: 'portaal'        { objectNaam }  → maakt/geeft alleen-lezen portaallink-token
-import { kv, hashWachtwoord, sessieUitToken, fout } from './_lib.js';
+import { kv, hashWachtwoord, sessieUitToken, fout, IS_AFBEELDING } from './_lib.js';
 
+const str = (v, max) => (v == null ? '' : String(v)).slice(0, max);
 const BRANCHES = ['beveiliging', 'schoonmaak', 'facilitair', 'techniek', 'evenementen', 'overig'];
 
 export default async function handler(req, res) {
@@ -43,8 +44,9 @@ export default async function handler(req, res) {
     const bedrijf = await kv.get(`bedrijf:${bid}`);
     if (b.naam) bedrijf.naam = String(b.naam).slice(0, 80);
     if (b.logo !== undefined) {
+      if (b.logo && !IS_AFBEELDING(b.logo)) return fout(res, 400, 'Logo moet een PNG-, JPEG- of WebP-afbeelding zijn.');
       if (b.logo && b.logo.length > 300000) return fout(res, 400, 'Logo te groot (max ~200 kB).');
-      bedrijf.logo = b.logo;
+      bedrijf.logo = b.logo || '';
     }
     if (b.branche && BRANCHES.includes(b.branche)) bedrijf.branche = b.branche;
     await kv.set(`bedrijf:${bid}`, bedrijf);
@@ -52,21 +54,32 @@ export default async function handler(req, res) {
   }
 
   if (b.actie === 'objecten') {
-    await kv.set(`bedrijf:${bid}:objecten`, (b.objecten || []).slice(0, 200));
+    const lijst = (Array.isArray(b.objecten) ? b.objecten : []).slice(0, 200).filter(o => o && typeof o === 'object' && o.naam)
+      .map(o => ({
+        naam: str(o.naam, 120), adres: str(o.adres, 200), email: str(o.email, 200),
+        checkpoints: (Array.isArray(o.checkpoints) ? o.checkpoints : []).slice(0, 200)
+          .map(c => ({ id: str(c && c.id, 40), naam: str(c && c.naam, 120) })),
+        ...(typeof o.portaal === 'string' && /^[a-f0-9]{16,64}$/.test(o.portaal) ? { portaal: o.portaal } : {})
+      }));
+    await kv.set(`bedrijf:${bid}:objecten`, lijst);
     return res.status(200).json({ ok: true });
   }
   if (b.actie === 'diensten') {
-    await kv.set(`bedrijf:${bid}:diensten`, (b.diensten || []).slice(0, 50));
+    const tijd = v => (/^\d{2}:\d{2}$/.test(String(v ?? '')) ? String(v) : '');
+    const lijst = (Array.isArray(b.diensten) ? b.diensten : []).slice(0, 50).filter(d => d && typeof d === 'object')
+      .map(d => ({ naam: str(d.naam, 80), van: tijd(d.van), tot: tijd(d.tot) }));
+    await kv.set(`bedrijf:${bid}:diensten`, lijst);
     return res.status(200).json({ ok: true });
   }
 
   if (b.actie === 'medewerker+') {
     const login = String(b.login || '').toLowerCase().trim();
     if (!b.naam || !login || !b.wachtwoord) return fout(res, 400, 'Naam, login en wachtwoord zijn verplicht.');
-    if (b.wachtwoord.length < 8) return fout(res, 400, 'Wachtwoord: minimaal 8 tekens.');
+    if (login.length > 120) return fout(res, 400, 'Login te lang.');
+    if (String(b.wachtwoord).length < 8) return fout(res, 400, 'Wachtwoord: minimaal 8 tekens.');
     if (await kv.get(`user:${login}`)) return fout(res, 409, 'Deze login bestaat al.');
     const { salt, hash } = hashWachtwoord(b.wachtwoord);
-    await kv.set(`user:${login}`, { login, naam: b.naam, pnr: b.pnr || '', rol: 'medewerker', bid, salt, hash, actief: true });
+    await kv.set(`user:${login}`, { login, naam: str(b.naam, 120), pnr: str(b.pnr, 40), rol: 'medewerker', bid, salt, hash, actief: true });
     await kv.sadd(`bedrijf:${bid}:users`, login);
     return res.status(200).json({ ok: true });
   }

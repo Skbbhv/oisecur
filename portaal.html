@@ -85,9 +85,11 @@ const $ = id => document.getElementById(id);
 const token = new URLSearchParams(location.search).get('t');
 let bedrijf = null;
 
-function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function fmtDate(iso){ if(!iso) return '—'; const [y,m,d]=iso.split('-'); return d+'-'+m+'-'+y; }
-function gpsTxt(g){ return g ? '<div class="gps">GPS '+g.lat.toFixed(5)+', '+g.lng.toFixed(5)+'</div>' : ''; }
+function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function fmtDate(iso){ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso||'')); return m ? m[3]+'-'+m[2]+'-'+m[1] : '—'; }
+function isGps(g){ return !!g && Number.isFinite(g.lat) && Number.isFinite(g.lng); }
+function gpsTxt(g){ return isGps(g) ? '<div class="gps">GPS '+g.lat.toFixed(5)+', '+g.lng.toFixed(5)+'</div>' : ''; }
+function isImg(s){ return typeof s==='string' && /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(s); }
 
 async function laad(){
   if(!token){ $('lijst').innerHTML='<div class="fout">Geen portaallink gevonden in het adres.</div>'; $('p-sub').textContent=''; return; }
@@ -96,7 +98,7 @@ async function laad(){
     const d = await res.json();
     if(!res.ok) throw new Error(d.fout||'Fout');
     bedrijf = d.bedrijf;
-    if(bedrijf.logo){ $('p-logo').src=bedrijf.logo; $('p-logo').hidden=false; }
+    if(isImg(bedrijf.logo)){ $('p-logo').src=bedrijf.logo; $('p-logo').hidden=false; }
     $('p-titel').textContent = d.object;
     $('p-sub').textContent = 'Beveiligingsrapportages door '+bedrijf.naam+' — alleen-lezen overzicht.';
     document.title = d.object+' — rapportageportaal';
@@ -104,9 +106,9 @@ async function laad(){
     $('lijst').innerHTML = d.rapporten.map(r=>{
       const tag={dienst:'tag-dienst',incident:'tag-incident',ronde:'tag-ronde'}[r.type];
       const naam={dienst:'Dienst',incident:'Incident',ronde:'Ronde'}[r.type];
-      return '<div class="rij"><span class="tag '+tag+'">'+naam+'</span>'+
-        '<div><div class="mono">'+r.nummer+'</div><div class="meta">'+fmtDate(r.datum)+' · '+esc(r.naam)+'</div></div>'+
-        '<button class="knop" onclick="openRapport(\''+r.nummer+'\')">Bekijken</button></div>';
+      return '<div class="rij"><span class="tag '+(tag||'')+'">'+(naam||'Rapport')+'</span>'+
+        '<div><div class="mono">'+esc(r.nummer)+'</div><div class="meta">'+fmtDate(r.datum)+' · '+esc(r.naam)+'</div></div>'+
+        '<button class="knop" data-nummer="'+esc(r.nummer)+'">Bekijken</button></div>';
     }).join('');
   }catch(e){
     $('p-sub').textContent='';
@@ -126,6 +128,7 @@ async function openRapport(nummer){
     window.scrollTo(0,0);
   }catch(e){ alert(e.message); }
 }
+$('lijst').addEventListener('click', e=>{ const b=e.target.closest('[data-nummer]'); if(b) openRapport(b.dataset.nummer); });
 function sluitRapport(){
   $('rapport').classList.remove('open');
   $('terug').classList.remove('open');
@@ -135,43 +138,44 @@ function sluitRapport(){
 function kv(k,v){ return '<tr><td>'+k+'</td><td>'+(v||'—')+'</td></tr>'; }
 function sect(t,v){ return v ? '<h2>'+t+'</h2><p>'+esc(v).replaceAll('\n','<br>')+'</p>' : ''; }
 function bouw(r){
-  const titel={dienst:'Dienstrapport',incident:'Incidentrapport',ronde:'Ronderapport'}[r.type];
+  const titel={dienst:'Dienstrapport',incident:'Incidentrapport',ronde:'Ronderapport'}[r.type]||'Rapport';
   let body='<table class="kv">'+
     kv('Beveiliger', esc(r.naam)+(r.pnr?' &nbsp;(nr. '+esc(r.pnr)+')':''))+
     kv('Object / locatie', esc(r.object)+(r.adres?' — '+esc(r.adres):''))+
     kv('Datum', fmtDate(r.datum))+
-    kv('Dienst', (r.dienstnaam?esc(r.dienstnaam)+' · ':'')+(r.van||'—')+' – '+(r.tot||'—'))+'</table>';
+    kv('Dienst', (r.dienstnaam?esc(r.dienstnaam)+' · ':'')+esc(r.van||'—')+' – '+esc(r.tot||'—'))+'</table>';
   if(r.type==='dienst'){
     body+='<h2>Mutaties</h2><table><tr><th class="pr-time">Tijd</th><th>Omschrijving</th></tr>'+
-      r.mutaties.map(m=>'<tr><td class="pr-time">'+(m.tijd||'—')+'</td><td>'+esc(m.oms)+gpsTxt(m.gps)+'</td></tr>').join('')+'</table>';
+      (r.mutaties||[]).map(m=>'<tr><td class="pr-time">'+esc(m.tijd||'—')+'</td><td>'+esc(m.oms)+gpsTxt(m.gps)+'</td></tr>').join('')+'</table>';
     if(r.overdracht) body+='<h2>Overdracht</h2><p>'+esc(r.overdracht).replaceAll('\n','<br>')+'</p>';
   }
   if(r.type==='incident'){
-    const i=r.incident;
+    const i=r.incident||{};
     body+='<h2>Incidentgegevens</h2><table class="kv">'+
       kv('Categorie',esc(i.cat))+kv('Prioriteit', i.prio==='Hoog'?'<span class="sev-hoog">HOOG</span>':esc(i.prio))+
-      kv('Tijdstip',i.tijd||'—')+kv('Exacte locatie',esc(i.loc)||'—')+
-      (r.gps?kv('GPS-locatie','<span class="gps" style="font-size:12px">'+r.gps.lat.toFixed(5)+', '+r.gps.lng.toFixed(5)+'</span>'):'')+
+      kv('Tijdstip',esc(i.tijd||'—'))+kv('Exacte locatie',esc(i.loc)||'—')+
+      (isGps(r.gps)?kv('GPS-locatie','<span class="gps" style="font-size:12px">'+r.gps.lat.toFixed(5)+', '+r.gps.lng.toFixed(5)+'</span>'):'')+
       kv('Politie ter plaatse',i.politie?'Ja':'Nee')+kv('Overige hulpdiensten',i.hulp?'Ja':'Nee')+
       kv('Schade geconstateerd',i.schade?'Ja':'Nee')+'</table>';
     body+=sect('Omschrijving',i.oms)+sect('Genomen acties',i.actie)+
           sect('Betrokkenen / signalement',i.betrok)+sect('Vervolgacties',i.vervolg);
     if(i.fotos&&i.fotos.length) body+='<h2>Foto\u2019s ('+i.fotos.length+')</h2><div class="pr-fotos">'+
-      i.fotos.map(f=>'<img src="'+f+'" alt="Incidentfoto">').join('')+'</div>';
+      i.fotos.filter(isImg).map(f=>'<img src="'+esc(f)+'" alt="Incidentfoto">').join('')+'</div>';
   }
   if(r.type==='ronde'){
-    body+='<h2>Controleronde</h2><table class="kv">'+kv('Gestart',r.ronde.start||'—')+kv('Afgerond',r.ronde.eind||'—')+'</table>';
+    const rd=r.ronde||{};
+    body+='<h2>Controleronde</h2><table class="kv">'+kv('Gestart',esc(rd.start||'—'))+kv('Afgerond',esc(rd.eind||'—'))+'</table>';
     body+='<table><tr><th>Checkpoint</th><th style="width:110px">Status</th><th>Opmerking</th></tr>'+
-      r.ronde.punten.map(p=>'<tr><td>'+esc(p.naam)+gpsTxt(p.gps)+'</td><td'+(p.status==='Afwijking'?' class="afw"':'')+'>'+p.status+(p.qr?'<div class="gps">QR gescand '+(p.tijd||'')+'</div>':'')+'</td><td>'+(esc(p.opm)||'—')+'</td></tr>').join('')+'</table>';
+      (rd.punten||[]).map(p=>'<tr><td>'+esc(p.naam)+gpsTxt(p.gps)+'</td><td'+(p.status==='Afwijking'?' class="afw"':'')+'>'+esc(p.status)+(p.qr?'<div class="gps">QR gescand '+esc(p.tijd||'')+'</div>':'')+'</td><td>'+(esc(p.opm)||'—')+'</td></tr>').join('')+'</table>';
   }
   return '<div class="pr"><div class="pr-head">'+
-    '<div>'+(bedrijf.logo?'<img class="pr-logo" src="'+bedrijf.logo+'" alt="Logo">':'')+
+    '<div>'+(isImg(bedrijf.logo)?'<img class="pr-logo" src="'+esc(bedrijf.logo)+'" alt="Logo">':'')+
     '<h1>'+esc(bedrijf.naam)+' — '+titel+'</h1><div class="sub">Beveiligingsrapportage</div></div>'+
-    '<div class="pr-num">'+r.nummer+'<br>'+fmtDate(r.datum)+'<br><span class="status">'+(r.type==='incident'?'Incident':'Definitief')+'</span></div></div>'+
+    '<div class="pr-num">'+esc(r.nummer)+'<br>'+fmtDate(r.datum)+'<br><span class="status">'+(r.type==='incident'?'Incident':'Definitief')+'</span></div></div>'+
     body+
-    '<div class="pr-sign"><div class="sig">Handtekening beveiliger<br>'+(r.handtekening?'<img src="'+r.handtekening+'" alt="Handtekening">':'<br><br>')+esc(r.naam)+'</div>'+
+    '<div class="pr-sign"><div class="sig">Handtekening beveiliger<br>'+(isImg(r.handtekening)?'<img src="'+esc(r.handtekening)+'" alt="Handtekening">':'<br><br>')+esc(r.naam)+'</div>'+
     '<div class="sig">Handtekening leidinggevende / opdrachtgever<br><br><br>&nbsp;</div></div>'+
-    '<div class="pr-foot"><span>Gegenereerd met Oisecur</span><span>'+r.nummer+'</span></div></div>';
+    '<div class="pr-foot"><span>Gegenereerd met Oisecur</span><span>'+esc(r.nummer)+'</span></div></div>';
 }
 laad();
 </script>

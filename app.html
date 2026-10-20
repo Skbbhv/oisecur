@@ -338,12 +338,12 @@ const nowHM = (d = new Date()) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 const fmtDate = iso => { if (!iso) return '—'; const [y, m, d] = iso.split('-'); return `${d}-${m}-${y}`; };
 const clone = o => (typeof structuredClone === 'function' ? structuredClone(o) : JSON.parse(JSON.stringify(o)));
 const daysAgo = n => { const d = new Date(); d.setDate(d.getDate() - n); return todayISO(d); };
-const gpsTxt = g => (g && typeof g.lat === 'number' ? `${g.lat.toFixed(5)}, ${g.lng.toFixed(5)}` : '');
+const gpsTxt = g => (g && Number.isFinite(g.lat) && Number.isFinite(g.lng) ? `${g.lat.toFixed(5)}, ${g.lng.toFixed(5)}` : '');
 const app = $('#app');
 
-function toast(msg, err = false) {
+function toast(msg, err = false, ms = 0) {
   const t = $('#toast'); t.textContent = msg; t.className = 'show' + (err ? ' err' : '');
-  clearTimeout(toast._t); toast._t = setTimeout(() => (t.className = err ? 'err' : ''), err ? 4500 : 2800);
+  clearTimeout(toast._t); toast._t = setTimeout(() => (t.className = err ? 'err' : ''), ms || (err ? 4500 : 2800));
 }
 const Store = {
   get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
@@ -657,7 +657,9 @@ function welcome(mode = 'login') {
         ? await serverApi('auth', { actie: 'login', gebruiker: f.gebruiker.trim(), wachtwoord: f.wachtwoord })
         : await serverApi('registreer', { bedrijf: f.bedrijf.trim(), naam: f.naam.trim(), email: f.email.trim(), wachtwoord: f.wachtwoord, branche: f.branche, website: f.website });
       await afterAuth(d, login ? f.gebruiker : f.email);
-      if (!login) toast('Welkom! Zet eerst je locaties en team erin.');
+      if (!login) d.oibaseBevestigen
+        ? toast('Check je mail om je gratis Oibase-toegang te bevestigen. Tot die tijd loopt je proefperiode.', false, 9000)
+        : toast('Welkom! Zet eerst je locaties en team erin.');
     } catch (x) {
       MODE = null; TOKEN = null;
       err.textContent = x.message;
@@ -723,7 +725,7 @@ function listHTML() {
   if (!LIST.length) return `<div class="empty">Nog geen rapporten. Kies hierboven wat je wilt vastleggen.</div>`;
   if (!rs.length) return `<div class="empty">Geen rapporten gevonden met deze filters.</div>`;
   return `<div class="rlist">${rs.map(r => `
-    <a class="rcard ${r.type}" href="#/rapport/${encodeURIComponent(r.nummer)}">
+    <a class="rcard ${esc(r.type)}" href="#/rapport/${encodeURIComponent(r.nummer)}">
       <div class="l1"><b>${esc(l.types[r.type] || r.type)}</b><span class="num">${esc(r.nummer)}</span></div>
       <div class="l2">${esc(fmtDate(r.datum))} · ${esc(r.object || '—')} · ${esc(r.naam || '—')}</div>
       <div class="l3">${esc(detailOf(r))}</div>
@@ -962,7 +964,7 @@ function renderCps(focusLast) {
 }
 function renderPhotos() {
   const box = $('#ph'); if (!box) return;
-  box.innerHTML = draft.incident.fotos.map((p, n) => `<figure><img src="${p}" alt="Foto ${n + 1}"><button type="button" class="del" data-del-ph="${n}" aria-label="Foto verwijderen">×</button></figure>`).join('');
+  box.innerHTML = draft.incident.fotos.map((p, n) => `<figure><img src="${esc(p)}" alt="Foto ${n + 1}"><button type="button" class="del" data-del-ph="${n}" aria-label="Foto verwijderen">×</button></figure>`).join('');
 }
 function getGPS() {
   return new Promise(res => {
@@ -1027,7 +1029,8 @@ async function submitReport() {
     toast('Opgeslagen: ' + r.nummer);
     go('rapport/' + encodeURIComponent(r.nummer));
     loadList().catch(() => {});
-    if (r.email && confirm(`Rapport nu mailen naar ${r.email}?`)) mailReport(r);
+    const mailTo = objByName(r.object)?.email || r.email;
+    if (mailTo && confirm(`Rapport nu mailen naar ${mailTo}?`)) mailReport(r);
   } catch (e) {
     toast(e.status === 0 ? 'Geen verbinding. Je rapport blijft bewaard als concept; probeer het straks opnieuw.' : e.message, true);
     if (btn.isConnected) { btn.disabled = false; btn.textContent = 'Opslaan en afronden'; }
@@ -1098,14 +1101,14 @@ async function viewReport(nummer) {
     <div><span>Politie ter plaatse</span><b>${i.politie ? 'Ja' : 'Nee'}</b></div><div><span>Overige hulpdiensten</span><b>${i.hulp ? 'Ja' : 'Nee'}</b></div>
     <div><span>Schade geconstateerd</span><b>${i.schade ? 'Ja' : 'Nee'}</b></div>${g ? `<div><span>GPS-locatie</span><b class="mono" style="font-size:13px">${gpsTxt(g)}</b></div>` : ''}</div>
     ${[['Omschrijving', i.oms], ['Genomen acties', i.actie], ['Betrokkenen / signalement', i.betrok], ['Vervolgacties / opvolging', i.vervolg]].filter(x => x[1]).map(([a, b]) => `<div class="lbl">${a}</div><p class="pre">${esc(b)}</p>`).join('')}
-    ${(i.fotos || []).length ? `<h3>Foto's (${i.fotos.length})</h3><div class="photos">${i.fotos.map((ph, n) => `<figure><img src="${ph}" alt="Foto ${n + 1}"></figure>`).join('')}</div>` : ''}`;
+    ${(i.fotos || []).length ? `<h3>Foto's (${i.fotos.length})</h3><div class="photos">${i.fotos.map((ph, n) => `<figure><img src="${esc(ph)}" alt="Foto ${n + 1}"></figure>`).join('')}</div>` : ''}`;
   if (r.type === 'ronde') { const rd = r.ronde || {}; body = `<h3>Checkpoints</h3>
     <div class="kv" style="margin-bottom:10px"><div><span>Start ronde</span><b>${esc(rd.start || '—')}</b></div><div><span>Einde ronde</span><b>${esc(rd.eind || '—')}</b></div></div>
     ${(rd.punten || []).length ? `<table><tr><th>Checkpoint</th><th>Tijd</th><th>Status</th><th>Opmerking</th></tr>${rd.punten.map(c => `<tr><td>${esc(c.naam)}${c.gps ? `<div class="gps">GPS ${gpsTxt(c.gps)}</div>` : ''}</td><td class="t">${esc(c.tijd || '—')}${c.qr ? '<div class="gps">QR</div>' : ''}</td><td class="s-${statusCls(c.status)}">${esc(statusLbl(c.status))}</td><td>${esc(c.opm || '')}</td></tr>`).join('')}</table>` : '<p>Geen checkpoints.</p>'}`; }
   const o = objByName(r.object);
   shell('overzicht', l.types[r.type] || 'Rapport', `
     <article class="paper">
-      <div class="ph"><div>${B.logo ? `<img src="${B.logo}" alt="Logo">` : ''}<h2>${esc(l.types[r.type] || r.type)}</h2><div style="font-size:13px;color:#555">${esc(B.naam)}</div></div>
+      <div class="ph"><div>${B.logo ? `<img src="${esc(B.logo)}" alt="Logo">` : ''}<h2>${esc(l.types[r.type] || r.type)}</h2><div style="font-size:13px;color:#555">${esc(B.naam)}</div></div>
         <div class="nr">${esc(r.nummer)}<br><span class="st">Definitief</span></div></div>
       <div class="kv">
         <div><span>${esc(l.persoon)}</span><b>${esc(r.naam || '—')}${r.pnr ? ` (${esc(r.pnr)})` : ''}</b></div>
@@ -1115,7 +1118,7 @@ async function viewReport(nummer) {
       </div>
       ${body}
       <h3>Ondertekening</h3>
-      <div class="sig">${r.handtekening ? `<img src="${r.handtekening}" alt="Handtekening">` : '<p>Niet ondertekend.</p>'}
+      <div class="sig">${r.handtekening ? `<img src="${esc(r.handtekening)}" alt="Handtekening">` : '<p>Niet ondertekend.</p>'}
       <p style="font-size:13px;color:#555;margin-top:6px">${esc(r.naam || '')}</p></div>
     </article>
     <p class="hint">${r.email ? `Opdrachtgever: ${esc(r.email)}` : ''}${o?.portaal ? `${r.email ? ' · ' : ''}Dit rapport staat ook in het portaal van de opdrachtgever.` : ''}</p>`, `
@@ -1146,44 +1149,19 @@ async function shareReport(r) {
   doc.save(name); toast('Delen kan niet op dit apparaat. De PDF is gedownload.');
 }
 async function mailReport(r) {
-  const to = (r.email || prompt('E-mailadres van de opdrachtgever:') || '').trim();
+  // De server stelt de mail zelf samen en stuurt alleen naar het adres van de opdrachtgever (locatie).
+  // Heeft de locatie geen e-mailadres, dan mag er één los adres worden opgegeven.
+  const o = objByName(r.object);
+  let to = (o?.email || r.email || '').trim();
+  if (!to) to = (prompt('E-mailadres van de opdrachtgever:') || '').trim();
   if (!to) return;
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return toast('Dit e-mailadres klopt niet.', true);
   toast('Versturen…');
   try {
-    await call('verstuur', { to, onderwerp: `${B.naam} — ${L().types[r.type]} ${r.nummer} (${fmtDate(r.datum)})`, html: mailHTML(r), bedrijf: B.naam });
-    toast(MODE === 'demo' ? `Demo: in het echt gaat het rapport nu naar ${to}` : `Rapport verstuurd naar ${to}`);
+    const d = await call('verstuur', { nummer: r.nummer, to });
+    const naar = (d && d.to) || to;
+    toast(MODE === 'demo' ? `Demo: in het echt gaat het rapport nu naar ${naar}` : `Rapport verstuurd naar ${naar}`);
   } catch (e) { toast(e.message, true); }
-}
-function mailHTML(r) {
-  const l = L(), i = r.incident || {};
-  const row = (k, v) => `<tr><td style="padding:6px 10px;border-bottom:1px solid #e5e7eb;color:#6b7280;width:170px">${k}</td><td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">${v || '—'}</td></tr>`;
-  const h = t => `<h3 style="color:#0d2456;font-size:15px;margin:18px 0 6px;text-transform:uppercase">${t}</h3>`;
-  const tbl = rows => `<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:14px">${rows}</table>`;
-  let body = tbl(row(esc(l.persoon), esc(r.naam) + (r.pnr ? ` (${esc(r.pnr)})` : '')) + row(esc(l.object), esc(r.object) + (r.adres ? ' — ' + esc(r.adres) : '')) +
-    row('Datum', fmtDate(r.datum)) + row('Dienst', (r.dienstnaam ? esc(r.dienstnaam) + ' · ' : '') + esc(r.van || '—') + ' – ' + esc(r.tot || '—')));
-  if (r.type === 'dienst') {
-    body += h(esc(l.log)) + tbl((r.mutaties || []).map(m => row(esc(m.tijd || '—'), esc(m.oms))).join(''));
-    if (r.overdracht) body += h('Overdracht') + `<p style="white-space:pre-wrap">${esc(r.overdracht)}</p>`;
-  }
-  if (r.type === 'incident') {
-    body += h(esc(l.incident)) + tbl(row('Categorie', esc(i.cat)) + row('Prioriteit', esc(i.prio)) + row('Tijdstip', esc(i.tijd)) + row('Exacte locatie', esc(i.loc)) +
-      row('Politie ter plaatse', i.politie ? 'Ja' : 'Nee') + row('Overige hulpdiensten', i.hulp ? 'Ja' : 'Nee') + row('Schade geconstateerd', i.schade ? 'Ja' : 'Nee'));
-    [['Omschrijving', i.oms], ['Genomen acties', i.actie], ['Betrokkenen / signalement', i.betrok], ['Vervolgacties', i.vervolg]].forEach(([a, b]) => { if (b) body += h(a) + `<p style="white-space:pre-wrap">${esc(b)}</p>`; });
-    if ((i.fotos || []).length) body += `<p style="color:#6b7280">Bij dit rapport horen ${i.fotos.length} foto('s). Vraag de PDF op als u deze wilt ontvangen.</p>`;
-  }
-  if (r.type === 'ronde') {
-    const rd = r.ronde || {};
-    body += h('Checkpoints') + `<p>Start ${esc(rd.start || '—')} · einde ${esc(rd.eind || '—')}</p>` +
-      tbl((rd.punten || []).map(p => row(esc(p.naam), `<b style="color:${p.status === 'Afwijking' ? '#c1121f' : p.status === 'OK' ? '#15803d' : '#b7791f'}">${esc(statusLbl(p.status))}</b>${p.tijd ? ' · ' + esc(p.tijd) : ''}${p.qr ? ' · QR' : ''}${p.opm ? '<br>' + esc(p.opm) : ''}`)).join(''));
-  }
-  const o = objByName(r.object);
-  return `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1f2937;max-width:640px">
-    <h2 style="color:#0d2456;border-bottom:3px solid #0d2456;padding-bottom:8px;margin:18px 0 12px">${esc(l.types[r.type])} ${esc(r.nummer)}</h2>
-    ${body}
-    <p style="margin-top:18px">Ondertekend door ${esc(r.naam)}.</p>
-    ${o?.portaal ? `<p><a href="${location.origin}/portaal.html?t=${esc(o.portaal)}">Bekijk al uw rapporten in het portaal</a></p>` : ''}
-    <p style="color:#9ca3af;font-size:12px">${esc(B.naam)} · gegenereerd met Oisecur</p></div>`;
 }
 
 /* ═════════════ PDF ═════════════ */
@@ -1522,7 +1500,7 @@ function viewSettings() {
     </form></section>
     <section class="card"><h2>Logo</h2>
       <p class="muted" style="font-size:14px">Je logo komt bovenaan elk rapport en in het portaal van de opdrachtgever.</p>
-      ${B.logo ? `<div class="logo-prev"><img src="${B.logo}" alt="Logo"></div>` : ''}
+      ${B.logo ? `<div class="logo-prev"><img src="${esc(B.logo)}" alt="Logo"></div>` : ''}
       <div class="row" style="margin-top:12px"><label class="btn btn-ghost sm" style="color:var(--txt)">${B.logo ? 'Ander logo' : 'Logo uploaden'}<input type="file" accept="image/*" id="s-logo" hidden></label>
       ${B.logo ? '<button class="btn btn-danger sm" id="s-logo-rm">Verwijderen</button>' : ''}</div>
     </section>
