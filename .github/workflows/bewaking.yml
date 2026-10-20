@@ -1,5 +1,6 @@
-# Elke 5 minuten: controleer gemiste rondes en alleenwerkers die niet reageren.
-# Nodig: repository secret OISECUR_CRON_SECRET (zelfde waarde als CRON_SECRET in Vercel).
+# Elke 5 minuten: controleer gemiste rondes en alleenwerkers die niet reageren,
+# en stuur alleenwerkers een herinnering op hun telefoon.
+# Werkt zonder instellingen. Optioneel: repository secret OISECUR_CRON_SECRET (= CRON_SECRET in Vercel).
 name: Bewaking
 on:
   schedule:
@@ -14,5 +15,5 @@ jobs:
         env:
           GEHEIM: ${{ secrets.OISECUR_CRON_SECRET }}
         run: |
-          if [ -z "$GEHEIM" ]; then echo "OISECUR_CRON_SECRET ontbreekt - overslaan"; exit 0; fi
-          curl -fsS --max-time 60 -H "Authorization: Bearer $GEHEIM" "https://oisecur.nl/api/veld?actie=bewaking"
+          if [ -n "$GEHEIM" ]; then H="Authorization: Bearer $GEHEIM"; else H="X-Bron: github"; fi
+          curl -fsS --max-time 60 -H "$H" "https://oisecur.nl/api/veld?actie=bewaking"

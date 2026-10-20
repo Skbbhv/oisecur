@@ -40,6 +40,7 @@ export const kv = {
     return c.set(k, enc(v));
   },
   async del(k) { const c = await conn(); return c.del(k); },
+  async setnx(k, v) { const c = await conn(); return (await c.set(k, enc(v), { NX: true })) === 'OK'; },
   async incr(k) { const c = await conn(); return c.incr(k); },
   async expire(k, s) { const c = await conn(); return c.expire(k, s); },
   async sadd(k, v) { const c = await conn(); return c.sAdd(k, enc(v)); },
@@ -209,6 +210,7 @@ export async function maakAlarm(bid, bedrijf, alarm, { extraTo = [], fetchFn = f
   const lijst = (await kv.get(sleutel)) || [];
   lijst.unshift(a);
   await kv.set(sleutel, lijst.slice(0, 200));
+  if (!a.afgehandeld) await alarmPush(bid, a);
   const aan = [...new Set([...alarmOntvangers(bedrijf), ...extraTo.map(e => String(e || '').toLowerCase().trim()).filter(IS_EMAIL)])];
   if (!aan.length || !process.env.RESEND_API_KEY) return a;
   const dag = new Date().toISOString().slice(0, 10);
@@ -229,6 +231,49 @@ export async function maakAlarm(bid, bedrijf, alarm, { extraTo = [], fetchFn = f
   const onderwerp = `${a.soort === 'sos' ? '🚨 ' : '⚠️ '}${kop}: ${a.titel || ''}`;
   await Promise.all(aan.map(to => stuurMail({ to, subject: onderwerp, html }, fetchFn).catch(() => false)));
   return a;
+}
+async function alarmPush(bid, a) {
+  try {
+    await pushBeheerders(bid, { titel: (a.soort === 'sos' ? '🚨 ' : '⚠️ ') + (ALARM_KOP[a.soort] || 'Alarm'), tekst: a.titel || '', url: '/app.html#/opvolging/alarmen',
+      tag: 'alarm-' + a.id, urgent: a.soort === 'sos' || a.soort === 'alleen' });
+  } catch {}
+}
+
+/* ── Pushmeldingen op de telefoon (Web Push). Sleutels worden één keer gemaakt en in de database bewaard. ── */
+let _wp = null;
+async function webpush() {
+  if (_wp) return _wp;
+  const m = (await import('web-push')).default;
+  let keys = await kv.get('vapid:keys');
+  if (!keys || !keys.publicKey) {
+    const nieuw = m.generateVAPIDKeys();
+    await kv.setnx('vapid:keys', nieuw);
+    keys = await kv.get('vapid:keys');
+  }
+  m.setVapidDetails('mailto:info@oisecur.nl', keys.publicKey, keys.privateKey);
+  _wp = { m, keys };
+  return _wp;
+}
+export async function vapidPubliek() { return (await webpush()).keys.publicKey; }
+export async function stuurPush(bid, login, data) {
+  const k = `push:${bid}:${login}`;
+  const subs = (await kv.get(k)) || [];
+  if (!subs.length) return 0;
+  let wp; try { wp = await webpush(); } catch { return 0; }
+  let n = 0; const houden = [];
+  for (const s of subs) {
+    try { await wp.m.sendNotification(s, JSON.stringify(data), { TTL: 900, urgency: data.urgent ? 'high' : 'normal' }); n++; houden.push(s); }
+    catch (e) { if (e && (e.statusCode === 404 || e.statusCode === 410)) continue; houden.push(s); }
+  }
+  if (houden.length !== subs.length) await kv.set(k, houden);
+  return n;
+}
+export async function pushBeheerders(bid, data) {
+  const logins = await kv.smembers(`bedrijf:${bid}:users`);
+  const users = await Promise.all(logins.map(l => kv.get(`user:${l}`)));
+  let n = 0;
+  for (const u of users) if (u && u.rol === 'beheerder' && u.actief !== false) n += await stuurPush(bid, u.login, data);
+  return n;
 }
 
 /* ── Oibase-rooster (alleen-lezen) ── */

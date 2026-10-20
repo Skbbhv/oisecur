@@ -1143,6 +1143,12 @@ function viewOverzicht() {
   $('#fp').onchange = e => { F.per = e.target.value; relist(); };
   $('#b-ov').onclick = overviewDialog;
   bindList(); bindVeilig();
+  if (admin && MODE === 'server' && !Store.get('ois_pushvraag')) pushStatus().then(st => {
+    if (st !== 'uit' || !$('#alarm-slot')) return;
+    $('#alarm-slot').insertAdjacentHTML('afterend', '<div class="warn" id="push-nudge" style="margin:0 0 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="flex:1;min-width:200px">Krijg alarmen direct op deze telefoon, ook als de app dicht is.</span><button class="btn btn-primary sm" id="pn-aan">Aanzetten</button><button class="linkbtn" id="pn-nee" style="margin:0">Niet nu</button></div>');
+    $('#pn-aan').onclick = async () => { Store.set('ois_pushvraag', 1); await pushAan(); $('#push-nudge')?.remove(); };
+    $('#pn-nee').onclick = () => { Store.set('ois_pushvraag', 1); $('#push-nudge')?.remove(); };
+  });
 }
 
 /* ═════════════ Opvolging van meldingen (beheerder) ═════════════ */
@@ -1400,7 +1406,7 @@ function alleenDialog() {
   $('#f-alleen').onsubmit = async e => {
     e.preventDefault(); const f = Object.fromEntries(new FormData(e.target));
     try {
-      try { if (window.Notification && Notification.permission === 'default') await Notification.requestPermission(); } catch (x) {}
+      try { await pushAan(true); } catch (x) {}
       const g = await Promise.race([getGPS(), new Promise(r => setTimeout(() => r(null), 3000))]);
       const d = await call('veld', { actie: 'alleen-start', object: f.object, minuten: +f.minuten, gps: g });
       VELD.alleen = d.alleen; closeModal(); toast(`Alleen werken gestart: elke ${f.minuten} minuten een check`); refreshVeldUI();
@@ -1448,6 +1454,41 @@ function roosterHTML() {
   return `<section class="card"><div class="sec-t"><h2>${admin ? 'Rooster vandaag' : 'Mijn diensten'}</h2><span class="tag grey">Oibase</span></div>
     ${list.length ? `<div class="att">${list.map(x => { const o = roosterObj(x); return `<div class="a"><span class="dot b"></span><span class="grow"><b>${admin ? esc(x.naam || 'Open dienst') + ' · ' : esc(x.datum === t ? 'Vandaag' : new Date(x.datum + 'T12:00').toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short' })) + ' · '}${esc(x.van)}–${esc(x.tot)}</b><small>${esc(x.opdracht || '—')}${o ? '' : x.opdracht ? ' · niet gekoppeld aan een ' + esc(L().object.toLowerCase()) : ''}</small></span></div>`; }).join('')}</div>`
       : `<p class="muted" style="font-size:14.5px">${admin ? 'Vandaag staan er geen diensten in het rooster.' : 'Er staan geen diensten voor je gepland.'}</p>`}</section>`;
+}
+
+/* ═════════════ Pushmeldingen op de telefoon ═════════════ */
+const pushOndersteund = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window && location.protocol === 'https:';
+const isIos = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isStandalone = () => { try { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch (e) { return false; } };
+function b64ToBytes(b64) { const p = '='.repeat((4 - b64.length % 4) % 4), s = atob((b64 + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(s, c => c.charCodeAt(0)); }
+async function pushStatus() {
+  if (MODE === 'demo') return 'demo';
+  if (!pushOndersteund()) return isIos() && !isStandalone() ? 'ios-installeren' : 'niet';
+  if (Notification.permission === 'denied') return 'geweigerd';
+  try { const reg = await navigator.serviceWorker.getRegistration(); const sub = reg && await reg.pushManager.getSubscription(); return sub && (VELD.push || []).includes(sub.endpoint) ? 'aan' : 'uit'; } catch (e) { return 'uit'; }
+}
+async function pushAan(stil = false) {
+  if (MODE === 'demo') { if (!stil) toast('Demo: in het echt krijg je nu meldingen op dit apparaat.'); return false; }
+  if (!pushOndersteund()) { if (!stil) toast(isIos() && !isStandalone() ? 'Op iPhone: zet Oisecur eerst op je beginscherm (Deel → Zet op beginscherm) en open de app daarvandaan.' : 'Dit apparaat of deze browser ondersteunt geen meldingen.', true, 8000); return false; }
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { if (!stil) toast('Meldingen zijn geweigerd. Zet ze aan in de instellingen van je telefoon.', true, 7000); return false; }
+    const reg = await navigator.serviceWorker.register('/sw.js'); await navigator.serviceWorker.ready;
+    const { publicKey } = await call('veld?actie=vapid');
+    let sub = await reg.pushManager.getSubscription();
+    if (sub && sub.options && sub.options.applicationServerKey) {
+      const huidig = btoa(String.fromCharCode(...new Uint8Array(sub.options.applicationServerKey))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      if (huidig !== publicKey) { await sub.unsubscribe(); sub = null; }
+    }
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(publicKey) });
+    await call('veld', { actie: 'push-aan', sub: sub.toJSON() });
+    VELD.push = [...new Set([...(VELD.push || []), sub.endpoint])];
+    if (!stil) toast('Meldingen staan aan op dit apparaat');
+    return true;
+  } catch (e) { if (!stil) toast('Meldingen aanzetten lukte niet: ' + (e.message || e), true, 7000); return false; }
+}
+async function pushUit() {
+  try { const reg = await navigator.serviceWorker.getRegistration(); const sub = reg && await reg.pushManager.getSubscription(); if (sub) { await call('veld', { actie: 'push-uit', endpoint: sub.endpoint }); await sub.unsubscribe(); VELD.push = (VELD.push || []).filter(x => x !== sub.endpoint); } toast('Meldingen uitgezet op dit apparaat'); } catch (e) { toast(e.message, true); }
 }
 
 /* ═════════════ Sleutels en passen ═════════════ */
@@ -2394,12 +2435,15 @@ function viewSettings() {
       <p class="muted" style="font-size:14px">Alarmen (hoge prioriteit, gemiste ronde, alleenwerker reageert niet, noodmelding) gaan altijd naar <b style="color:var(--txt)">${esc(B.email || 'je eigen adres')}</b>. Zet hier extra adressen, bijvoorbeeld je meldkamer of leidinggevende.</p>
       ${[0, 1, 2].map(n => `<input type="email" name="a${n}" value="${esc((B.alarmEmails || [])[n] || '')}" placeholder="extra@adres.nl" autocomplete="off">`).join('')}
       <button class="btn btn-ghost sm" style="align-self:flex-start">Opslaan</button></form>
-      ${VELD.koppeling && !VELD.koppeling.bewaking ? '<p class="warn">De automatische controle op gemiste rondes en alleenwerkers is nog niet ingesteld op de server. Alarmen bij hoge prioriteit en noodmeldingen werken wel.</p>' : ''}</section>
+</section>
     <section class="card"><h2>Koppeling met Oibase</h2>
       <p class="muted" style="font-size:14px">Zie het rooster uit Oibase in Oisecur: wie vandaag werkt en waar. Een nieuw rapport krijgt automatisch het juiste ${esc(L().object.toLowerCase())} en de diensttijden. Werkt met het Oibase-account op ${esc(B.email || 'je e-mailadres')}.</p>
-      <div class="row" style="margin-top:12px;align-items:center">${VELD.koppeling?.aan ? `<span class="tag ${ROOSTER?.ok ? 'green' : 'amber'}">${ROOSTER?.ok ? 'Gekoppeld · ' + ROOSTER.diensten.length + ' diensten' : ROOSTER?.reden === 'bevestigen' ? 'Wacht op bevestiging e-mail' : ROOSTER?.reden === 'niet-gevonden' ? 'Geen Oibase-account gevonden' : 'Aan'}</span><button class="btn btn-ghost sm" id="s-oib" data-aan="0">Uitzetten</button>` : '<button class="btn btn-primary sm" id="s-oib" data-aan="1">Koppelen</button>'}</div></section>` : ''}
+      <div class="row" style="margin-top:12px;align-items:center">${VELD.koppeling?.aan ? `<span class="tag ${ROOSTER?.ok ? 'green' : 'amber'}">${ROOSTER?.ok ? 'Gekoppeld · ' + ROOSTER.diensten.length + ' diensten' : ROOSTER?.reden === 'bevestigen' ? 'Wacht op bevestiging e-mail' : ROOSTER?.reden === 'niet-gevonden' ? 'Geen Oibase-account op dit e-mailadres' : ROOSTER?.reden === 'geen-geheim' ? 'Server nog niet ingesteld' : 'Aan'}</span><button class="btn btn-ghost sm" id="s-oib" data-aan="0">Uitzetten</button>` : '<button class="btn btn-primary sm" id="s-oib" data-aan="1">Koppelen</button>'}</div></section>` : ''}
     ${admin && PLAN ? `<section class="card"><h2>Abonnement</h2><p class="muted" style="font-size:14px">${PLAN.plan === 'proef' ? `Proefperiode${PLAN.proefTot ? ` tot en met <b style="color:var(--txt)">${esc(fmtDate(PLAN.proefTot))}</b> (${Math.max(0, dayDiff(todayISO(), PLAN.proefTot))} dagen)` : ''}. Wil je doorgaan? Mail naar <a href="mailto:info@oisecur.nl" style="color:var(--blauw)">info@oisecur.nl</a>.`
       : PLAN.plan === 'oibase' ? 'Gratis via je Oibase Enterprise-abonnement.' : 'Actief abonnement.'}</p></section>` : ''}
+    <section class="card"><h2>Meldingen op deze telefoon</h2>
+      <p class="muted" style="font-size:14px">${admin ? 'Krijg alarmen (noodmelding, gemiste ronde, alleenwerker reageert niet, hoge prioriteit) direct op je telefoon, ook als de app dicht is.' : 'Krijg een seintje als je bij alleen werken op "Alles OK" moet tikken, ook als de app dicht is.'}</p>
+      <div class="row" style="margin-top:12px;align-items:center" id="push-row"><span class="tag grey">Controleren…</span></div></section>
     <section class="card"><h2>Wachtwoord wijzigen</h2><form id="f-pw" class="stack" novalidate>
       <div class="grid2"><label>Huidig wachtwoord<input type="password" name="oud" autocomplete="current-password" required></label>
       <label>Nieuw wachtwoord (minimaal 8 tekens)<input type="password" name="nieuw" minlength="8" autocomplete="new-password" required></label></div>
@@ -2410,6 +2454,20 @@ function viewSettings() {
     </section>
     <p class="hint" style="text-align:center;margin-top:20px">Oisecur · <a href="/" style="color:var(--muted)">oisecur.nl</a> · <a href="mailto:info@oisecur.nl" style="color:var(--muted)">info@oisecur.nl</a></p>`);
   $('#s-out').onclick = logout;
+  pushStatus().then(st => {
+    const row = $('#push-row'); if (!row) return;
+    const T = { aan: '<span class="tag green">Aan</span><button class="btn btn-ghost sm" data-p="test">Test</button><button class="btn btn-ghost sm" data-p="uit">Uitzetten</button>',
+      uit: '<button class="btn btn-primary sm" data-p="aan">Meldingen aanzetten</button>', demo: '<button class="btn btn-primary sm" data-p="aan">Meldingen aanzetten</button>',
+      geweigerd: '<span class="tag red">Geweigerd</span><span class="hint" style="margin:0">Sta meldingen voor oisecur.nl toe in de instellingen van je telefoon of browser.</span>',
+      'ios-installeren': '<span class="hint" style="margin:0">Op iPhone werkt dit als je Oisecur op je beginscherm zet: tik op Deel → "Zet op beginscherm" en open de app daarvandaan.</span>',
+      niet: '<span class="hint" style="margin:0">Deze browser ondersteunt geen meldingen. Gebruik Chrome of zet de app op je beginscherm.</span>' };
+    row.innerHTML = T[st] || T.uit;
+    $$('#push-row [data-p]').forEach(b => b.onclick = async () => {
+      if (b.dataset.p === 'aan') { if (await pushAan()) viewSettings(); }
+      else if (b.dataset.p === 'uit') { await pushUit(); viewSettings(); }
+      else { try { await call('veld', { actie: 'push-test' }); toast('Testmelding verstuurd'); } catch (x) { toast(x.message, true); } }
+    });
+  });
   $('#f-pw').onsubmit = async e => {
     e.preventDefault(); const f = Object.fromEntries(new FormData(e.target));
     if (!f.oud || !f.nieuw) return toast('Vul beide velden in.', true);

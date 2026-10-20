@@ -4,8 +4,9 @@
 // GET  /api/veld                         → { alleen, alarmen (beheerder), sleutels, laatsteRonde (beheerder) }
 // GET  /api/veld?actie=rooster           → diensten uit Oibase (vandaag -1 t/m +13 dagen)
 // GET  /api/veld?actie=handtekening&id=X → handtekening bij een sleuteluitgifte
-// GET  /api/veld?actie=bewaking&key=CRON_SECRET (of Authorization: Bearer CRON_SECRET)
-//      → controleert rondes en alleenwerkers van alle bedrijven. Elke 5 minuten aanroepen (cron-job.org of Vercel Cron).
+// GET  /api/veld?actie=bewaking   → controleert rondes en alleenwerkers van alle bedrijven (elke 5 min via GitHub Actions).
+//      Zonder sleutel hooguit één keer per 4 minuten; met CRON_SECRET altijd.
+// GET  /api/veld?actie=vapid      → publieke sleutel voor pushmeldingen
 // POST /api/veld { actie, ... }
 //   ping { object }                       → checkpoint gescand (voor de rondebewaking)
 //   alleen-start { object, minuten }      → alleen werken starten (10–180 min tussen controles)
@@ -16,12 +17,15 @@
 //   sleutels { items:[{id,naam,soort,nummer,object}] }   → (beheerder) lijst vervangen
 //   uitgifte { itemId, aan, organisatie, handtekening, opm }
 //   retour { itemId, handtekening?, opm }
+//   push-aan { sub } / push-uit { endpoint } / push-test   → pushmeldingen op dit apparaat
 //   koppel-oibase { aan:boolean }         → (beheerder) rooster-koppeling aan/uit (vraagt e-mailbevestiging)
 import crypto from 'crypto';
 import {
   kv, sessieUitToken, fout, veiligGelijk, IS_AFBEELDING, stuurMail, escHtml, bevestigHash,
-  amsParts, amsNaarUtc, dagErvoor, amsHm, maakAlarm, oibaseRooster, OIBASE_START, OIBASE_TYPES
+  amsParts, amsNaarUtc, dagErvoor, amsHm, maakAlarm, oibaseRooster, OIBASE_START, OIBASE_TYPES, stuurPush, vapidPubliek
 } from './_lib.js';
+const koppelingAan = b => !!b && (b.oibaseKoppeling === true || (b.oibaseKoppeling !== false && b.plan === 'oibase'));
+const koppelingBevestigd = b => !!b && (b.emailBevestigd === true || b.plan === 'oibase');
 
 const str = (v, max) => (v == null ? '' : String(v)).slice(0, max);
 const gpsOf = g => (g && typeof g === 'object' && Number.isFinite(g.lat) && Number.isFinite(g.lng) ? { lat: g.lat, lng: g.lng, ...(Number.isFinite(g.acc) ? { acc: Math.round(g.acc) } : {}) } : null);
@@ -62,6 +66,12 @@ export async function controleer(bid, { nu = Date.now(), force = false } = {}) {
     const s = await kv.get(`alleen:${bid}:${login}`);
     if (!s) { await kv.srem(`bedrijf:${bid}:alleen`, login); continue; }
     if (s.alarm) continue;
+    // Herinnering op de telefoon kort voor de check
+    if (s.herinnerd !== s.laatste && nu >= Date.parse(s.laatste) + (Number(s.minuten) - 6) * 60000) {
+      s.herinnerd = s.laatste;
+      await kv.set(`alleen:${bid}:${login}`, s, { ex: 16 * 3600 });
+      try { await stuurPush(bid, login, { titel: 'Tik op "Alles OK"', tekst: `Je alleen-werken-check${s.object ? ' (' + s.object + ')' : ''} is om ${amsHm(Date.parse(s.laatste) + s.minuten * 60000)}. Open Oisecur en tik op Alles OK.`, url: '/app.html#/overzicht', tag: 'alleen', urgent: true }); } catch {}
+    }
     const deadline = Date.parse(s.laatste) + (Number(s.minuten) + 5) * 60000;
     if (nu <= deadline) continue;
     s.alarm = true; s.alarmT = new Date(nu).toISOString();
@@ -77,8 +87,8 @@ export async function controleer(bid, { nu = Date.now(), force = false } = {}) {
 
 /* ═════════ Rooster uit Oibase ═════════ */
 async function rooster(bedrijf, bid) {
-  if (!bedrijf.oibaseKoppeling) return { ok: false, reden: 'uit' };
-  if (bedrijf.emailBevestigd !== true) return { ok: false, reden: 'bevestigen' };
+  if (!koppelingAan(bedrijf)) return { ok: false, reden: 'uit' };
+  if (!koppelingBevestigd(bedrijf)) return { ok: false, reden: 'bevestigen' };
   const cache = `rooster:${bid}`;
   const c = await kv.get(cache);
   if (c && c.ok) return c;
@@ -109,12 +119,19 @@ export default async function handler(req, res) {
   if (req.method === 'GET' && q.actie === 'bewaking') {
     const geheim = process.env.CRON_SECRET;
     const mee = String(q.key || '') || String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
-    if (!geheim || !veiligGelijk(mee, geheim)) return fout(res, 401, 'Geen toegang.');
+    const vertrouwd = !!geheim && veiligGelijk(mee, geheim);
+    res.setHeader('Cache-Control', 'no-store');
+    // Zonder sleutel mag iedereen de controle aanroepen, maar hooguit één keer per 4 minuten (er komt geen data terug).
+    if (!vertrouwd && !(await kv.setnx('bewaking:globaal', 1))) return res.status(200).json({ ok: true, overgeslagen: true });
+    if (!vertrouwd) await kv.expire('bewaking:globaal', 240);
     const bids = await kv.smembers('bedrijven');
     let alarmen = 0;
     for (const bid of bids) { try { alarmen += (await controleer(bid, { force: true })).alarmen || 0; } catch {} }
-    res.setHeader('Cache-Control', 'no-store');
-    return res.status(200).json({ ok: true, bedrijven: bids.length, alarmen });
+    return res.status(200).json({ ok: true, alarmen });
+  }
+  if (req.method === 'GET' && q.actie === 'vapid') {
+    try { return res.status(200).json({ publicKey: await vapidPubliek() }); }
+    catch { return fout(res, 503, 'Pushmeldingen zijn nog niet beschikbaar.'); }
   }
 
   const sessie = await sessieUitToken(req);
@@ -155,7 +172,8 @@ export default async function handler(req, res) {
       alleenTeam,
       laatsteRonde: admin ? (laatste || {}) : undefined,
       sleutels: sleutels || { items: [], log: [] },
-      koppeling: admin ? { aan: !!(bedrijf && bedrijf.oibaseKoppeling), bevestigd: !!(bedrijf && bedrijf.emailBevestigd), email: (bedrijf && bedrijf.email) || '',
+      push: ((await kv.get(`push:${bid}:${login}`)) || []).map(s => s.endpoint),
+      koppeling: admin ? { aan: koppelingAan(bedrijf), bevestigd: koppelingBevestigd(bedrijf), email: (bedrijf && bedrijf.email) || '',
         beschikbaar: !!process.env.OIBASE_KOPPELING_GEHEIM, bewaking: !!process.env.CRON_SECRET } : undefined
     });
   }
@@ -201,6 +219,27 @@ export default async function handler(req, res) {
     await kv.del(`alleen:${bid}:${login}`);
     await kv.srem(`bedrijf:${bid}:alleen`, login);
     return res.status(200).json({ ok: true });
+  }
+
+  /* ── Pushmeldingen ── */
+  if (b.actie === 'push-aan') {
+    const s = b.sub || {};
+    if (typeof s.endpoint !== 'string' || !/^https:\/\//.test(s.endpoint) || s.endpoint.length > 800 || !s.keys || typeof s.keys.p256dh !== 'string' || typeof s.keys.auth !== 'string')
+      return fout(res, 400, 'Ongeldig apparaat.');
+    const k = `push:${bid}:${login}`;
+    const lijst = ((await kv.get(k)) || []).filter(x => x.endpoint !== s.endpoint);
+    lijst.unshift({ endpoint: s.endpoint, keys: { p256dh: str(s.keys.p256dh, 200), auth: str(s.keys.auth, 100) } });
+    await kv.set(k, lijst.slice(0, 5));
+    return res.status(200).json({ ok: true });
+  }
+  if (b.actie === 'push-uit') {
+    const k = `push:${bid}:${login}`;
+    await kv.set(k, ((await kv.get(k)) || []).filter(x => x.endpoint !== b.endpoint));
+    return res.status(200).json({ ok: true });
+  }
+  if (b.actie === 'push-test') {
+    const n = await stuurPush(bid, login, { titel: 'Oisecur', tekst: 'Pushmeldingen werken op dit apparaat.', url: '/app.html#/instellingen', tag: 'test' });
+    return n ? res.status(200).json({ ok: true, aantal: n }) : fout(res, 400, 'Geen melding verstuurd. Zet meldingen eerst aan op dit apparaat.');
   }
 
   /* ── Noodknop ── */
@@ -269,7 +308,7 @@ export default async function handler(req, res) {
     await kv.set(`bedrijf:${bid}`, bedrijf);
     await kv.del(`rooster:${bid}`);
     let mail = false;
-    if (bedrijf.oibaseKoppeling && bedrijf.emailBevestigd !== true && bedrijf.email) {
+    if (bedrijf.oibaseKoppeling && !koppelingBevestigd(bedrijf) && bedrijf.email) {
       const h = bevestigHash(bid, bedrijf.email);
       if (h) {
         const link = `https://oisecur.nl/api/registreer?bevestig=${encodeURIComponent(bid)}&h=${h}`;
@@ -277,7 +316,7 @@ export default async function handler(req, res) {
           html: `<div style="font-family:Arial,sans-serif;font-size:15px;color:#1f2937"><p>Hallo,</p><p>Je wilt het rooster uit Oibase in Oisecur zien. Bevestig eerst dat dit e-mailadres (${escHtml(bedrijf.email)}) van jou is:</p><p><a href="${link}" style="display:inline-block;background:#0a5ff0;color:#fff;padding:11px 20px;border-radius:8px;text-decoration:none;font-weight:bold">E-mailadres bevestigen</a></p><p style="color:#6b7280;font-size:13px">Heb je dit niet aangevraagd? Dan kun je deze mail negeren.</p></div>` }).catch(() => false);
       }
     }
-    return res.status(200).json({ ok: true, aan: bedrijf.oibaseKoppeling, bevestigd: bedrijf.emailBevestigd === true, mail });
+    return res.status(200).json({ ok: true, aan: bedrijf.oibaseKoppeling, bevestigd: koppelingBevestigd(bedrijf), mail });
   }
 
   return fout(res, 400, 'Onbekende actie.');
