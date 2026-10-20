@@ -7,7 +7,8 @@ export default async function handler(req, res) {
   const instellingen = {
     REDIS_URL: aanwezig('REDIS_URL'), KV_URL: aanwezig('KV_URL'), REDIS_TLS_URL: aanwezig('REDIS_TLS_URL'),
     KV_REST_API_URL: aanwezig('KV_REST_API_URL'), UPSTASH_REDIS_REST_URL: aanwezig('UPSTASH_REDIS_REST_URL'),
-    RESEND_API_KEY: aanwezig('RESEND_API_KEY'), OISECUR_ADMIN_KEY: aanwezig('OISECUR_ADMIN_KEY'), CRON_SECRET: aanwezig('CRON_SECRET')
+    RESEND_API_KEY: aanwezig('RESEND_API_KEY'), OISECUR_ADMIN_KEY: aanwezig('OISECUR_ADMIN_KEY'), CRON_SECRET: aanwezig('CRON_SECRET'),
+    OIBASE_KOPPELING_GEHEIM: aanwezig('OIBASE_KOPPELING_GEHEIM')
   };
   let database = 'ok';
   try {
