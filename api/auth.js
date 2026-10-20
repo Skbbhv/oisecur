@@ -1,6 +1,6 @@
 // POST /api/auth  { actie:'login', gebruiker, wachtwoord }  →  { token, rol, naam, pnr, bedrijf }
 //                { actie:'uitloggen' } met Authorization-header
-import { kv, controleerWachtwoord, maakSessie, fout } from './_lib.js';
+import { kv, controleerWachtwoord, maakSessie, fout, synchroniseerOibase } from './_lib.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return fout(res, 405, 'Method not allowed');
@@ -19,8 +19,9 @@ export default async function handler(req, res) {
   if (!user || user.actief === false || !controleerWachtwoord(wachtwoord, user.salt, user.hash))
     return fout(res, 401, 'Onjuiste gebruikersnaam of wachtwoord.');
 
-  const bedrijf = await kv.get(`bedrijf:${user.bid}`);
+  let bedrijf = await kv.get(`bedrijf:${user.bid}`);
   if (!bedrijf) return fout(res, 401, 'Bedrijf niet gevonden.');
+  bedrijf = await synchroniseerOibase(bedrijf);   // Oibase Enterprise = Oisecur gratis
   if (bedrijf.geblokkeerd)
     return fout(res, 403, 'Dit account is tijdelijk geblokkeerd. Neem contact op met info@oisecur.nl.');
   if (bedrijf.plan === 'proef' && bedrijf.proefTot && bedrijf.proefTot < new Date().toISOString().slice(0, 10))

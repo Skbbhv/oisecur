@@ -2,7 +2,7 @@
 // { bedrijf, naam, email, wachtwoord, branche, website }   (website = honeypot, moet leeg zijn)
 // → { token, rol, naam, pnr, bedrijf }  (direct ingelogd, zelfde antwoord als /api/auth)
 // Beveiliging tegen misbruik: max. 5 aanmeldingen per IP-adres per uur.
-import { kv, hashWachtwoord, maakSessie, fout } from './_lib.js';
+import { kv, hashWachtwoord, maakSessie, fout, oibaseEnterprise } from './_lib.js';
 
 const BRANCHES = ['beveiliging', 'schoonmaak', 'facilitair', 'techniek', 'evenementen', 'overig'];
 const PROEF_DAGEN = 14;
@@ -43,6 +43,8 @@ export default async function handler(req, res) {
   const nu = new Date();
   const proefTot = new Date(nu.getTime() + PROEF_DAGEN * 864e5).toISOString().slice(0, 10);
   const bedrijf = { id: bid, naam: bedrijfsnaam, logo: '', plan: 'proef', branche, sinds: nu.toISOString(), proefTot, email: login };
+  // Klant van Oibase Enterprise? Dan gratis, zonder proefperiode.
+  if (await oibaseEnterprise(login)) { bedrijf.plan = 'oibase'; delete bedrijf.proefTot; bedrijf.oibaseSinds = nu.toISOString().slice(0, 10); }
 
   await kv.set(`bedrijf:${bid}`, bedrijf);
   await kv.sadd('bedrijven', bid);
@@ -59,6 +61,6 @@ export default async function handler(req, res) {
   const token = await maakSessie(login, bid, 'beheerder');
   return res.status(200).json({
     token, rol: 'beheerder', naam, pnr: '',
-    bedrijf: { id: bid, naam: bedrijfsnaam, logo: '', branche }
+    bedrijf: { id: bid, naam: bedrijfsnaam, logo: '', branche, plan: bedrijf.plan }
   });
 }
