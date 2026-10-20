@@ -1,6 +1,13 @@
 // GET /api/status — controle of de server goed is ingesteld.
-// Toont alleen óf instellingen aanwezig zijn (ja/nee), nooit de waarden zelf.
+// Openbaar: alleen of de database werkt. Welke instellingen aanwezig zijn (ja/nee, nooit de waarden)
+// alleen met de beheerderssleutel in de kop x-admin-key.
 import { kv } from './_lib.js';
+import crypto from 'crypto';
+
+function isBeheerder(req) {
+  const goed = process.env.OISECUR_ADMIN_KEY || '', mee = String(req.headers['x-admin-key'] || '');
+  return !!goed && mee.length === goed.length && crypto.timingSafeEqual(Buffer.from(mee), Buffer.from(goed));
+}
 
 export default async function handler(req, res) {
   const aanwezig = k => !!process.env[k];
@@ -15,5 +22,5 @@ export default async function handler(req, res) {
     await Promise.race([kv.get('status:ping'), new Promise((_, r) => setTimeout(() => r(new Error('geen antwoord binnen 8 seconden')), 8000))]);
   } catch (e) { database = 'fout: ' + e.message; }
   res.setHeader('Cache-Control', 'no-store');
-  return res.status(200).json({ database, instellingen });
+  return res.status(200).json(isBeheerder(req) ? { database, instellingen } : { database });
 }
