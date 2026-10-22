@@ -180,9 +180,25 @@ section{padding:96px 0}
 .faq summary:hover{color:var(--blauw)}
 .faq details p{padding:0 44px 20px 0;color:var(--txt-2);font-size:15.5px}
 
+
+/* Nacht-band */
+.nacht{position:relative;min-height:440px;display:flex;align-items:center;overflow:hidden;background:#05101f;color:#fff}
+.nacht img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 30%;filter:grayscale(1) contrast(1.15) brightness(.75)}
+.nacht::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(1,18,48,.94) 0%,rgba(1,30,80,.78) 45%,rgba(1,46,119,.25) 100%)}
+.nacht .container{position:relative;z-index:1;padding-top:72px;padding-bottom:72px}
+.nacht .eyebrow{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.22);color:#cfe0ff}
+.nacht .eyebrow::before{background:#ff4d5a;box-shadow:0 0 0 4px rgba(255,77,90,.25);animation:puls 1.6s infinite}
+@keyframes puls{50%{opacity:.35}}
+@media(prefers-reduced-motion:reduce){.nacht .eyebrow::before{animation:none}}
+.nacht h2{font-size:clamp(30px,4.6vw,50px);font-weight:800;letter-spacing:-.035em;line-height:1.08;max-width:16ch;margin-bottom:16px}
+.nacht p{color:#c9d7ee;font-size:17.5px;max-width:46ch}
+.nacht .ts{font-family:var(--mono);font-size:13px;color:#8fb0e8;margin-top:26px;letter-spacing:.02em}
+@media(max-width:700px){.nacht{min-height:380px}.nacht::after{background:linear-gradient(180deg,rgba(1,18,48,.72),rgba(1,18,48,.92))}}
+
 /* Slot-CTA */
 #slot{background:linear-gradient(135deg,var(--navy) 0%,#0a4fd0 60%,var(--blauw) 100%);text-align:center;color:#fff;position:relative;overflow:hidden}
 #slot::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px);background-size:44px 44px;mask-image:radial-gradient(ellipse 60% 80% at 50% 50%,#000,transparent);-webkit-mask-image:radial-gradient(ellipse 60% 80% at 50% 50%,#000,transparent);pointer-events:none}
+#slot .bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.22;mix-blend-mode:luminosity}
 #slot .container{position:relative}
 #slot h2{font-size:clamp(28px,4.2vw,44px);font-weight:800;letter-spacing:-.03em;margin-bottom:14px;color:#fff}
 #slot p{color:#d6e3ff;font-size:17.5px;max-width:52ch;margin:0 auto 32px}
@@ -294,6 +310,16 @@ footer a:hover{color:var(--blauw)}
       <div class="branch"><h3>Evenementen &amp; horeca</h3><div class="types"><span>Dienstrapport</span><span>Incidentrapport</span><span>Controleronde</span></div><p>Logboek per evenement, incidenten met betrokkenen en controles van nooduitgangen.</p></div>
       <div class="branch"><h3>Andere branche?</h3><div class="types"><span>Dagrapport</span><span>Melding</span><span>Controleronde</span></div><p>Werk je buiten op locatie en moet je rapporteren aan een klant? Dan werkt Oisecur ook voor jou.</p></div>
     </div>
+  </div>
+</section>
+
+<section class="nacht" aria-label="Rapporteren in het veld">
+  <img src="https://images.unsplash.com/photo-1529747598642-d0b4e3667314?auto=format&amp;fit=crop&amp;w=1800&amp;q=70" alt="Beveiliger met oortje houdt een ingang in de gaten" width="1800" height="1000" loading="lazy">
+  <div class="container">
+    <span class="eyebrow">Live in het veld</span>
+    <h2>Als het misgaat, telt elke seconde.</h2>
+    <p>Een inbraakpoging om 03:12, een gewonde bezoeker, een open nooddeur. Je mensen leggen het direct vast, met foto, tijd en locatie. Achteraf staat er niets ter discussie.</p>
+    <div class="ts">03:12 · Melding vastgelegd · GPS ✓ · Foto ✓</div>
   </div>
 </section>
 
@@ -471,6 +497,7 @@ footer a:hover{color:var(--blauw)}
 </section>
 
 <section id="slot">
+  <img class="bg" src="https://images.unsplash.com/photo-1709193079866-a9858dc34d30?auto=format&amp;fit=crop&amp;w=1800&amp;q=60" alt="" loading="lazy">
   <div class="container">
     <h2>Vanavond nog je eerste rapport?</h2>
     <p>Binnen vijf minuten staan je locaties en medewerkers erin. Het eerste rapport is dan een kwestie van kiezen en typen.</p>
