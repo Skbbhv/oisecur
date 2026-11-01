@@ -5,6 +5,9 @@
   "functions": {
     "api/status.js": {
       "maxDuration": 60
+    },
+    "api/dagelijks.js": {
+      "maxDuration": 60
     }
   },
   "crons": [

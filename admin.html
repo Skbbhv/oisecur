@@ -118,8 +118,13 @@ td small{display:block;color:var(--muted);font-size:12.5px}
 <section class="login" id="v-login">
   <form class="card stack" id="f-key">
     <h2>Beheer Oisecur</h2>
-    <p class="muted" style="font-size:14px">Alleen voor jou. Log in met de beheersleutel die in Vercel staat als <span class="mono">OISECUR_ADMIN_KEY</span>.</p>
-    <label>Beheersleutel<input type="password" id="key" autocomplete="current-password" required></label>
+    <p class="muted" style="font-size:14px">Alleen voor jou. Log in met beheer@oibase.nl en je Oibase-wachtwoord.</p>
+    <div id="login-account" class="stack">
+      <label>E-mail<input type="email" id="l-mail" autocomplete="username" value="beheer@oibase.nl"></label>
+      <label>Wachtwoord<input type="password" id="l-pw" autocomplete="current-password"></label>
+    </div>
+    <label id="login-sleutel" hidden>Beheersleutel (<span class="mono">OISECUR_ADMIN_KEY</span>)<input type="password" id="key" autocomplete="off"></label>
+    <a href="#" id="l-wissel" style="font-size:13px">Inloggen met de beheersleutel</a>
     <label class="check"><input type="checkbox" id="remember"> Onthouden op dit apparaat</label>
     <p class="err" id="key-err"></p>
     <button class="btn btn-primary" style="width:100%">Inloggen</button>
@@ -131,6 +136,7 @@ td small{display:block;color:var(--muted);font-size:12.5px}
   <div class="toolbar">
     <input type="search" id="q" placeholder="Zoek op naam, code of e-mail…">
     <div class="chips" id="chips"></div>
+    <button class="btn btn-ghost sm" id="b-fact">Facturen</button>
     <button class="btn btn-primary sm" id="b-new">+ Nieuw bedrijf</button>
   </div>
   <div class="tbl"><table>
@@ -176,9 +182,10 @@ function planBadge(b) {
 function randomPw() { const c = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; const a = crypto.getRandomValues(new Uint32Array(12)); a.forEach(n => s += c[n % c.length]); return s; }
 
 async function api(body) {
-  const res = await fetch('/api/admin', { method: body ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json', 'x-admin-key': KEY }, body: body ? JSON.stringify(body) : undefined });
+  const kop = KEY.startsWith('tok:') ? { Authorization: 'Bearer ' + KEY.slice(4) } : { 'x-admin-key': KEY };
+  const res = await fetch('/api/admin', { method: body ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json', ...kop }, body: body ? JSON.stringify(body) : undefined });
   const d = await res.json().catch(() => ({}));
-  if (res.status === 401) { forget(); showLogin('De beheersleutel klopt niet (meer).'); throw new Error(d.fout || 'Ongeldige beheersleutel.'); }
+  if (res.status === 401) { forget(); showLogin(KEY.startsWith('tok:') ? 'Je sessie is verlopen. Log opnieuw in.' : 'De beheersleutel klopt niet (meer).'); throw new Error(d.fout || 'Niet ingelogd.'); }
   if (!res.ok) {
     if (res.status >= 500) {
       try { const s = await (await fetch('/api/status')).json(); if (s.database !== 'ok') throw new Error('Server kan de database niet bereiken (' + s.database.replace(/^fout: /, '') + '). Controleer REDIS_URL in Vercel.'); } catch (x) { if (x.message.startsWith('Server')) throw x; }
@@ -192,17 +199,28 @@ function forget() { try { localStorage.removeItem('ois_admin'); sessionStorage.r
 function stored() { try { return localStorage.getItem('ois_admin') || sessionStorage.getItem('ois_admin') || ''; } catch (e) { return ''; } }
 function showLogin(msg) { $('#v-login').hidden = false; $('#v-main').hidden = true; $('#top-right').hidden = true; $('#key-err').textContent = msg || ''; closeModal(); }
 
+$('#l-wissel').onclick = e => { e.preventDefault(); const s = $('#login-sleutel').hidden; $('#login-sleutel').hidden = !s; $('#login-account').hidden = s;
+  e.target.textContent = s ? 'Inloggen met e-mail en wachtwoord' : 'Inloggen met de beheersleutel'; };
 $('#f-key').onsubmit = async e => {
-  e.preventDefault(); KEY = $('#key').value.trim(); if (!KEY) return;
+  e.preventDefault(); $('#key-err').textContent = '';
   const btn = e.target.querySelector('button'); btn.disabled = true;
-  try { await load(); remember(KEY, $('#remember').checked); $('#key').value = ''; }
-  catch (x) { $('#key-err').textContent = x.message; }
+  try {
+    if (!$('#login-sleutel').hidden) { KEY = $('#key').value.trim(); if (!KEY) throw new Error('Vul de beheersleutel in.'); }
+    else {
+      const r = await fetch('/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ actie: 'login', gebruiker: $('#l-mail').value.trim(), wachtwoord: $('#l-pw').value }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.token) throw new Error(d.fout || 'Inloggen mislukt.');
+      KEY = 'tok:' + d.token;
+    }
+    await load(); remember(KEY, $('#remember').checked); $('#key').value = ''; $('#l-pw').value = '';
+  } catch (x) { $('#key-err').textContent = x.message; KEY = ''; }
   btn.disabled = false;
 };
 $('#b-out').onclick = () => { forget(); showLogin(); };
 $('#b-ref').onclick = () => load().then(() => toast('Bijgewerkt')).catch(x => toast(x.message, true));
 $('#q').oninput = render;
 $('#b-new').onclick = newCompany;
+$('#b-fact').onclick = allInvoices;
 
 async function load() {
   const d = await api();
@@ -271,6 +289,22 @@ async function openCompany(bid) {
       <p class="muted" style="font-size:13px">Een verlopen proef kan niet meer inloggen; de gegevens blijven bewaard. Zet het pakket op Starter, Pro of Business zodra de klant betaalt.</p>
     </div></div>
 
+    <div class="sec"><h3>Facturen</h3>
+      <p class="muted" style="font-size:13px;margin-bottom:10px">Bij Starter, Pro en Business gaat op de 1e van de maand automatisch de factuur over de vorige maand de deur uit (eerste maand naar rato).</p>
+      <div class="stack" id="d-fg">
+        <label class="check"><input type="checkbox" id="fg-aan"${b.factureren === false ? '' : ' checked'}> Automatisch factureren</label>
+        <div class="row"><label style="flex:1">Bedrijfsnaam op factuur<input id="fg-bedrijfsnaam" value="${esc((b.factuur || {}).bedrijfsnaam || '')}" placeholder="${esc(b.naam)}"></label>
+          <label style="flex:1">Factuur-e-mail<input id="fg-email" type="email" value="${esc((b.factuur || {}).email || '')}" placeholder="${esc(b.email || '')}"></label></div>
+        <div class="row"><label style="flex:2">Adres<input id="fg-adres" value="${esc((b.factuur || {}).adres || '')}"></label>
+          <label style="flex:1">Postcode<input id="fg-postcode" value="${esc((b.factuur || {}).postcode || '')}"></label>
+          <label style="flex:1">Plaats<input id="fg-plaats" value="${esc((b.factuur || {}).plaats || '')}"></label></div>
+        <div class="row"><label style="flex:1">KvK<input id="fg-kvk" value="${esc((b.factuur || {}).kvk || '')}"></label>
+          <label style="flex:1">Btw-nummer<input id="fg-btw" value="${esc((b.factuur || {}).btw || '')}"></label></div>
+        <div><button class="btn btn-ghost sm" id="fg-save">Factuurgegevens opslaan</button></div>
+      </div>
+      <div class="list" id="d-facturen" style="margin-top:12px"><p class="muted">Facturen ophalen…</p></div>
+    </div>
+
     <div class="sec"><h3>Toegang</h3>
       <p class="muted" style="font-size:14px;margin-bottom:10px">${b.geblokkeerd ? 'Dit bedrijf is geblokkeerd: niemand kan inloggen.' : 'Iedereen van dit bedrijf kan inloggen.'}</p>
       <button class="btn ${b.geblokkeerd ? 'btn-primary' : 'btn-danger'} sm" id="d-blok">${b.geblokkeerd ? 'Blokkade opheffen' : 'Blokkeren'}</button>
@@ -293,7 +327,12 @@ async function openCompany(bid) {
       <div class="row" style="margin-top:10px"><input id="d-del-code" placeholder="Typ ${esc(b.id)} ter bevestiging" style="margin:0;max-width:260px"><button class="btn btn-danger sm" id="d-del">Definitief verwijderen</button></div></div>`);
 
   const act = async (body, msg) => { try { const r = await api({ bid, ...body }); toast(msg); await load(); return r; } catch (x) { toast(x.message, true); } };
-  $('#d-plan-save').onclick = async () => { await act({ actie: 'plan', plan: $('#d-plan').value }, 'Pakket opgeslagen'); openCompany(bid); };
+  $('#d-plan-save').onclick = async () => {
+    const plan = $('#d-plan').value, betaald = PRIJS[plan] > 0 && plan !== b.plan;
+    const mail = betaald ? confirm(`Bevestigingsmail over het ${PLAN_NAAM[plan]}-abonnement naar de klant sturen?`) : false;
+    const r = await act({ actie: 'plan', plan, mail }, 'Pakket opgeslagen'); if (r && r.mail) toast('Pakket opgeslagen en bevestiging gemaild'); openCompany(bid); };
+  $('#fg-save').onclick = () => act({ actie: 'factuurgegevens', factureren: $('#fg-aan').checked, factuur: Object.fromEntries(['bedrijfsnaam', 'email', 'adres', 'postcode', 'plaats', 'kvk', 'btw'].map(k => [k, $('#fg-' + k).value])) }, 'Factuurgegevens opgeslagen');
+  api({ actie: 'facturen', bid }).then(r => invoiceList($('#d-facturen'), r.facturen, () => openCompany(bid))).catch(x => { $('#d-facturen').innerHTML = `<p class="err">${esc(x.message)}</p>`; });
   document.querySelectorAll('[data-proef]').forEach(bt => bt.onclick = async () => { const r = await act({ actie: 'proef', dagen: +bt.dataset.proef }, 'Proef verlengd'); if (r) toast(`Proef loopt nu tot ${fmt(r.proefTot)}`); openCompany(bid); });
   $('#d-blok').onclick = async () => {
     if (!b.geblokkeerd && !confirm(`${b.naam} blokkeren? Niemand van dit bedrijf kan dan nog inloggen.`)) return;
@@ -316,6 +355,30 @@ async function openCompany(bid) {
     if (!confirm(`Echt ${b.naam} met ALLE gegevens verwijderen?`)) return;
     try { await api({ actie: 'verwijder', bid, bevestig: code }); closeModal(); toast('Bedrijf verwijderd'); await load(); } catch (x) { toast(x.message, true); }
   };
+}
+
+const geld = n => '€ ' + Number(n || 0).toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const F_STATUS = { aangemaakt: ['Klaargezet', 'b-proef'], verstuurd: ['Open', 'b-proef'], betaald: ['Betaald', 'b-pro'], vervallen: ['Vervallen', 'b-verlopen'] };
+function invoiceList(el, lijst, opnieuw, metBedrijf) {
+  if (!lijst.length) { el.innerHTML = '<p class="muted">Nog geen facturen.</p>'; return; }
+  el.innerHTML = lijst.map(f => { const [s, c] = F_STATUS[f.status] || [f.status, '']; const laat = f.status === 'verstuurd' && f.vervaldatum < TODAY;
+    return `<div class="li"><div><span class="mono" style="font-size:13px">${esc(f.nummer)}</span> <span class="badge ${laat ? 'b-verlopen' : c}">${laat ? 'Te laat' : s}</span>
+      <small>${metBedrijf ? esc((f.klant || {}).bedrijfsnaam || f.bid) + ' · ' : ''}${esc(f.periode)} · ${geld(f.totaal)} · vervalt ${fmt(f.vervaldatum)}${f.betaald_op ? ' · betaald ' + fmt(f.betaald_op) : ''}${f.herinneringen ? ' · ' + f.herinneringen + 'x herinnerd' : ''}</small></div>
+      <div class="row" style="gap:6px"><button class="btn btn-ghost sm" data-fbekijk="${f.id}">Bekijk</button>${f.status === 'verstuurd' ? `<button class="btn btn-primary sm" data-fbetaald="${f.id}">Betaald</button>` : ''}${f.status === 'betaald' ? `<button class="btn btn-ghost sm" data-fopen="${f.id}">Toch open</button>` : ''}</div></div>`; }).join('');
+  el.querySelectorAll('[data-fbekijk]').forEach(bt => bt.onclick = async e => { e.stopPropagation();
+    const w = window.open('', '_blank'); try { const r = await api({ actie: 'factuur_html', id: bt.dataset.fbekijk });
+      w.document.write(`<!doctype html><html lang="nl"><head><meta charset="utf-8"><title>Factuur ${esc(r.nummer)}</title><style>@media print{.geen-print{display:none}}</style></head><body style="margin:0;background:#fff">${r.html}</body></html>`); w.document.close(); }
+    catch (x) { w.close(); toast(x.message, true); } });
+  const zet = (sel, status, msg) => el.querySelectorAll(`[${sel}]`).forEach(bt => bt.onclick = async e => { e.stopPropagation();
+    try { await api({ actie: 'factuur_status', id: bt.getAttribute(sel), status }); toast(msg); opnieuw(); } catch (x) { toast(x.message, true); } });
+  zet('data-fbetaald', 'betaald', 'Gemarkeerd als betaald'); zet('data-fopen', 'verstuurd', 'Weer op open gezet');
+}
+async function allInvoices() {
+  openModal(`<div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2>Facturen</h2><p class="muted" id="fa-sum"></p></div><button class="close" data-close aria-label="Sluiten">×</button></div><div class="sec"><div class="list" id="fa-list"><p class="muted">Ophalen…</p></div></div>`);
+  try { const r = await api({ actie: 'facturen' }); const open = r.facturen.filter(f => f.status === 'verstuurd');
+    $('#fa-sum').textContent = `${r.facturen.length} facturen · ${open.length} open (${geld(open.reduce((n, f) => n + Number(f.totaal), 0))})`;
+    invoiceList($('#fa-list'), r.facturen, allInvoices, true); }
+  catch (x) { $('#fa-list').innerHTML = `<p class="err">${esc(x.message)}</p>`; }
 }
 
 function newCompany() {

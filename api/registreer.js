@@ -6,6 +6,27 @@
 // GET /api/registreer?bevestig=<bid>&h=<hmac> — bevestigingslink uit de mail voor Oibase Enterprise-klanten.
 //   Pas na bevestiging van het e-mailadres krijgt het bedrijf het gratis pakket 'oibase'.
 import { kv, hashWachtwoord, maakSessie, fout, oibaseEnterprise, bevestigHash, veiligGelijk, stuurMail, escHtml, clientIp } from './_lib.js';
+import { verstuur, mailHTML, proefMail, EIGENAAR, kortNL } from './_mail.js';
+
+// Direct na aanmelden: welkomstmail naar de klant en een melding naar Erik.
+// Zelfde sleutel als de dagelijkse taak, dus de welkomstmail gaat nooit twee keer.
+async function welkom(bedrijf, naam, enterprise) {
+  const sleutel = `mail:${bedrijf.id}:proef_welkom`;
+  let ok = false;
+  try {
+    if (await kv.setnx(sleutel, new Date().toISOString().slice(0, 10))) {
+      const t = proefMail('welkom', bedrijf, String(naam).split(' ')[0]);
+      ok = await verstuur({ aan: bedrijf.email, onderwerp: t.onderwerp, html: mailHTML(t.alineas, t.knop), tekst: t.alineas.join('\n\n') });
+      if (!ok) await kv.del(sleutel);
+    }
+  } catch {}
+  try {
+    const regels = [`Nieuwe aanmelding op Oisecur: ${bedrijf.naam}.`,
+      `• Naam: ${naam}\n• E-mail: ${bedrijf.email}\n• Branche: ${bedrijf.branche}\n• Bedrijfscode: ${bedrijf.id}\n• Proef loopt tot en met ${kortNL(bedrijf.proefTot)}${enterprise ? '\n• Klant van Oibase Enterprise (gratis na bevestiging e-mailadres)' : ''}`,
+      ok ? 'De welkomstmail is verstuurd.' : 'Let op: de welkomstmail kon nu niet verstuurd worden. De dagelijkse taak probeert het morgenochtend opnieuw.'];
+    await verstuur({ aan: EIGENAAR, onderwerp: 'Oisecur: nieuwe aanmelding — ' + bedrijf.naam, html: mailHTML(regels, ['Naar het beheer', 'https://oisecur.nl/admin.html']), tekst: regels.join('\n\n') });
+  } catch {}
+}
 
 const BRANCHES = ['beveiliging', 'schoonmaak', 'facilitair', 'techniek', 'evenementen', 'overig'];
 const PROEF_DAGEN = 14;
@@ -111,6 +132,8 @@ export default async function handler(req, res) {
       });
     } catch { oibaseBevestigen = false; }
   }
+
+  await welkom(bedrijf, naam, enterprise);
 
   const token = await maakSessie(login, bid, 'beheerder');
   return res.status(200).json({

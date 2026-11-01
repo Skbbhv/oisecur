@@ -75,6 +75,17 @@ export async function sb(op, k, v, a, b) {
   if (!r.ok) throw new Error('Database-fout ' + r.status + ': ' + (await r.text().catch(() => '')).slice(0, 200));
   return r.json();
 }
+// Facturen (tabel oisecur_facturen, doorlopende nummering van Oibase B.V.)
+export async function factuurDb(op, data = {}) {
+  const geheim = process.env.OIBASE_KOPPELING_GEHEIM;
+  if (!geheim) throw new Error('OIBASE_KOPPELING_GEHEIM ontbreekt in Vercel.');
+  const r = await fetch(SUPABASE_URL + '/rest/v1/rpc/oisecur_factuur', {
+    method: 'POST', headers: { apikey: SUPABASE_PUBLIEK, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ p_geheim: geheim, p_op: op, p_data: data }), signal: AbortSignal.timeout(10000)
+  });
+  if (!r.ok) throw new Error('Facturen: database-fout ' + r.status + ': ' + (await r.text().catch(() => '')).slice(0, 200));
+  return r.json();
+}
 const supabaseKv = {
   get: k => sb('get', k),
   set: (k, v, opts) => sb('set', k, v, opts && opts.ex ? Math.ceil(opts.ex) : undefined),

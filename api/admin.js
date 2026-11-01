@@ -10,7 +10,23 @@
 // POST /api/admin { actie:'wachtwoord', bid, login, wachtwoord }   → wachtwoord van een gebruiker resetten
 // POST /api/admin { actie:'notitie',    bid, notitie }             → eigen notitie bij het bedrijf
 // POST /api/admin { actie:'verwijder',  bid, bevestig:bid }        → bedrijf met ALLE gegevens verwijderen
-import { kv, hashWachtwoord, fout, veiligGelijk, clientIp, fotoSleutels } from './_lib.js';
+// POST /api/admin { actie:'factuurgegevens', bid, factuur:{...}, factureren } → gegevens op de factuur
+// POST /api/admin { actie:'facturen', bid? }                         → facturen (van één bedrijf of alle)
+// POST /api/admin { actie:'factuur_status', id, status }             → betaald / verstuurd / vervallen
+// POST /api/admin { actie:'factuur_html', id }                       → factuur als HTML (bekijken / PDF)
+// Inloggen: kop x-admin-key = OISECUR_ADMIN_KEY, of een Oisecur-sessie van beheer@oibase.nl (Authorization: Bearer).
+import { kv, hashWachtwoord, fout, veiligGelijk, clientIp, fotoSleutels, sessieUitToken, factuurDb, IS_EMAIL } from './_lib.js';
+import { verstuur, mailHTML, pakketMail, PRIJS } from './_mail.js';
+import { factuurHTML } from './_factuur.js';
+
+const EIGENAAR_LOGIN = 'beheer@oibase.nl';
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const kort = (s, n) => String(s ?? '').trim().slice(0, n);
+async function isEigenaar(req) {
+  if (process.env.OISECUR_ADMIN_KEY && veiligGelijk(req.headers['x-admin-key'], process.env.OISECUR_ADMIN_KEY)) return true;
+  if (!/^Bearer [a-f0-9]{16,128}$/i.test(req.headers.authorization || '')) return false;
+  try { const s = await sessieUitToken(req); return !!s && s.login === EIGENAAR_LOGIN && s.rol === 'beheerder'; } catch { return false; }
+}
 
 const PLANS = ['proef', 'starter', 'pro', 'business', 'oibase'];   // oibase = gratis via Oibase Enterprise
 const BRANCHES = ['beveiliging', 'schoonmaak', 'facilitair', 'techniek', 'evenementen', 'overig'];
@@ -38,7 +54,7 @@ export default async function handler(req, res) {
   const teller = `admin:fout:ip:${clientIp(req)}`;
   if (Number(await kv.get(teller)) >= 20)
     return fout(res, 429, 'Te veel mislukte pogingen. Probeer het over 15 minuten opnieuw.');
-  if (!process.env.OISECUR_ADMIN_KEY || !veiligGelijk(req.headers['x-admin-key'], process.env.OISECUR_ADMIN_KEY)) {
+  if (!(await isEigenaar(req))) {
     const n = await kv.incr(teller); if (n === 1) await kv.expire(teller, 15 * 60);
     return fout(res, 401, 'Ongeldige beheersleutel.');
   }
@@ -58,6 +74,21 @@ export default async function handler(req, res) {
 
   if (req.method !== 'POST') return fout(res, 405, 'Method not allowed');
   const b = req.body || {};
+
+  /* ── Facturen ── */
+  if (b.actie === 'facturen' && !b.bid) return res.status(200).json({ facturen: await factuurDb('lijst', {}) });
+  if (b.actie === 'factuur_status' || b.actie === 'factuur_html') {
+    if (!UUID.test(String(b.id || ''))) return fout(res, 400, 'Onbekende factuur.');
+    if (b.actie === 'factuur_status') {
+      if (!['betaald', 'verstuurd', 'vervallen'].includes(b.status)) return fout(res, 400, 'Onbekende status.');
+      const r = await factuurDb('status', { id: b.id, status: b.status });
+      if (!r || !r.ok) return fout(res, 404, 'Factuur niet gevonden.');
+      return res.status(200).json({ ok: true, factuur: r.factuur });
+    }
+    const f = (await factuurDb('lijst', {})).find(x => x.id === b.id);
+    if (!f) return fout(res, 404, 'Factuur niet gevonden.');
+    return res.status(200).json({ html: factuurHTML(f, { printknop: true }), nummer: f.nummer });
+  }
 
   /* ── Acties op een bestaand bedrijf ── */
   if (b.actie) {
@@ -80,10 +111,33 @@ export default async function handler(req, res) {
 
     if (b.actie === 'plan') {
       if (!PLANS.includes(b.plan)) return fout(res, 400, 'Onbekend pakket.');
+      const oud = bedrijf.plan;
       bedrijf.plan = b.plan;
       if (b.plan !== 'proef') bedrijf.betaaldSinds = bedrijf.betaaldSinds || vandaag();
       await kv.set(`bedrijf:${bid}`, bedrijf);
-      return res.status(200).json({ ok: true, bedrijf: { plan: bedrijf.plan } });
+      // Nieuw betaald pakket: bevestiging naar de klant (met hoe de facturen gaan)
+      let mail = false;
+      if (PRIJS[b.plan] && oud !== b.plan && b.mail !== false && bedrijf.factureren !== false) {
+        const aan = (bedrijf.factuur && bedrijf.factuur.email) || bedrijf.email;
+        const t = pakketMail(bedrijf, b.plan);
+        try { mail = await verstuur({ aan, onderwerp: t.onderwerp, html: mailHTML(t.alineas, t.knop), tekst: t.alineas.filter(Boolean).join('\n\n'), bcc: 'info@oibase.nl' }); } catch {}
+      }
+      return res.status(200).json({ ok: true, bedrijf: { plan: bedrijf.plan }, mail });
+    }
+
+    if (b.actie === 'factuurgegevens') {
+      const f = b.factuur || {};
+      const email = kort(f.email, 200).toLowerCase();
+      if (email && !IS_EMAIL(email)) return fout(res, 400, 'Factuur-e-mailadres klopt niet.');
+      bedrijf.factuur = { bedrijfsnaam: kort(f.bedrijfsnaam, 100), email, adres: kort(f.adres, 120), postcode: kort(f.postcode, 12),
+        plaats: kort(f.plaats, 60), kvk: kort(f.kvk, 20), btw: kort(f.btw, 20) };
+      bedrijf.factureren = b.factureren !== false;
+      await kv.set(`bedrijf:${bid}`, bedrijf);
+      return res.status(200).json({ ok: true });
+    }
+
+    if (b.actie === 'facturen') {
+      return res.status(200).json({ facturen: await factuurDb('lijst', { bid }) });
     }
 
     if (b.actie === 'proef') {
