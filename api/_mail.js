@@ -38,7 +38,7 @@ export function mailHTML(alineas, knop) {
 }
 
 // Versturen via Resend. Eerst vanaf oisecur.nl; lukt dat niet (domein niet geverifieerd), dan vanaf oibase.nl.
-const AFZENDERS = ['Oisecur <info@oisecur.nl>', 'Oisecur <info@oibase.nl>'];
+const AFZENDERS = ['Oisecur <info@oisecur.nl>', 'Oisecur <info@oibase.nl>', 'Oisecur <oisecur@skbbhv.nl>'];   // eerste geverifieerde domein wint
 export const mailFouten = [];   // laatste weigeringen van de mailserver (voor het dagoverzicht en /api/dagelijks)
 export async function verstuur({ aan, onderwerp, html, tekst, bcc, afzender }, fetchFn = fetch) {
   if (!process.env.RESEND_API_KEY || !IS_EMAIL(String(aan || ''))) return false;
