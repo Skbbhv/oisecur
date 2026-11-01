@@ -214,13 +214,18 @@ export function fotoSleutels(bid, r) {
 
 /* ── Mail via Resend ── */
 export const AFZENDER = 'Oisecur Rapportage <rapportage@oisecur.nl>';
+// Eerst vanaf oisecur.nl; is dat domein (nog) niet geverifieerd bij Resend, dan vanaf oibase.nl.
 export async function stuurMail({ to, subject, html }, fetchFn = fetch) {
-  const r = await fetchFn('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: AFZENDER, to: [to], subject: String(subject).replace(/[\r\n]+/g, ' ').slice(0, 200), html })
-  });
-  return r.ok;
+  for (const from of [AFZENDER, 'Oisecur Rapportage <info@oibase.nl>']) {
+    const r = await fetchFn('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from, to: [to], reply_to: 'info@oibase.nl', subject: String(subject).replace(/[\r\n]+/g, ' ').slice(0, 200), html })
+    });
+    if (r.ok) return true;
+    if (r.status !== 403 && r.status !== 422) return false;
+  }
+  return false;
 }
 
 /* ── Bevestigingslink voor de Oibase-koppeling ── */

@@ -2,10 +2,9 @@
 //  - maandag: weekoverzicht van de afgelopen 7 dagen
 //  - de 1e van de maand: maandrapport van de vorige maand (cijfers + link naar het portaal met PDF)
 // Beveiligd met CRON_SECRET. Handmatig: ?soort=week of ?soort=maand
-import { kv, fout, veiligGelijk, escHtml, amsParts } from './_lib.js';
+import { kv, fout, veiligGelijk, escHtml, amsParts, stuurMail } from './_lib.js';
 import { maandMails } from './_maand.js';
 
-const FROM = 'Oisecur Rapportage <rapportage@oisecur.nl>';
 
 export default async function handler(req, res) {
   const geheim = process.env.CRON_SECRET;
@@ -56,12 +55,7 @@ export default async function handler(req, res) {
         `</table>` +
         (obj.portaal ? `<p><a href="https://oisecur.nl/portaal.html?t=${encodeURIComponent(obj.portaal)}">Bekijk alle rapporten in uw portaal</a></p>` : '') +
         `<p style="color:#888;font-size:12px">Automatisch weekoverzicht — gegenereerd met Oisecur.</p></div>`;
-      const r = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: FROM, to: [obj.email], subject: `Weekoverzicht beveiliging — ${String(obj.naam).replace(/[\r\n]+/g, ' ')}`, html })
-      });
-      if (r.ok) verstuurd++;
+      if (await stuurMail({ to: obj.email, subject: `Weekoverzicht beveiliging — ${String(obj.naam).replace(/[\r\n]+/g, ' ')}`, html })) verstuurd++;
     }
   }
   return res.status(200).json({ ok: true, verstuurd, maand });
