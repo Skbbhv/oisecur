@@ -1,5 +1,5 @@
 // Oisecur — gedeelde opmaak voor klantmails, facturen en het dagoverzicht.
-import { escHtml as esc, IS_EMAIL } from './_lib.js';
+import { escHtml as esc, IS_EMAIL, resendSleutel } from './_lib.js';
 
 export const BV = {
   naam: 'Oibase B.V.', adres: 'Goordelaan 19', postcode: '9591 CB', plaats: 'Onstwedde', land: 'Nederland',
@@ -41,13 +41,14 @@ export function mailHTML(alineas, knop) {
 const AFZENDERS = ['Oisecur <info@oisecur.nl>', 'Oisecur <info@oibase.nl>', 'Oisecur <oisecur@skbbhv.nl>'];   // eerste geverifieerde domein wint
 export const mailFouten = [];   // laatste weigeringen van de mailserver (voor het dagoverzicht en /api/dagelijks)
 export async function verstuur({ aan, onderwerp, html, tekst, bcc, afzender }, fetchFn = fetch) {
-  if (!process.env.RESEND_API_KEY || !IS_EMAIL(String(aan || ''))) return false;
+  const sleutel = await resendSleutel();
+  if (!sleutel || !IS_EMAIL(String(aan || ''))) return false;
   const lijst = afzender ? [afzender, ...AFZENDERS] : AFZENDERS;
   for (const from of lijst) {
     try {
       const r = await fetchFn('https://api.resend.com/emails', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        headers: { Authorization: `Bearer ${sleutel}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ from, to: [aan], subject: String(onderwerp).replace(/[\r\n]+/g, ' ').slice(0, 200), html,
           ...(tekst ? { text: tekst } : {}), ...(bcc && bcc !== aan ? { bcc: [bcc] } : {}), reply_to: BV.email }),
         signal: AbortSignal.timeout(10000)

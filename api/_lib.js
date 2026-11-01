@@ -214,12 +214,24 @@ export function fotoSleutels(bid, r) {
 
 /* ── Mail via Resend ── */
 export const AFZENDER = 'Oisecur Rapportage <rapportage@oisecur.nl>';
+// Mailsleutel: eerst uit de database (instelling:resend_key, door de eigenaar gezet), anders uit Vercel.
+let _resend = null, _resendTijd = 0;
+export async function resendSleutel() {
+  if (_resend !== null && Date.now() - _resendTijd < 300000) return _resend;
+  let s = '';
+  try { const v = await kv.get('instelling:resend_key'); if (typeof v === 'string' && v.startsWith('re_')) s = v; } catch {}
+  _resend = s || process.env.RESEND_API_KEY || ''; _resendTijd = Date.now();
+  return _resend;
+}
+
 // Eerst vanaf oisecur.nl; is dat domein (nog) niet geverifieerd bij Resend, dan vanaf oibase.nl.
 export async function stuurMail({ to, subject, html }, fetchFn = fetch) {
+  const sleutel = await resendSleutel();
+  if (!sleutel) return false;
   for (const from of [AFZENDER, 'Oisecur Rapportage <info@oibase.nl>']) {
     const r = await fetchFn('https://api.resend.com/emails', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      headers: { Authorization: `Bearer ${sleutel}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ from, to: [to], reply_to: 'info@oibase.nl', subject: String(subject).replace(/[\r\n]+/g, ' ').slice(0, 200), html })
     });
     if (r.ok) return true;
@@ -334,7 +346,7 @@ export async function maakAlarm(bid, bedrijf, alarm, { extraTo = [], fetchFn = f
   await kv.set(sleutel, lijst.slice(0, 200));
   if (!a.afgehandeld) await alarmPush(bid, a);
   const aan = [...new Set([...alarmOntvangers(bedrijf), ...extraTo.map(e => String(e || '').toLowerCase().trim()).filter(IS_EMAIL)])];
-  if (!aan.length || !process.env.RESEND_API_KEY) return a;
+  if (!aan.length || !(await resendSleutel())) return a;
   const dag = new Date().toISOString().slice(0, 10);
   const n = await kv.incr(`mail:alarm:${bid}:${dag}`);
   if (n === 1) await kv.expire(`mail:alarm:${bid}:${dag}`, 2 * 864e2);
