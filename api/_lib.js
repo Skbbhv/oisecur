@@ -32,7 +32,8 @@ const dec = (v) => {
   try { return JSON.parse(v); } catch { return v; }
 };
 
-export const kv = {
+// Oude opslag (Redis) — alleen nog gebruikt tot de overzetting naar Supabase klaar is.
+const redisKv = {
   async get(k) { const c = await conn(); return dec(await c.get(k)); },
   async set(k, v, opts) {
     const c = await conn();
@@ -51,6 +52,96 @@ export const kv = {
   async llen(k) { const c = await conn(); return c.lLen(k); },
   async lrem(k, count, v) { const c = await conn(); return c.lRem(k, count, enc(v)); }
 };
+
+/* ── Nieuwe opslag: Supabase (Oibase-database, tabel oisecur_kv) ──
+   Bereikbaar via de functie oisecur_kv, beveiligd met OIBASE_KOPPELING_GEHEIM. */
+const SUPABASE_URL = process.env.OISECUR_SUPABASE_URL || 'https://uexorfxmhjrvfgawsdlu.supabase.co';
+const SUPABASE_PUBLIEK = process.env.OIBASE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_FPEAeYQte7pgQWgeQ-OIsA_IkMCFMyt';
+export async function sb(op, k, v, a, b) {
+  const geheim = process.env.OIBASE_KOPPELING_GEHEIM;
+  if (!geheim) throw new Error('Database niet ingesteld: OIBASE_KOPPELING_GEHEIM ontbreekt in Vercel.');
+  const body = { p_geheim: geheim, p_op: op };
+  if (k !== undefined) body.p_k = k;
+  if (v !== undefined) body.p_v = v;
+  if (a !== undefined) body.p_a = a;
+  if (b !== undefined) body.p_b = b;
+  let r;
+  try {
+    r = await fetch(SUPABASE_URL + '/rest/v1/rpc/oisecur_kv', {
+      method: 'POST', headers: { apikey: SUPABASE_PUBLIEK, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body), signal: AbortSignal.timeout(10000)
+    });
+  } catch (e) { throw new Error('Database niet bereikbaar: ' + (e.message || e)); }
+  if (!r.ok) throw new Error('Database-fout ' + r.status + ': ' + (await r.text().catch(() => '')).slice(0, 200));
+  return r.json();
+}
+const supabaseKv = {
+  get: k => sb('get', k),
+  set: (k, v, opts) => sb('set', k, v, opts && opts.ex ? Math.ceil(opts.ex) : undefined),
+  del: k => sb('del', k),
+  setnx: (k, v) => sb('setnx', k, v),
+  incr: k => sb('incr', k),
+  expire: (k, s) => sb('expire', k, undefined, Math.ceil(s)),
+  sadd: (k, v) => sb('sadd', k, v),
+  srem: (k, v) => sb('srem', k, v),
+  smembers: k => sb('smembers', k),
+  lpush: (k, v) => sb('lpush', k, v),
+  lrange: (k, a, b) => sb('lrange', k, undefined, a, b),
+  llen: k => sb('llen', k),
+  lrem: (k, count, v) => sb('lrem', k, v, count)
+};
+
+// Welke opslag? Supabase zodra de overzetting klaar is; daarvoor Redis.
+// Tijdens de overzetting (enkele seconden) worden wijzigingen even geweigerd, zodat er niets verloren gaat.
+let _klaar = false, _sbFoutTot = 0;
+export async function opslagModus() {
+  if (_klaar) return 'supabase';
+  if (!REDIS) { _klaar = true; return 'supabase'; }                    // geen Redis meer → altijd Supabase
+  if (!process.env.OIBASE_KOPPELING_GEHEIM || Date.now() < _sbFoutTot) return 'redis';
+  try {
+    const [klaar, bezig] = await sb('mget', undefined, ['migratie:klaar', 'migratie:bezig']);
+    if (klaar) { _klaar = true; return 'supabase'; }
+    return bezig ? 'bezig' : 'redis';
+  } catch { _sbFoutTot = Date.now() + 60000; return 'redis'; }
+}
+async function kies() {
+  const m = await opslagModus();
+  if (m === 'bezig') throw new Error('Oisecur wordt even bijgewerkt. Probeer het over een minuut opnieuw.');
+  return m === 'supabase' ? supabaseKv : redisKv;
+}
+export const kv = Object.fromEntries(Object.keys(supabaseKv).map(n => [n, async (...args) => (await kies())[n](...args)]));
+
+// Eenmalig alles van Redis naar Supabase kopiëren. Wordt gestart via /api/status.
+export async function migreerNaarSupabase() {
+  if (await opslagModus() === 'supabase') return { status: 'klaar' };
+  if (!(await sb('setnx', 'migratie:bezig', new Date().toISOString()))) return { status: 'bezig' };
+  await sb('expire', 'migratie:bezig', undefined, 180);
+  try {
+    const c = await conn();
+    let batch = [], grootte = 0, aantal = 0;
+    const weg = async () => { if (batch.length) { await sb('mset', undefined, batch); aantal += batch.length; batch = []; grootte = 0; } };
+    for await (const key of c.scanIterator({ COUNT: 200 })) {
+      if (key.startsWith('migratie:')) continue;
+      const [type, ttl] = await Promise.all([c.type(key), c.ttl(key)]);
+      if (ttl === -2) continue;
+      let v;
+      if (type === 'string') v = dec(await c.get(key));
+      else if (type === 'set') v = (await c.sMembers(key)).map(dec);
+      else if (type === 'list') v = (await c.lRange(key, 0, -1)).map(dec);
+      else continue;
+      if (v === null) continue;
+      const stuk = JSON.stringify(v).length;
+      if (batch.length && (batch.length >= 100 || grootte + stuk > 2e6)) await weg();
+      batch.push({ k: key, v, ex: ttl > 0 ? ttl : null }); grootte += stuk;
+    }
+    await weg();
+    await sb('set', 'migratie:klaar', { t: new Date().toISOString(), sleutels: aantal });
+    _klaar = true;
+    return { status: 'klaar', sleutels: aantal };
+  } finally {
+    await sb('del', 'migratie:bezig').catch(() => {});
+  }
+}
 
 /* ── Wachtwoorden: scrypt met salt, geen platte tekst in de database ── */
 export function hashWachtwoord(wachtwoord) {
