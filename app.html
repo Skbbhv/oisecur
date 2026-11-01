@@ -2701,5 +2701,39 @@ function seedDemo() {
 
 init();
 </script>
+<style>
+.ww-wrap{position:relative;display:block}
+.ww-wrap>input{padding-right:44px!important}
+.ww-oog{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:none;border:0;padding:0;margin:0;cursor:pointer;color:inherit;opacity:.55;border-radius:6px}
+.ww-oog:hover,.ww-oog:focus-visible{opacity:1}
+.ww-oog svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<script>
+(function(){
+  var lang=(document.documentElement.lang||'nl').slice(0,2);
+  var L={nl:['Wachtwoord tonen','Wachtwoord verbergen'],en:['Show password','Hide password'],de:['Passwort anzeigen','Passwort verbergen'],fr:['Afficher le mot de passe','Masquer le mot de passe'],es:['Mostrar contraseña','Ocultar contraseña'],pt:['Mostrar palavra-passe','Ocultar palavra-passe']}[lang]||['Wachtwoord tonen','Wachtwoord verbergen'];
+  var OPEN='<svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  var DICHT='<svg viewBox="0 0 24 24"><path d="M17.9 17.9A10.4 10.4 0 0 1 12 19c-6.5 0-10-7-10-7a18.5 18.5 0 0 1 5.1-5.9M9.9 5.2A9.6 9.6 0 0 1 12 5c6.5 0 10 7 10 7a18.6 18.6 0 0 1-2.2 3.2M14.1 14.1a3 3 0 1 1-4.2-4.2"/><path d="M2 2l20 20"/></svg>';
+  function voorzie(inp){
+    if(inp.dataset.wwOog||!inp.parentNode)return;
+    inp.dataset.wwOog='1';
+    var cs=getComputedStyle(inp);
+    var w=document.createElement('span');w.className='ww-wrap';
+    w.style.marginTop=cs.marginTop;w.style.marginBottom=cs.marginBottom;
+    inp.parentNode.insertBefore(w,inp);w.appendChild(inp);
+    inp.style.marginTop='0';inp.style.marginBottom='0';
+    var b=document.createElement('button');b.type='button';b.className='ww-oog';
+    function zet(zicht){inp.type=zicht?'text':'password';b.innerHTML=zicht?DICHT:OPEN;b.setAttribute('aria-label',L[zicht?1:0]);b.title=L[zicht?1:0];b.setAttribute('aria-pressed',zicht?'true':'false')}
+    zet(false);
+    b.addEventListener('mousedown',function(e){e.preventDefault()});
+    b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();var pos=inp.selectionStart;zet(inp.type==='password');try{inp.focus();if(pos!=null)inp.setSelectionRange(pos,pos)}catch(_){}});
+    w.appendChild(b);
+    var f=inp.form;if(f&&!f.dataset.wwOog){f.dataset.wwOog='1';f.addEventListener('submit',function(){f.querySelectorAll('input[data-ww-oog]').forEach(function(i){i.type='password'})},true)}
+  }
+  function scan(r){(r.querySelectorAll?r:document).querySelectorAll('input[type=password]:not([data-ww-oog])').forEach(voorzie)}
+  function start(){scan(document);new MutationObserver(function(m){for(var i=0;i<m.length;i++)for(var j=0;j<m[i].addedNodes.length;j++){var n=m[i].addedNodes[j];if(n.nodeType!==1)continue;if(n.matches&&n.matches('input[type=password]'))voorzie(n);else if(n.querySelector&&n.querySelector('input[type=password]'))scan(n)}}).observe(document.body,{childList:true,subtree:true})}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+})();
+</script>
 </body>
 </html>
