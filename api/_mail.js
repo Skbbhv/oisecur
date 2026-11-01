@@ -39,6 +39,7 @@ export function mailHTML(alineas, knop) {
 
 // Versturen via Resend. Eerst vanaf oisecur.nl; lukt dat niet (domein niet geverifieerd), dan vanaf oibase.nl.
 const AFZENDERS = ['Oisecur <info@oisecur.nl>', 'Oisecur <info@oibase.nl>'];
+export const mailFouten = [];   // laatste weigeringen van de mailserver (voor het dagoverzicht en /api/dagelijks)
 export async function verstuur({ aan, onderwerp, html, tekst, bcc, afzender }, fetchFn = fetch) {
   if (!process.env.RESEND_API_KEY || !IS_EMAIL(String(aan || ''))) return false;
   const lijst = afzender ? [afzender, ...AFZENDERS] : AFZENDERS;
@@ -52,8 +53,10 @@ export async function verstuur({ aan, onderwerp, html, tekst, bcc, afzender }, f
         signal: AbortSignal.timeout(10000)
       });
       if (r.ok) return true;
+      const melding = await r.text().catch(() => '');
+      mailFouten.push(`${from} → ${r.status} ${melding.slice(0, 160)}`); if (mailFouten.length > 10) mailFouten.shift();
       if (r.status !== 403 && r.status !== 422) return false;   // alleen bij een afzenderprobleem de volgende proberen
-    } catch { return false; }
+    } catch (e) { mailFouten.push(`${from} → ${e.message || e}`); return false; }
   }
   return false;
 }

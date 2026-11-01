@@ -6,7 +6,7 @@
 // Toegang: Authorization: Bearer CRON_SECRET, of kop x-oisecur-geheim = OIBASE_KOPPELING_GEHEIM.
 // ?droog=1 → alles uitrekenen, niets versturen of opslaan (antwoord laat zien wat er zou gebeuren).
 import { kv, fout, veiligGelijk, amsParts, factuurDb, IS_EMAIL } from './_lib.js';
-import { verstuur, mailHTML, proefMail, herinneringMail, EIGENAAR, PRIJS, PLAN_NAAM, bedrag, kortNL, periodeLabel } from './_mail.js';
+import { verstuur, mailFouten, mailHTML, proefMail, herinneringMail, EIGENAAR, PRIJS, PLAN_NAAM, bedrag, kortNL, periodeLabel } from './_mail.js';
 import { factuurRegels, klantGegevens, factuurOnderwerp, factuurMailHTML } from './_factuur.js';
 
 const plusDagen = (d, n) => { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
@@ -133,5 +133,5 @@ export default async function handler(req, res) {
     if (!ok) await kv.del(`dagoverzicht:${vandaag}`);
   }
   res.setHeader('Cache-Control', 'no-store');
-  return res.status(200).json({ ok: true, ...v, overzicht });
+  return res.status(200).json({ ok: true, ...v, overzicht, ...(mailFouten.length ? { mailFouten } : {}) });
 }
