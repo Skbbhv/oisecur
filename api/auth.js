@@ -1,6 +1,6 @@
 // POST /api/auth  { actie:'login', gebruiker, wachtwoord }  →  { token, rol, naam, pnr, bedrijf }
 //                { actie:'uitloggen' } met Authorization-header
-import { kv, controleerWachtwoord, maakSessie, fout, synchroniseerOibase } from './_lib.js';
+import { kv, controleerWachtwoord, maakSessie, fout, synchroniseerOibase, oibaseWachtwoordKlopt } from './_lib.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return fout(res, 405, 'Method not allowed');
@@ -24,7 +24,10 @@ export default async function handler(req, res) {
     return fout(res, 429, 'Te veel mislukte pogingen. Probeer het over 15 minuten opnieuw.');
 
   const user = await kv.get(`user:${login}`);
-  if (!user || user.actief === false || !controleerWachtwoord(wachtwoord, user.salt, user.hash)) {
+  const actief = !!user && user.actief !== false;
+  const klopt = actief && ((user.salt && user.hash && controleerWachtwoord(wachtwoord, user.salt, user.hash)) ||
+    (user.oibaseLogin === true && await oibaseWachtwoordKlopt(user.login, wachtwoord)));   // zelfde wachtwoord als in Oibase
+  if (!klopt) {
     for (const k of [fAcc, fIp]) { const n = await kv.incr(k); if (n === 1) await kv.expire(k, 15 * 60); }
     return fout(res, 401, 'Onjuiste gebruikersnaam of wachtwoord.');
   }

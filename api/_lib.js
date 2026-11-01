@@ -248,6 +248,21 @@ export async function oibaseEnterprise(email, fetchFn = fetch) {
   } catch { return false; }
 }
 
+// Inloggen met het Oibase-wachtwoord (alleen voor gebruikers met oibaseLogin: true).
+export async function oibaseWachtwoordKlopt(email, wachtwoord, fetchFn = fetch) {
+  const e = String(email || '').toLowerCase().trim();
+  if (!e.includes('@') || !wachtwoord) return false;
+  try {
+    const r = await fetchFn(OIBASE_SUPABASE + '/auth/v1/token?grant_type=password', {
+      method: 'POST', headers: { apikey: OIBASE_PUBLIEK, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: e, password: String(wachtwoord) }), signal: AbortSignal.timeout(6000)
+    });
+    if (!r.ok) return false;
+    const d = await r.json();
+    return !!(d && d.access_token && d.user && String(d.user.email || '').toLowerCase() === e);
+  } catch { return false; }
+}
+
 // Pakket bijwerken op basis van Oibase: 'oibase' erbij of eraf. Geeft het (eventueel aangepaste) bedrijf terug.
 export async function synchroniseerOibase(bedrijf) {
   if (!bedrijf || !bedrijf.email) return bedrijf;
